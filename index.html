@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>雙語聊天橋 v21.1 (大偵探完全掌控版)</title>
+    <title>雙語聊天橋 v21.3 (Gemini AI 專用版)</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -21,7 +21,6 @@
             overflow: hidden;
         }
 
-        /* 頂部導覽列 */
         h2 {
             text-align: center;
             color: #1a1a1a;
@@ -34,7 +33,6 @@
             flex-shrink: 0;
         }
 
-        /* 聊天歷史紀錄區塊 */
         #chat {
             flex: 1;
             padding: 15px;
@@ -45,7 +43,6 @@
             background-color: #eceff1;
         }
 
-        /* 對話框外殼 */
         .msg-wrapper {
             display: flex;
             flex-direction: column;
@@ -53,7 +50,6 @@
             width: fit-content;
         }
 
-        /* 自己發的訊息（靠右、深藍色系） */
         .msg-right {
             align-self: flex-end;
             align-items: flex-end;
@@ -64,7 +60,6 @@
             border-bottom-right-radius: 4px;
         }
 
-        /* 對方發的訊息（靠左、白色系） */
         .msg-left {
             align-self: flex-start;
             align-items: flex-start;
@@ -75,7 +70,6 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* 对话框本体 */
         .msg-bubble {
             padding: 10px 14px;
             border-radius: 16px;
@@ -85,7 +79,6 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* 名字與時間 */
         .msg-meta {
             font-size: 0.75rem;
             color: #8e8e93;
@@ -93,7 +86,6 @@
             padding: 0 4px;
         }
 
-        /* 翻譯後的文字區塊 */
         .translated-text {
             margin-top: 6px;
             padding-top: 6px;
@@ -109,7 +101,6 @@
             color: #555555;
         }
 
-        /* 補唸小喇叭按鈕 */
         .tts-btn {
             background: none;
             border: none;
@@ -124,7 +115,6 @@
             color: #ffffff;
         }
 
-        /* 底部固定操作面板 */
         .controls {
             padding: 12px;
             background-color: #ffffff;
@@ -155,7 +145,6 @@
             gap: 8px;
         }
 
-        /* 輸入框與下拉選單優化 */
         input[type="text"], select {
             font-size: 1rem;
             padding: 10px;
@@ -171,7 +160,6 @@
             border-color: #007aff;
         }
 
-        /* 按鈕樣式 */
         .send-btn {
             padding: 10px 18px;
             background-color: #007aff;
@@ -189,7 +177,7 @@
 </head>
 <body>
 
-    <h2>雙語聊天橋 v21.1</h2>
+    <h2>雙語聊天橋 v21.3</h2>
     
     <div id="chat"></div>
 
@@ -212,46 +200,27 @@
     </div>
 
     <script>
-        /* 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟 */
-        /* 🕵️‍♂️ 大偵探專屬路標【第一區：FIREBASE 資料庫金鑰位置】 */
-        /* 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟 */
+        // 【第一區：已經內嵌好的全新 Firebase 資料庫設定】
         var firebaseConfig = {
-            // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
-  authDomain: "chat-bridge-f89ed.firebaseapp.com",
-  databaseURL: "https://chat-bridge-f89ed-default-rtdb.firebaseio.com",
-  projectId: "chat-bridge-f89ed",
-  storageBucket: "chat-bridge-f89ed.firebasestorage.app",
-  messagingSenderId: "622910981254",
-  appId: "1:622910981254:web:1d9d07862a765c31f6fd07",
-  measurementId: "G-PLGDSEQKSP"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+            apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
+            authDomain: "chat-bridge-f89ed.firebaseapp.com",
+            databaseURL: "https://chat-bridge-f89ed-default-rtdb.firebaseio.com",
+            projectId: "chat-bridge-f89ed",
+            storageBucket: "chat-bridge-f89ed.firebasestorage.app",
+            messagingSenderId: "622910981254",
+            appId: "1:622910981254:web:1d9d07862a765c31f6fd07",
+            measurementId: "G-PLGDSEQKSP"
         };
-        // 啟動資料庫
         firebase.initializeApp(firebaseConfig);
         var database = firebase.database();
 
 
-        /* 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟 */
-        /* 🕵️‍♂️ 大偵探專屬路標【第二區：GOOGLE 翻譯金鑰位置】 */
-        /* 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟 */
-        var googleTranslateApiKey = "AQ.Ab8RN6L65gjy8DJD2GbBHqti6tUjIZJpF4ZFkLGY5yilU6kZzA"; // 👈 以後換翻譯金鑰，只要改雙引號裡面的字就行了！
+        // 【第二區：大偵探專用——Gemini AI金鑰更換區】
+        var geminiApiKey = "AQ.Ab8RN6IlycRsac0g522_c5HwF-uiDV7VlDxfQo86JF0o-iFqdg"; // 👈 我已經幫妳把剛剛截圖裡的 AQ 金鑰完美填進去了！
 
 
         // -------------------------------------------------------------
-        // 後續的核心程式碼（不用動它）
+        // 以下是核心運作系統（已經完全切換成 Gemini 翻譯引擎）
         // -------------------------------------------------------------
         const chatDiv = document.getElementById('chat');
         const usernameInput = document.getElementById('username');
@@ -288,21 +257,32 @@ const analytics = getAnalytics(app);
 
         database.ref('messages').limitToLast(30).on('child_added', (snapshot) => {
             const msg = snapshot.val();
-            let targetLang = (msg.originalLang === 'zh-TW') ? 'ru' : 'zh-TW';
+            let targetLangText = (msg.originalLang === 'zh-TW') ? 'Traditional Chinese to Russian' : 'Russian to Traditional Chinese';
             
-            let url = `https://translation.googleapis.com/language/translate/v2?key=${googleTranslateApiKey}`;
+            // 呼叫強大的 Gemini AI 進行翻譯
+            let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            
             fetch(url, {
                 method: 'POST',
-                body: JSON.stringify({ q: msg.text, target: targetLang })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `You are a professional translator. Translate the following text from ${targetLangText}. Only provide the direct translation result, do not include any other explanations or greetings.\n\nText: ${msg.text}`
+                        }]
+                    }]
+                })
             })
             .then(res => res.json())
             .then(data => {
-                let translatedText = data.data.translations[0].translatedText;
+                let translatedText = data.candidates[0].content.parts[0].text.trim();
+                let targetLang = (msg.originalLang === 'zh-TW') ? 'ru' : 'zh-TW';
                 displayMessage(wrapper, msg, translatedText, targetLang);
             })
             .catch(err => {
-                console.error("翻譯出錯了:", err);
-                displayMessage(wrapper, msg, "(翻譯失敗)", targetLang);
+                console.error("Gemini 翻譯出錯了:", err);
+                let targetLang = (msg.originalLang === 'zh-TW') ? 'ru' : 'zh-TW';
+                displayMessage(wrapper, msg, "(AI連線失敗)", targetLang);
             });
 
             const wrapper = document.createElement('div');
