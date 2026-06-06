@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>雙語聊天橋 v21.4 (Gemini AI 完全融合版)</title>
+    <title>雙語聊天橋 v21.5 (終極完美修正版)</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -46,7 +46,7 @@
         .msg-wrapper {
             display: flex;
             flex-direction: column;
-            max-width: 80%;
+            max-width: 85%;
             width: fit-content;
         }
 
@@ -71,12 +71,22 @@
         }
 
         .msg-bubble {
-            padding: 10px 14px;
-            border-radius: 16px;
+            padding: 12px 16px;
+            border-radius: 18px;
             font-size: 1.05rem;
             line-height: 1.4;
             word-break: break-all;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .msg-header {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
 
         .msg-meta {
@@ -87,31 +97,34 @@
         }
 
         .translated-text {
-            margin-top: 6px;
-            padding-top: 6px;
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 1px dashed rgba(0, 0, 0, 0.1);
             font-style: italic;
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
         .msg-right .translated-text {
             border-top: 1px dashed rgba(255, 255, 255, 0.3);
-            color: #f0f0f0;
+            color: #f5f5f5;
         }
         .msg-left .translated-text {
-            color: #555555;
+            color: #444444;
         }
 
+        /* 優化後的小喇叭按鈕樣式 */
         .tts-btn {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             padding: 2px 6px;
-            margin-left: 5px;
+            border-radius: 4px;
+            background-color: rgba(0, 122, 255, 0.1);
             color: #007aff;
-            vertical-align: middle;
+            margin-left: 5px;
         }
         .msg-right .tts-btn {
+            background-color: rgba(255, 255, 255, 0.2);
             color: #ffffff;
         }
 
@@ -152,8 +165,8 @@
             border-radius: 8px;
             outline: none;
         }
-        #username { width: 40%; }
-        #langSelect { width: 60%; }
+        #username { width: 35%; }
+        #langSelect { width: 65%; }
         #message { flex: 1; }
 
         input[type="text"]:focus {
@@ -177,7 +190,7 @@
 </head>
 <body>
 
-    <h2>雙語聊天橋 v21.4</h2>
+    <h2>雙語聊天橋 v21.5</h2>
     
     <div id="chat"></div>
 
@@ -200,7 +213,7 @@
     </div>
 
     <script>
-        // 【1. 完美內嵌大偵探全新真正的 Firebase 配置】
+        // 【1. 內嵌大偵探全新的 Firebase 配置】
         var firebaseConfig = {
             apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
             authDomain: "chat-bridge-f89ed.firebaseapp.com",
@@ -215,12 +228,12 @@
         var database = firebase.database();
 
 
-        // 【2. 完美內嵌大偵探寶貴的 Gemini AQ 金鑰】
+        // 【2. 內嵌大偵探寶貴的 Gemini AQ 金鑰】
         var geminiApiKey = "AQ.Ab8RN6IlycRsac0g522_c5HwF-uiDV7VlDxfQo86JF0o-iFqdg";
 
 
         // -------------------------------------------------------------
-        // 後續核心系統（已經修正所有衝突語法）
+        // 後續核心系統（全新精簡 Gemini AI 專用通訊架構）
         // -------------------------------------------------------------
         const chatDiv = document.getElementById('chat');
         const usernameInput = document.getElementById('username');
@@ -257,9 +270,14 @@
 
         database.ref('messages').limitToLast(30).on('child_added', (snapshot) => {
             const msg = snapshot.val();
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('msg-wrapper');
+            chatDiv.appendChild(wrapper);
+
             let targetLangText = (msg.originalLang === 'zh-TW') ? 'Traditional Chinese to Russian' : 'Russian to Traditional Chinese';
+            let targetLangCode = (msg.originalLang === 'zh-TW') ? 'ru' : 'zh-TW';
             
-            // 呼叫 Gemini AI 進行對話翻譯
+            // 純淨版 Gemini API 連線路徑
             let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
             
             fetch(url, {
@@ -268,26 +286,23 @@
                 body: JSON.stringify({
                     contents: [{
                         parts: [{
-                            text: `You are a professional translator. Translate the following text from ${targetLangText}. Only provide the direct translation result, do not include any other explanations or greetings.\n\nText: ${msg.text}`
+                            text: `You are a professional translator. Translate the following text from ${targetLangText}. Only provide the direct translation result, do not include any other explanations, notes, or greetings.\n\nText: ${msg.text}`
                         }]
                     }]
                 })
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('API response error');
+                return res.json();
+            })
             .then(data => {
                 let translatedText = data.candidates[0].content.parts[0].text.trim();
-                let targetLang = (msg.originalLang === 'zh-TW') ? 'ru' : 'zh-TW';
-                displayMessage(wrapper, msg, translatedText, targetLang);
+                displayMessage(wrapper, msg, translatedText, targetLangCode);
             })
             .catch(err => {
-                console.error("Gemini 翻譯出錯了:", err);
-                let targetLang = (msg.originalLang === 'zh-TW') ? 'ru' : 'zh-TW';
-                displayMessage(wrapper, msg, "(AI連線失敗)", targetLang);
+                console.error("Gemini 翻譯失敗:", err);
+                displayMessage(wrapper, msg, "(翻譯失敗)", targetLangCode);
             });
-
-            const wrapper = document.createElement('div');
-            wrapper.classList.add('msg-wrapper');
-            chatDiv.appendChild(wrapper);
         });
 
         function displayMessage(wrapper, msg, translatedText, targetLang) {
@@ -300,11 +315,17 @@
             bubble.classList.add('msg-bubble');
             
             bubble.innerHTML = `
-                <strong>${msg.username}</strong>: ${msg.text}
-                <button class="tts-btn" onclick="speakText('${msg.text.replace(/'/g, "\\'")}', '${msg.originalLang}')">🔊原音</button>
+                <div class="msg-header">
+                    <span>${msg.username}</span>
+                    <button class="tts-btn" onclick="speakText('${msg.text.replace(/'/g, "\\'")}', '${msg.originalLang}')">🔊 唸原音</button>
+                </div>
+                <div>${msg.text}</div>
                 <div class="translated-text">
-                    👉 ${translatedText}
-                    <button class="tts-btn" onclick="speakText('${translatedText.replace(/'/g, "\\'")}', '${targetLang}')">🔊翻譯</button>
+                    <div style="margin-bottom: 4px;">
+                        <strong>👉 翻譯：</strong>
+                        <button class="tts-btn" onclick="speakText('${translatedText.replace(/'/g, "\\'")}', '${targetLang}')">🔊 唸翻譯</button>
+                    </div>
+                    <div>${translatedText}</div>
                 </div>
             `;
 
