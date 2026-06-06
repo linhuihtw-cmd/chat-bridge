@@ -218,7 +218,7 @@
 
 <script>
 
-// 🔑 請在這裡換上妳從 AI Studio 複製回來的真正金鑰（要記得帶上雙引號喔！）
+// 🔑 大偵探，把妳從 AI Studio 拿到的金鑰貼在下方雙引號內即可（原本的 "貼你的全新金鑰" 那個位置）
 const API_KEY = "AQ.Ab8RN6L9JZyiTh70p02dhNWO6VRtRdrtz90wqbszu6qrt539zA"; 
 
 const firebaseConfig = {
@@ -279,4 +279,311 @@ function playNotificationSound() {
 function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
-  titleFlashInterval = setInterval(()
+  titleFlashInterval = setInterval(() => {
+    document.title = isOldTitle ? "💬 【新訊息】" : "🌉 雙語聊天橋 v21.0";
+    isOldTitle = !isOldTitle;
+  }, 1000);
+}
+
+// 📋 智慧複製函式
+function copyThisLine(text, btnObj) {
+  let cleanText = text.replace(/["'「」]/g, "").trim();
+  if(!cleanText) return;
+
+  navigator.clipboard.writeText(cleanText).then(() => {
+    btnObj.innerText = "✅ 已複製";
+    btnObj.style.background = "#10b981";
+    btnObj.style.color = "white";
+    btnObj.style.borderColor = "#10b981";
+    
+    setTimeout(() => {
+      btnObj.innerText = "📋 Скопировать";
+      btnObj.style.background = "#ffffff";
+      btnObj.style.color = "#475569";
+      btnObj.style.borderColor = "#cbd5e1";
+    }, 1500);
+  }).catch(err => {
+    alert("複製失敗：" + err);
+  });
+}
+
+function secureClearDatabase() {
+  const password = prompt("請輸入管理員密碼以清空聊天室歷史紀錄：");
+  
+  if (password === "0000") {
+    if (confirm("確定要徹底清空 Firebase 資料庫中的所有對話紀錄嗎？")) {
+      db.ref("messages").remove()
+        .then(() => {
+          alert("資料庫已成功清空！網頁將自動重新整理。");
+          location.reload();
+        })
+        .catch((err) => {
+          alert("清空失敗：" + err.message);
+        });
+    }
+  } else if (password !== null) {
+    alert("密碼錯誤！");
+  }
+}
+
+// 📋【大偵探特調直覺法】
+function detectSimplifiedByDetectiveLogic(str) {
+  const detectiveCheckList = [
+    '国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', 
+    '东', '乐', '个', '发', '动', '后', '团', '图', '处', '备', '复', '阳', '头', '妈', 
+    '丽', '学', '实', '宠', '审', '寻', '寿', '专', '將', '岁', '岛', '师', '带', '常', 
+    '广', '庆', '废', '開', '張', '弹', '強', '归', '当', '录', '总', '惩', '护', '报', 
+    '担', '压', '扩', '扫', '扬', '执', '联', '择', '挂', '换', '摇', '时', '明', '机', 
+    '权', '条', '來', '极', '构', '样', '欢', '欧', '死', '毁', '气', '汇', '汉', '沒', 
+    '沦', '沧', '沪', '河', '治', '注', '泪', '波', '洁', '洋', '洒', '洗', '洞', '流', 
+    '浅', '测', '济', '浓', '滨', '海', '浪', '涉', '涛', '涨', '润', '清', '漸', '渔', 
+    '渠', '温', '游', '湾', '湿', '潰', '溅', '源', '溪', '灭', '灯', '灰', '灵', '炉', 
+    '烂', '炼', '烁', '煩', '烧', '热', '營', '烛', '烟', '隨', '隐', '难', '雾', '震', 
+    '霜', '霞', '韩', '音', '页', '頂', '項', '顺', '须', '顽', '顾', '顿', '预', '颅', 
+    '领', '颇', '颈', '颊', '颔', '颖', '颗', '题', '颜', '额', '颠', '颤', '风', '飘', 
+    '飞', '食', '餐', '饥', '饭', '饮', '饰', '饱', '伺', '饿', '馆', '扬'
+  ];
+
+  for (let char of detectiveCheckList) {
+    if (str.includes(char)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function renderChat() {
+  const chat = document.getElementById("chat");
+  chat.innerHTML = chatHistory.map((m, index) => {
+    if (m.role === "user") {
+      return `<div class="msg-box"><div class="bubble chat-text">${m.text}</div></div>`;
+    } else {
+      let rawText = m.text;
+      
+      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：")) {
+        return `<div class="msg-box"><div class="bubble error-card">🤖 <b>Gemini 系統回報 / Отчет системы</b><br>${rawText}</div></div>`;
+      }
+
+      rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
+
+      let correspondingUserInput = "";
+      for (let i = index - 1; i >= 0; i--) {
+        if (chatHistory[i] && chatHistory[i].role === "user") {
+          correspondingUserInput = chatHistory[i].text.trim();
+          break;
+        }
+      }
+
+      let tagRegex = /(【[^】]+】[^【\n]*)/g;
+      let matchedBlocks = rawText.match(tagRegex);
+      
+      if (!matchedBlocks || matchedBlocks.length === 0) {
+        matchedBlocks = rawText.split('\n');
+      }
+
+      let tradContent = "";
+      matchedBlocks.forEach(block => {
+        if (block.includes("【繁體中文")) {
+          let match = block.match(/^【[^】]+】([\s\S]*)$/);
+          if (match) tradContent = match[1].trim();
+        }
+      });
+
+      let processedLines = matchedBlocks.map(block => {
+        let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
+        if(!trimmedLine) return "";
+
+        if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
+          let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
+          let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
+          
+          if (!hasSimplified && isIncluded) {
+            return ""; 
+          }
+        }
+
+        if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
+          return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
+        }
+
+        if (trimmedLine.startsWith("【語意解釋")) {
+          return `<div class="card-line">${trimmedLine}</div>`;
+        }
+
+        let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
+        if (matchField && matchField[2].trim().length > 0) {
+          let contentText = matchField[2].trim();
+          let safeContent = contentText.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          return `<div class="card-line">${trimmedLine} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
+        }
+
+        return `<div class="card-line">${trimmedLine}</div>`;
+      });
+
+      let finalHtmlText = processedLines.filter(l => l !== "").join('');
+
+      return `<div class="msg-box"><div class="bubble ai-card"><b>🤖 Gemini 翻譯字卡</b>${finalHtmlText}</div></div>`;
+    }
+  }).join("");
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function buildPrompt(input) {
+  return `
+你是一個極度精準的「中俄跨語言翻譯與語言學習字卡器」。請根據用戶輸入，嚴格執行以下規則：
+
+【⚠️ 排版鐵律：標題與內容必須在同一行 ⚠️】
+任何欄位的內容都必須緊接在標題後方，嚴禁折行，且絕對不能輸出任何 Markdown 星號 (* 或 **)。
+請確保每一個標籤欄位獨立成行，絕對不要把多個標籤擠在同一個段落或同一行內！
+
+【欄位名稱規範（100% 固定不變）】
+你輸出的欄位標題，必須完完全全使用以下指定的中文/俄文雙語字串：
+【繁體中文 / Традиционный китайский】 內容
+【中文發音 / Пиньинь】 內容
+【簡體中文 / Упрощенный китайский】 內容
+【俄文翻譯 / Русский перевод】 內容
+【語意解釋 / Смысловое пояснение】 內容
+
+【核心語系分流生成機制】
+
+1. 當用戶輸入是「中文（繁體或簡體）」時：
+   * 必須完整產生所有 5 個欄位。
+   * 【繁體中文 / Традиционный китайский】這行必須完整輸出，不可自行省略。
+   * ⚠️【語意解釋 / Смысловое пояснение】內部的所有內容，必須「同時包含 中文：... 以及 Русский：...」，俄文是用來向對方解釋這個中文詞彙的，必須完整呈現，絕對不可漏掉。
+
+2. 當用戶輸入是「純俄文」時：
+   * ❌ 嚴禁輸出【俄文翻譯 / Русский перевод】這一行（直接全行省略）。
+   * 必須產生：【繁體中文 / Традиционный китайский】、【中文發音 / Пиньинь】、【簡體中文 / Упрощенный китайский】。
+   * ⚠️【語意解釋 / Смысловое пояснение】此時只需要輸出「中文：繁體解釋」，絕對不需要出現「Русский：」與任何俄文描述。
+
+3. 當用戶輸入是「英文或其他第三方語言（例如 WHY?, OMG, WTF）」時：
+   * 必須完整保留並換行輸出五個完整欄位，且【語意解釋】中「中文：...」與「Русский：...」均需完整保留。
+
+【⚠️ 繁簡分家與語意解釋繁體化 ⚠️】
+1.【繁體中文】欄位內必須是 100% 台灣繁體字。
+2. 任何情況下，【語意解釋】內部的「中文：」解釋，必須「100% 全為台灣繁體中文」，絕對不允許出現任何簡體字元！
+
+━━━━━━━━━━━━━━
+輸入：
+${input}
+`;
+}
+
+async function callGemini(text) {
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": API_KEY.trim()
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text }] }]
+        })
+      }
+    );
+    
+    if (!res.ok) {
+      return `【連線失敗原因】：Google 拒絕對話。 (Превышен бесплатный лимит запросов)`;
+    }
+
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "（沒有回應 / Нет ответа）";
+  } catch (e) {
+    return "錯誤 / Ошибка：" + e.message;
+  }
+}
+
+async function sendMsg() {
+  if (isSending) return; 
+
+  const inputObj = document.getElementById("msg");
+  const input = inputObj.value.trim();
+  if (!input || input.length === 0) {
+    inputObj.value = "";
+    inputObj.focus();
+    return;
+  }
+
+  isSending = true;
+  const sendBtn = document.getElementById("sendBtn");
+  sendBtn.disabled = true;
+  sendBtn.innerText = "...";
+  inputObj.value = "";
+  
+  inputObj.focus();
+
+  db.ref("messages").push({
+    role: "user",
+    text: input,
+    timestamp: Date.now()
+  });
+
+  const translatedText = await callGemini(buildPrompt(input));
+  
+  db.ref("messages").push({
+    role: "ai",
+    text: translatedText,
+    timestamp: Date.now()
+  });
+
+  setTimeout(() => {
+    isSending = false;
+    sendBtn.disabled = false;
+    sendBtn.innerText = "送出";
+    inputObj.focus();
+  }, 500);
+}
+
+function speakThisText(index) {
+  const targetMsg = chatHistory[index];
+  if (!targetMsg || !targetMsg.text) return;
+
+  let textToSpeak = "";
+  const matchTrad = targetMsg.text.match(/【繁體中文.*?】([\s\S]*?)(?=【|$)/);
+  if (matchTrad && matchTrad[1].trim().length > 0) {
+    textToSpeak = matchTrad[1].trim();
+  } else {
+    for (let i = index; i >= 0; i--) {
+      if (chatHistory[i].role === "user") {
+        textToSpeak = chatHistory[i].text.trim();
+        break;
+      }
+    }
+  }
+
+  if (!textToSpeak) return;
+  textToSpeak = textToSpeak.replace(/【.*?】/g, "").replace(/["'「」]/g, "").trim();
+
+  speechSynthesis.cancel();
+  const utteranceCorrect = new SpeechSynthesisUtterance(textToSpeak);
+  utteranceCorrect.lang = "zh-TW";
+  utteranceCorrect.volume = 1.0; 
+  utteranceCorrect.rate = 0.95;  
+  speechSynthesis.speak(utteranceCorrect);
+}
+
+let isFirstLoad = true;
+db.ref("messages").orderByChild("timestamp").limitToLast(1).once("value", () => {
+  setTimeout(() => { isFirstLoad = false; }, 1000);
+});
+
+db.ref("messages").on("child_added", (snapshot) => {
+  const newMsg = snapshot.val();
+  if (!newMsg || !newMsg.text || newMsg.text.trim() === "") return;
+  
+  chatHistory.push(newMsg);
+  renderChat();
+
+  if (!isFirstLoad) {
+    playNotificationSound();
+    if (!isTabActive) {
+      flashTabTitle();
+    }
+  }
+});
+</script>
+</body>
+</html>
