@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>雙語聊天橋 v21.3 (Gemini AI 專用版)</title>
+    <title>雙語聊天橋 v21.4 (Gemini AI 完全融合版)</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -177,7 +177,7 @@
 </head>
 <body>
 
-    <h2>雙語聊天橋 v21.3</h2>
+    <h2>雙語聊天橋 v21.4</h2>
     
     <div id="chat"></div>
 
@@ -200,7 +200,7 @@
     </div>
 
     <script>
-        // 【第一區：已經內嵌好的全新 Firebase 資料庫設定】
+        // 【1. 完美內嵌大偵探全新真正的 Firebase 配置】
         var firebaseConfig = {
             apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
             authDomain: "chat-bridge-f89ed.firebaseapp.com",
@@ -215,12 +215,12 @@
         var database = firebase.database();
 
 
-        // 【第二區：大偵探專用——Gemini AI金鑰更換區】
-        var geminiApiKey = "AQ.Ab8RN6IlycRsac0g522_c5HwF-uiDV7VlDxfQo86JF0o-iFqdg"; // 👈 我已經幫妳把剛剛截圖裡的 AQ 金鑰完美填進去了！
+        // 【2. 完美內嵌大偵探寶貴的 Gemini AQ 金鑰】
+        var geminiApiKey = "AQ.Ab8RN6IlycRsac0g522_c5HwF-uiDV7VlDxfQo86JF0o-iFqdg";
 
 
         // -------------------------------------------------------------
-        // 以下是核心運作系統（已經完全切換成 Gemini 翻譯引擎）
+        // 後續核心系統（已經修正所有衝突語法）
         // -------------------------------------------------------------
         const chatDiv = document.getElementById('chat');
         const usernameInput = document.getElementById('username');
@@ -259,7 +259,7 @@
             const msg = snapshot.val();
             let targetLangText = (msg.originalLang === 'zh-TW') ? 'Traditional Chinese to Russian' : 'Russian to Traditional Chinese';
             
-            // 呼叫強大的 Gemini AI 進行翻譯
+            // 呼叫 Gemini AI 進行對話翻譯
             let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
             
             fetch(url, {
