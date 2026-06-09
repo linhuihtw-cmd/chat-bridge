@@ -195,8 +195,8 @@
 
 <script>
 
-// 🔑 請在這裡換上妳的全新專案 API Key (目前先保留妳檔案內的這把測試)
-const API_KEY = "AQ.Ab8RN6LW_FOdG7pPjSOJWbztDI7nV6gbd4NEyahTSCSnTzmnyQ"; 
+// 🔑 請在這裡換上妳的全新專案 API Key
+const API_KEY = "AQ.Ab8RN6Kd2ey5S76zquSSGfXw8Hl7CaA3fQQmobA9wltAcXGwOw"; 
 
 const firebaseConfig = {
   apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
@@ -304,6 +304,7 @@ function secureClearDatabase() {
 }
 
 // 🕵️‍♂️【v20.7 大偵探特調直覺法】
+// 核心邏輯：只要句子中含有任何一個簡體特徵字，就打破「全繁體狀態」，判定包含簡體！
 function detectSimplifiedByDetectiveLogic(str) {
   const detectiveCheckList = [
     '国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', 
@@ -317,16 +318,16 @@ function detectSimplifiedByDetectiveLogic(str) {
     '渠', '温', '游', '湾', '湿', '溃', '溅', '源', '溪', '灭', '灯', '灰', '灵', '炉', 
     '烂', '炼', '烁', '烦', '烧', '热', '营', '烛', '烟', '随', '隐', '难', '雾', '震', 
     '霜', '霞', '韩', '音', '页', '顶', '项', '顺', '须', '顽', '顾', '顿', '预', '颅', 
-    '领', '颇', '颈', '颊', '颔', '颖', '顆', '題', '顏', '額', '顛', '顫', '風', '飄', 
-    '飛', '食', '餐', '飢', '飯', '飲', '飾', '飽', '飼', '餓', '館', '揚'
+    '领', '颇', '颈', '颊', '颔', '颖', '颗', '题', '颜', '额', '颠', '颤', '风', '飘', 
+    '飞', '食', '餐', '饥', '饭', '饮', '饰', '饱', '饲', '饿', '馆', '扬'
   ];
 
   for (let char of detectiveCheckList) {
     if (str.includes(char)) {
-      return true; 
+      return true; // 抓到了！不是全繁體
     }
   }
-  return false; 
+  return false; // 通通沒抓到，判定為全繁體
 }
 
 function renderChat() {
@@ -337,12 +338,13 @@ function renderChat() {
     } else {
       let rawText = m.text;
       
-      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("錯誤 / Ошибка：")) {
-        return `<div class="msg-box"><div class="bubble error-card">🤖 <b>Gemini 系統回報 / Отчет systems</b><br>${rawText}</div></div>`;
+      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：")) {
+        return `<div class="msg-box"><div class="bubble error-card">🤖 <b>Gemini 系統回報 / Отчет системы</b><br>${rawText}</div></div>`;
       }
 
       rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
 
+      // 🔍 向上尋找 User 原始輸入內容
       let correspondingUserInput = "";
       for (let i = index - 1; i >= 0; i--) {
         if (chatHistory[i] && chatHistory[i].role === "user") {
@@ -351,6 +353,7 @@ function renderChat() {
         }
       }
 
+      // 🎯【標籤精密切片機制】
       let tagRegex = /(【[^】]+】[^【\n]*)/g;
       let matchedBlocks = rawText.match(tagRegex);
       
@@ -358,6 +361,7 @@ function renderChat() {
         matchedBlocks = rawText.split('\n');
       }
 
+      // 先抓出 Gemini 吐出來的繁體中文實際內容是什麼
       let tradContent = "";
       matchedBlocks.forEach(block => {
         if (block.includes("【繁體中文")) {
@@ -370,23 +374,27 @@ function renderChat() {
         let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
         if(!trimmedLine) return "";
 
+        // 🎯【智慧包容比對防線】：套用大偵探直覺邏輯
         if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
           let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
           let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
           
           if (!hasSimplified && isIncluded) {
-            return ""; 
+            return ""; // 如果是全繁體且內容包含，就把重複的繁中欄位藏起來！
           }
         }
 
+        // 2. 處理【中文發音】區塊 —— 綁定音效朗讀按鈕
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
         }
 
+        // 3. 處理【語意解釋】區塊 —— 保持原樣輸出
         if (trimmedLine.startsWith("【語意解釋")) {
           return `<div class="card-line">${trimmedLine}</div>`;
         }
 
+        // 4. 處理其餘要加上「複製按鈕」的標準欄位（繁中、簡中、俄文翻譯）
         let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
         if (matchField && matchField[2].trim().length > 0) {
           let contentText = matchField[2].trim();
@@ -423,9 +431,9 @@ function buildPrompt(input) {
 
 【核心語系分流生成機制】
 
-1. 當用戶輸入是「中文（繁體或簡體）」時 suicide：
+1. 當用戶輸入是「中文（繁體或簡體）」時：
    * 必須完整產生所有 5 個欄位。
-   * 【繁體中文 / Традиционный chinese】這行必須完整輸出，不可自行省略。
+   * 【繁體中文 / Традиционный китайский】這行必須完整輸出，不可自行省略。
    * ⚠️【語意解釋 / Смысловое пояснение】內部的所有內容，必須「同時包含 中文：... 以及 Русский：...」，俄文是用來向對方解釋這個中文詞彙的，必須完整呈現，絕對不可漏掉。
 
 2. 當用戶輸入是「純俄文」時：
@@ -446,25 +454,24 @@ ${input}
 `;
 }
 
-// 🕵️‍♂️【大偵探特調防攔截連線核心】
 async function callGemini(text) {
   try {
-    // 💡 密技：把 API_KEY 直接用 ?key= 接在網址最後面，完美避開本機安全限制與金鑰格式判定！
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY.trim();
-    
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text }] }]
-      })
-    });
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": API_KEY.trim()
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text }] }]
+        })
+      }
+    );
     
     if (!res.ok) {
-      // 💡 這裡修改為回報真實的錯誤狀態碼，讓偵探一眼看穿真相！
-      return `【連線失敗原因】：Google 拒絕對話。 (狀態碼: ${res.status})`;
+      return `【連線失敗原因】：Google 拒絕對話。 (Превышен бесплатный лимит запросов)`;
     }
 
     const data = await res.json();
