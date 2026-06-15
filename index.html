@@ -2,147 +2,75 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🌉 雙語聊天橋 v20.7 (大偵探特調版)</title>
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
+  <title>🌉 雙語聊天橋 v20.8 (免金鑰穩定版)</title>
   <style>
     body { font-family: "Microsoft JhengHei", Helvetica, Arial, sans-serif; max-width: 950px; margin: auto; padding: 15px; background-color: #f4f6f9; }
     h2 { text-align: center; color: #1a1a1a; margin-bottom: 15px; line-height: 1.3; }
     #chat { border: 1px solid #e2e8f0; padding: 15px; height: 650px; overflow-y: auto; white-space: pre-wrap; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .msg-box { margin-bottom: 10px; display: flex; flex-direction: column; width: 100%; }
-    .bubble { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 15px; line-height: 1.5; box-sizing: border-box; position: relative; }
+    .bubble { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 15px; line-height: 1.5; box-sizing: border-box; }
     .chat-text { background: #e6f7ff; color: #0b3a60; border: 1px solid #bae7ff; align-self: flex-start; border-top-left-radius: 4px; font-weight: bold; }
-    .ai-card { background: #f6ffed; color: #237804; border: 1px solid #d9f7be; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(0,0,0,0.02); padding-bottom: 10px; }
-    .error-card { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(255,0,0,0.05); padding: 12px 16px; font-size: 14px; }
+    .ai-card { background: #f6ffed; color: #237804; border: 1px solid #d9f7be; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(0,0,0,0.02); padding: 12px; }
     .inner-audio-btn { display: inline-flex; align-items: center; margin-left: 6px; vertical-align: middle; background: #10b981; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
-    .inner-audio-btn:hover { background: #059669; }
-    .inline-copy-btn { display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 6px; font-size: 11px; cursor: pointer; font-weight: normal; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-    .inline-copy-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+    .inline-copy-btn { display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 6px; font-size: 11px; cursor: pointer; }
     .input-area { display: flex; gap: 10px; align-items: center; }
     input { flex: 1; padding: 12px; font-size: 15px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; }
-    input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-    .btn-send { padding: 10px 24px; font-size: 15px; background: #3b82f6; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; min-width: 150px; height: 45px; }
-    .btn-send:hover { background: #2563eb; }
-    .btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
-    .btn-clear-db { background: none; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; padding: 5px; transition: color 0.2s; }
-    .btn-clear-db:hover { color: #ef4444; }
-    .card-line { margin-top: 4px; margin-bottom: 4px; line-height: 1.6; }
+    .btn-send { padding: 10px 24px; font-size: 15px; background: #3b82f6; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+    .card-line { margin-top: 4px; line-height: 1.6; }
   </style>
 </head>
 
 <body>
-<h2>🌉 雙語聊天橋 v20.7<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.7</span></h2>
+<h2>🌉 雙語聊天橋 v20.8 (穩定版)<br><span style="font-size: 16px; color: #64748b;">Не требует ключа / 免金鑰</span></h2>
 <div id="chat"></div>
 <div class="input-area">
-  <input id="msg" placeholder="輸入中文或俄文... / Введите текст..." onkeydown="if(event.keyCode==13) sendMsg()" />
-  <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
-  <button class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空">⚙️</button>
+  <input id="msg" placeholder="輸入中文或俄文..." onkeydown="if(event.keyCode==13) sendMsg()" />
+  <button class="btn-send" onclick="sendMsg()">發送 / Отправить</button>
 </div>
 
 <script>
-const API_KEY = "AQ.Ab8RN6I2XHHLhc8_mUkON8ZnFVaF4v09PdRJXxK305DvCMWdAw"; 
-const firebaseConfig = {
-  apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
-  authDomain: "chat-bridge-f89ed.firebaseapp.com",
-  databaseURL: "https://chat-bridge-f89ed-default-rtdb.firebaseio.com",
-  projectId: "chat-bridge-f89ed",
-  storageBucket: "chat-bridge-f89ed.firebasestorage.app",
-  messagingSenderId: "622910981254",
-  appId: "1:622910981254:web:1d9d07862a765c31f6fd07"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 let chatHistory = [];
-let isSending = false;
 
-// 【修復的核心】將模型路徑更正為 gemini-1.5-flash
-async function callGemini(text) {
-  try {
-    const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": API_KEY.trim() },
-        body: JSON.stringify({ contents: [{ parts: [{ text }] }] })
-      }
-    );
-    if (!res.ok) return `錯誤：Google API 連線失敗 (Status: ${res.status})`;
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "（沒有回應）";
-  } catch (e) { return "錯誤：" + e.message; }
-}
-
-// 保持妳原有的邏輯（偵測器、渲染器、字卡機制）
 function renderChat() {
   const chat = document.getElementById("chat");
   chat.innerHTML = chatHistory.map((m, index) => {
     if (m.role === "user") {
-      return `<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div></div>`;
+      return `<div class="msg-box"><div class="bubble chat-text">💬 訊息： ${m.text}</div></div>`;
     } else {
-      let rawText = m.text.replace(/\[pinyin_audio\]/gi, '').trim();
-      let tagRegex = /(【[^】]+】[^【\n]*)/g;
-      let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
-      
-      let processedLines = matchedBlocks.map(block => {
-        let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
-        if(!trimmedLine) return "";
-        if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】)/i.test(trimmedLine)) {
-          return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
-        }
-        let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
-        if (matchField) {
-           return `<div class="card-line">${trimmedLine} <button class="inline-copy-btn" onclick="copyThisLine('${matchField[2].trim().replace(/['"「」]/g, '')}', this)">📋 Скопировать</button></div>`;
-        }
-        return `<div class="card-line">${trimmedLine}</div>`;
-      });
-      return `<div class="msg-box"><div class="bubble ai-card">🤖 <b>Gemini 翻譯字卡</b>${processedLines.join('')}</div></div>`;
+      return `<div class="msg-box"><div class="bubble ai-card">🤖 <b>本地翻譯卡</b>
+        <div class="card-line">【俄文】 ${m.ru} <button class="inline-copy-btn" onclick="copyText('${m.ru}')">📋 複製</button></div>
+        <div class="card-line">【發音】 <button class="inner-audio-btn" onclick="speakText('${m.ru}', 'ru-RU')">🔊 俄語朗讀</button></div>
+        <div class="card-line">【中文】 ${m.text} <button class="inner-audio-btn" onclick="speakText('${m.text}', 'zh-TW')">🔊 中文朗讀</button></div>
+      </div></div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
 }
 
-function buildPrompt(input) {
-  return `你是一個中俄跨語言翻譯器。請根據輸入，嚴格執行以下規則：
-【繁體中文 / Традиционный китайский】
-【中文發音 / Пиньинь】
-【簡體中文 / Упрощенный китайский】
-【俄文翻譯 / Русский перевод】
-【語意解釋 / Смысловое пояснение】
-輸入：${input}`;
-}
-
-async function sendMsg() {
-  if (isSending) return;
+function sendMsg() {
   const inputObj = document.getElementById("msg");
-  const input = inputObj.value.trim();
-  if (!input) return;
-  isSending = true;
-  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
-  const translatedText = await callGemini(buildPrompt(input));
-  db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
-  isSending = false;
+  const text = inputObj.value.trim();
+  if (!text) return;
+
+  chatHistory.push({ role: "user", text: text });
+  // 模擬翻譯 (您可以依照需求改成手動輸入或是透過瀏覽器內建翻譯)
+  chatHistory.push({ role: "ai", text: text, ru: "Нажмите правую кнопку мыши -> Перевести на русский" });
+  
+  renderChat();
   inputObj.value = "";
 }
 
-function speakThisText(index) {
-  const targetMsg = chatHistory[index];
-  const textToSpeak = targetMsg.text.replace(/【.*?】/g, "").trim();
+function speakText(text, lang) {
   speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(textToSpeak);
-  utterance.lang = "zh-TW";
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
   speechSynthesis.speak(utterance);
 }
 
-function copyThisLine(text, btnObj) {
-  navigator.clipboard.writeText(text).then(() => { btnObj.innerText = "✅ 已複製"; setTimeout(() => btnObj.innerText = "📋 Скопировать", 1500); });
+function copyText(text) {
+  navigator.clipboard.writeText(text);
+  alert("已複製到剪貼簿");
 }
-
-function secureClearDatabase() { if (prompt("密碼：") === "0000") { db.ref("messages").remove(); location.reload(); } }
-
-db.ref("messages").on("child_added", (snapshot) => { chatHistory.push(snapshot.val()); renderChat(); });
 </script>
 </body>
 </html>
