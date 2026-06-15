@@ -2,74 +2,62 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🌉 雙語聊天橋 v20.8 (免金鑰穩定版)</title>
+  <title>🌉 雙語聊天橋 (完全免金鑰穩定版)</title>
   <style>
-    body { font-family: "Microsoft JhengHei", Helvetica, Arial, sans-serif; max-width: 950px; margin: auto; padding: 15px; background-color: #f4f6f9; }
-    h2 { text-align: center; color: #1a1a1a; margin-bottom: 15px; line-height: 1.3; }
-    #chat { border: 1px solid #e2e8f0; padding: 15px; height: 650px; overflow-y: auto; white-space: pre-wrap; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
-    .msg-box { margin-bottom: 10px; display: flex; flex-direction: column; width: 100%; }
-    .bubble { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 15px; line-height: 1.5; box-sizing: border-box; }
-    .chat-text { background: #e6f7ff; color: #0b3a60; border: 1px solid #bae7ff; align-self: flex-start; border-top-left-radius: 4px; font-weight: bold; }
-    .ai-card { background: #f6ffed; color: #237804; border: 1px solid #d9f7be; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(0,0,0,0.02); padding: 12px; }
-    .inner-audio-btn { display: inline-flex; align-items: center; margin-left: 6px; vertical-align: middle; background: #10b981; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
-    .inline-copy-btn { display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 6px; font-size: 11px; cursor: pointer; }
-    .input-area { display: flex; gap: 10px; align-items: center; }
-    input { flex: 1; padding: 12px; font-size: 15px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; }
-    .btn-send { padding: 10px 24px; font-size: 15px; background: #3b82f6; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
-    .card-line { margin-top: 4px; line-height: 1.6; }
+    body { font-family: "Microsoft JhengHei", sans-serif; max-width: 950px; margin: auto; padding: 15px; background-color: #f4f6f9; }
+    h2 { text-align: center; }
+    #chat { border: 1px solid #e2e8f0; padding: 15px; height: 650px; overflow-y: auto; background: #ffffff; border-radius: 16px; margin-bottom: 15px; }
+    .msg-box { margin-bottom: 10px; display: flex; flex-direction: column; }
+    .bubble { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 15px; }
+    .chat-text { background: #e6f7ff; align-self: flex-start; }
+    .ai-card { background: #f6ffed; border: 1px solid #d9f7be; align-self: flex-end; width: 75%; padding: 12px; }
+    .inner-audio-btn { background: #10b981; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; }
+    .input-area { display: flex; gap: 10px; }
+    input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #ccc; }
+    .btn-send { padding: 10px 24px; background: #3b82f6; color: white; border: none; border-radius: 10px; cursor: pointer; }
   </style>
 </head>
 
 <body>
-<h2>🌉 雙語聊天橋 v20.8 (穩定版)<br><span style="font-size: 16px; color: #64748b;">Не требует ключа / 免金鑰</span></h2>
+<h2>🌉 雙語聊天橋 (完全免金鑰版)</h2>
 <div id="chat"></div>
 <div class="input-area">
-  <input id="msg" placeholder="輸入中文或俄文..." onkeydown="if(event.keyCode==13) sendMsg()" />
-  <button class="btn-send" onclick="sendMsg()">發送 / Отправить</button>
+  <input id="msg" placeholder="輸入內容..." onkeydown="if(event.keyCode==13) sendMsg()" />
+  <button class="btn-send" onclick="sendMsg()">發送</button>
 </div>
 
 <script>
-let chatHistory = [];
-
-function renderChat() {
-  const chat = document.getElementById("chat");
-  chat.innerHTML = chatHistory.map((m, index) => {
-    if (m.role === "user") {
-      return `<div class="msg-box"><div class="bubble chat-text">💬 訊息： ${m.text}</div></div>`;
-    } else {
-      return `<div class="msg-box"><div class="bubble ai-card">🤖 <b>本地翻譯卡</b>
-        <div class="card-line">【俄文】 ${m.ru} <button class="inline-copy-btn" onclick="copyText('${m.ru}')">📋 複製</button></div>
-        <div class="card-line">【發音】 <button class="inner-audio-btn" onclick="speakText('${m.ru}', 'ru-RU')">🔊 俄語朗讀</button></div>
-        <div class="card-line">【中文】 ${m.text} <button class="inner-audio-btn" onclick="speakText('${m.text}', 'zh-TW')">🔊 中文朗讀</button></div>
-      </div></div>`;
-    }
-  }).join("");
-  chat.scrollTop = chat.scrollHeight;
-}
-
+// 此版本完全不需要 API_KEY，請直接使用！
 function sendMsg() {
   const inputObj = document.getElementById("msg");
   const text = inputObj.value.trim();
   if (!text) return;
 
-  chatHistory.push({ role: "user", text: text });
-  // 模擬翻譯 (您可以依照需求改成手動輸入或是透過瀏覽器內建翻譯)
-  chatHistory.push({ role: "ai", text: text, ru: "Нажмите правую кнопку мыши -> Перевести на русский" });
+  const chat = document.getElementById("chat");
   
-  renderChat();
+  // 顯示使用者輸入
+  chat.innerHTML += `<div class="msg-box"><div class="bubble chat-text">💬 訊息： ${text}</div></div>`;
+  
+  // 顯示系統翻譯提示卡
+  chat.innerHTML += `
+    <div class="msg-box">
+      <div class="bubble ai-card">
+        🤖 <b>系統提示</b><br>
+        【中文原文】 ${text}<br>
+        【操作建議】 請在頁面空白處按滑鼠右鍵，選擇「翻譯成俄文」。<br>
+        <button class="inner-audio-btn" onclick="speak('${text}')">🔊 朗讀原文</button>
+      </div>
+    </div>`;
+  
+  chat.scrollTop = chat.scrollHeight;
   inputObj.value = "";
 }
 
-function speakText(text, lang) {
+function speak(text) {
   speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
+  utterance.lang = 'zh-TW';
   speechSynthesis.speak(utterance);
-}
-
-function copyText(text) {
-  navigator.clipboard.writeText(text);
-  alert("已複製到剪貼簿");
 }
 </script>
 </body>
