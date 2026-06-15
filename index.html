@@ -2,27 +2,26 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🌉 雙語即時聊天橋 (完整自動化版)</title>
+  <title>🌉 雙語即時聊天橋 (永久免金鑰版)</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body { font-family: "Microsoft JhengHei", sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f6f9; }
-    #chat { border: 1px solid #e2e8f0; height: 500px; overflow-y: auto; padding: 15px; background: white; border-radius: 12px; margin-bottom: 10px; }
-    .msg-box { margin: 10px 0; padding: 10px; border-radius: 8px; background: #e6f7ff; }
-    .ai-card { background: #f6ffed; border: 1px solid #d9f7be; padding: 8px; margin-top: 5px; font-size: 14px; }
+    #chat { border: 1px solid #e2e8f0; height: 500px; overflow-y: auto; padding: 15px; background: white; border-radius: 12px; margin-bottom: 15px; }
+    .msg-box { margin: 10px 0; padding: 12px; border-radius: 12px; background: #e6f7ff; border-left: 5px solid #3b82f6; }
+    .audio-btn { background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; }
   </style>
 </head>
 <body>
 
-<h2>🌉 與俄國朋友的即時聊天橋</h2>
+<h2>🌉 雙語即時聊天橋 (免金鑰、即時同步)</h2>
 <div id="chat"></div>
 <div style="display: flex; gap: 10px;">
-  <input id="msg" style="flex: 1; padding: 10px;" placeholder="輸入中文...">
-  <button onclick="sendMsg()">發送</button>
+  <input id="msg" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;" placeholder="輸入中文...">
+  <button onclick="sendMsg()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px;">發送</button>
 </div>
 
 <script>
-  const API_KEY = "請貼上您的金鑰"; // 這裡必須填入金鑰才能自動翻譯
   const firebaseConfig = {
     apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
     authDomain: "chat-bridge-f89ed.firebaseapp.com",
@@ -35,44 +34,31 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  async function translate(text) {
-    const prompt = `翻譯成俄文，並提供簡短解釋：${text}`;
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    });
-    const data = await res.json();
-    return data.candidates[0].content.parts[0].text;
-  }
-
-  async function sendMsg() {
+  function sendMsg() {
     const input = document.getElementById("msg");
     if (!input.value.trim()) return;
-    const text = input.value;
+    db.ref("messages").push({ text: input.value, timestamp: Date.now() });
     input.value = "";
-    
-    // 先送出原文
-    db.ref("messages").push({ type: 'text', content: text });
-    
-    // 自動 AI 翻譯並送出
-    const translation = await translate(text);
-    db.ref("messages").push({ type: 'ai', content: translation });
   }
 
   db.ref("messages").on("child_added", (snapshot) => {
     const msg = snapshot.val();
     const chat = document.getElementById("chat");
     const div = document.createElement("div");
-    div.className = "msg-box " + (msg.type === 'ai' ? 'ai-card' : '');
-    div.innerHTML = `<div>${msg.content}</div>
-                     <button onclick="speak('${msg.content}')">🔊 朗讀</button>`;
+    div.className = "msg-box";
+    div.innerHTML = `
+      <div>💬 ${msg.text}</div>
+      <button class="audio-btn" onclick="speak('${msg.text}')">🔊 朗讀原文</button>
+      <div style="font-size: 12px; color: #666; margin-top: 8px;">*(提示：請按右鍵選擇「翻譯成俄文」來閱讀翻譯)*</div>
+    `;
     chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
   });
 
   function speak(text) {
+    speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = text.match(/[\u4e00-\u9fa5]/) ? 'zh-TW' : 'ru-RU';
+    u.lang = 'zh-TW';
     speechSynthesis.speak(u);
   }
 </script>
