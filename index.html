@@ -2,27 +2,29 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🌉 雙語即時聊天橋</title>
-  <!-- 載入 Firebase CDN -->
+  <title>🌉 雙語即時聊天橋 (整合版)</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f6f9; }
-    #chat { border: 1px solid #ccc; height: 500px; overflow-y: auto; padding: 15px; background: white; border-radius: 12px; margin-bottom: 10px; }
-    .msg { margin: 10px 0; padding: 10px; border-radius: 8px; background: #e6f7ff; }
+    body { font-family: "Microsoft JhengHei", sans-serif; max-width: 950px; margin: auto; padding: 15px; background-color: #f4f6f9; }
+    #chat { border: 1px solid #e2e8f0; height: 600px; overflow-y: auto; padding: 15px; background: white; border-radius: 12px; margin-bottom: 15px; }
+    .msg-box { margin-bottom: 15px; }
+    .chat-text { background: #e6f7ff; padding: 10px; border-radius: 8px; display: inline-block; }
+    .ai-card { background: #f6ffed; border: 1px solid #d9f7be; padding: 12px; border-radius: 8px; margin-top: 5px; width: 80%; }
+    .btn { background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px; }
+    .input-area { display: flex; gap: 10px; }
   </style>
 </head>
 <body>
 
-<h2>🌉 與俄國朋友的即時聊天橋</h2>
+<h2>🌉 雙語即時聊天橋</h2>
 <div id="chat"></div>
-<div style="display: flex; gap: 10px;">
+<div class="input-area">
   <input id="msg" style="flex: 1; padding: 10px;" placeholder="輸入訊息...">
   <button onclick="sendMsg()">發送</button>
 </div>
 
 <script>
-  // 您提供的 Firebase 設定
   const firebaseConfig = {
     apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
     authDomain: "chat-bridge-f89ed.firebaseapp.com",
@@ -33,26 +35,41 @@
     appId: "1:622910981254:web:1d9d07862a765c31f6fd07",
     measurementId: "G-PLGDSEQKSP"
   };
-
-  // 初始化
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
   function sendMsg() {
     const input = document.getElementById("msg");
     if (!input.value.trim()) return;
-    // 將訊息推送到 Firebase
     db.ref("messages").push({ text: input.value, timestamp: Date.now() });
     input.value = "";
   }
 
-  // 自動接收所有訊息
   db.ref("messages").on("child_added", (snapshot) => {
     const msg = snapshot.val();
     const chat = document.getElementById("chat");
-    chat.innerHTML += `<div class="msg">💬 ${msg.text}</div>`;
+    
+    // 渲染訊息與翻譯按鈕
+    const div = document.createElement("div");
+    div.className = "msg-box";
+    div.innerHTML = `
+      <div class="chat-text">💬 ${msg.text}</div>
+      <div class="ai-card">
+        【輔助功能】
+        <button class="btn" onclick="speak('${msg.text}', 'zh-TW')">🔊 朗讀</button>
+        <button class="btn" onclick="alert('請使用瀏覽器右鍵功能翻譯成俄文')">🌐 翻譯建議</button>
+      </div>
+    `;
+    chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
   });
+
+  function speak(text, lang) {
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    speechSynthesis.speak(utterance);
+  }
 </script>
 </body>
 </html>
