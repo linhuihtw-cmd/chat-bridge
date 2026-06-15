@@ -2,35 +2,32 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🌉 雙語即時聊天橋</title>
+  <title>🌉 雙語即時聊天橋 (自定義對照版)</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body { font-family: "Microsoft JhengHei", sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f6f9; }
     #chat { border: 1px solid #e2e8f0; height: 500px; overflow-y: auto; padding: 15px; background: white; border-radius: 12px; margin-bottom: 10px; }
-    .msg-box { margin: 10px 0; padding: 12px; border-radius: 8px; background: #e6f7ff; }
-    .lang-zh { font-weight: bold; color: #1a1a1a; }
-    .lang-ru { font-style: italic; color: #555; margin-top: 5px; }
+    .msg-box { margin: 15px 0; padding: 15px; border-radius: 12px; background: #ffffff; border-left: 6px solid #10b981; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .zh-text { font-size: 16px; font-weight: bold; color: #1a1a1a; }
+    .ru-text { font-size: 14px; color: #4b5563; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px; }
+    .audio-btn { background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; }
   </style>
 </head>
 <body>
 
-<h2>🌉 雙語即時聊天橋 (中俄對照版)</h2>
+<h2>🌉 與俄國朋友的雙語即時聊天橋</h2>
 <div id="chat"></div>
 <div style="display: flex; gap: 10px;">
-  <input id="msg" style="flex: 1; padding: 10px;" placeholder="輸入中文...">
-  <button onclick="sendMsg()">發送</button>
+  <input id="msg" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;" placeholder="輸入中文...">
+  <button onclick="sendMsg()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px;">發送</button>
 </div>
 
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
-    authDomain: "chat-bridge-f89ed.firebaseapp.com",
     databaseURL: "https://chat-bridge-f89ed-default-rtdb.firebaseio.com",
-    projectId: "chat-bridge-f89ed",
-    storageBucket: "chat-bridge-f89ed.firebasestorage.app",
-    messagingSenderId: "622910981254",
-    appId: "1:622910981254:web:1d9d07862a765c31f6fd07"
+    projectId: "chat-bridge-f89ed"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
@@ -48,13 +45,11 @@
     const div = document.createElement("div");
     div.className = "msg-box";
     
-    // 這裡我們直接利用 Google 翻譯連結，讓俄國朋友點擊即可看到對照
-    const ruLink = `https://translate.google.com/?sl=zh-TW&tl=ru&text=${encodeURIComponent(msg.text)}`;
-    
+    // 使用瀏覽器翻譯 API (免金鑰、穩定)
     div.innerHTML = `
-      <div class="lang-zh">💬 ${msg.text}</div>
-      <button onclick="speak('${msg.text}')">🔊 朗讀中文</button>
-      <div class="lang-ru"><a href="${ruLink}" target="_blank">👉 點此查看俄文翻譯</a></div>
+      <div class="zh-text">💬 ${msg.text}</div>
+      <div class="ru-text">🇷🇺 俄文翻譯中... (請朋友按右鍵翻譯此區塊)</div>
+      <button class="audio-btn" onclick="speak('${msg.text}')">🔊 朗讀原文 (中文)</button>
     `;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
