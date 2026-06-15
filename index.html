@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>雙語即時聊天橋</title>
+  <title>🌉 雙語即時聊天橋</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; }
-    #chat { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-    .msg-box { margin: 10px 0; padding: 10px; background: #f0f9ff; border-radius: 8px; }
-    /* 強制標記不被翻譯的區域 */
-    .no-translate { font-weight: bold; }
-    .translate-area { color: #555; font-style: italic; }
+    body { font-family: "Microsoft JhengHei", sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+    #chat { border: 1px solid #ccc; height: 500px; overflow-y: auto; padding: 15px; margin-bottom: 10px; border-radius: 10px; }
+    .msg-card { background: #f0f9ff; padding: 15px; margin: 10px 0; border-radius: 10px; border-left: 5px solid #1890ff; }
+    .zh-text { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+    .ru-text { font-size: 15px; color: #d32f2f; margin-bottom: 10px; font-weight: bold; }
+    .btn-group { display: flex; gap: 10px; }
   </style>
 </head>
 <body>
 
+<h2>🌉 即時對話對照橋</h2>
 <div id="chat"></div>
 <input id="msg" placeholder="輸入中文...">
 <button onclick="sendMsg()">發送</button>
 
 <script>
-  // Firebase 設定
   const firebaseConfig = {
     apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
     databaseURL: "https://chat-bridge-f89ed-default-rtdb.firebaseio.com"
@@ -40,16 +40,31 @@
     const msg = snapshot.val();
     const chat = document.getElementById("chat");
     const div = document.createElement("div");
-    div.className = "msg-box";
+    div.className = "msg-card";
+    const ruId = "ru-" + snapshot.key;
     
-    // 使用 translate 屬性排除翻譯，確保按鈕文字不被改掉
     div.innerHTML = `
-      <div class="no-translate">💬 ${msg.text}</div>
-      <button class="no-translate" onclick="speak('${msg.text}')">🔊 中文朗讀</button>
-      <div class="translate-area" translate="yes">俄文翻譯載入中...</div>
+      <div class="zh-text">💬 ${msg.text}</div>
+      <div class="ru-text" id="${ruId}"></div>
+      <div class="btn-group">
+        <button onclick="speak('${msg.text}')">🔊 朗讀中文</button>
+        <button onclick="inlineTranslate('${msg.text}', '${ruId}')">🔍 顯示俄文</button>
+      </div>
     `;
     chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
   });
+
+  // 直接在頁面顯示，不跳轉
+  async function inlineTranslate(text, id) {
+    const target = document.getElementById(id);
+    target.innerText = "翻譯中...";
+    // 使用 Google 翻譯的內嵌請求機制
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-TW&tl=ru&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    target.innerText = "🇷🇺 " + data[0][0][0];
+  }
 
   function speak(text) {
     const u = new SpeechSynthesisUtterance(text);
