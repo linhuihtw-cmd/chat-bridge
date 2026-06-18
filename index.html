@@ -137,6 +137,11 @@
       outline: none;
     }
 
+    input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
     .btn-send {
       padding: 10px 24px;
       font-size: 15px;
@@ -159,6 +164,7 @@
       font-size: 12px;
       cursor: pointer;
       padding: 5px;
+      transition: color 0.2s;
     }
     .btn-clear-db:hover { color: #ef4444; }
 
@@ -185,7 +191,6 @@
 
 <script>
 
-// 🔑 請在這裡換上妳的全新 DeepSeek API Key
 const API_KEY = "sk-8791bc56948c4f9c9f8e32b3125ffcc5"; 
 
 const firebaseConfig = {
@@ -193,10 +198,9 @@ const firebaseConfig = {
   authDomain: "chat-bridge-f89ed.firebaseapp.com",
   databaseURL: "https://chat-bridge-f89ed-default-rtdb.firebaseio.com",
   projectId: "chat-bridge-f89ed",
-  storageBucket: "chat-bridge-f89ed.firebasestorage.app",
+  storageBucket: "chat-bridge-f89ed.appspot.com",
   messagingSenderId: "622910981254",
-  appId: "1:622910981254:web:1d9d07862a765c31f6fd07",
-  measurementId: "G-PLGDSEQKSP"
+  appId: "1:622910981254:web:1d9d07862a765c31f6fd07"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -324,11 +328,9 @@ function renderChat() {
       return `<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div></div>`;
     } else {
       let rawText = m.text;
-      
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：")) {
         return `<div class="msg-box"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div></div>`;
       }
-
       rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
 
       let correspondingUserInput = "";
@@ -340,12 +342,8 @@ function renderChat() {
       }
 
       let tagRegex = /(【[^】]+】[^【\n]*)/g;
-      let matchedBlocks = rawText.match(tagRegex);
+      let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
       
-      if (!matchedBlocks || matchedBlocks.length === 0) {
-        matchedBlocks = rawText.split('\n');
-      }
-
       let tradContent = "";
       matchedBlocks.forEach(block => {
         if (block.includes("【繁體中文")) {
@@ -361,19 +359,13 @@ function renderChat() {
         if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
           let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
           let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
-          
-          if (!hasSimplified && isIncluded) {
-            return ""; 
-          }
+          if (!hasSimplified && isIncluded) return "";
         }
 
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
         }
-
-        if (trimmedLine.startsWith("【語意解釋")) {
-          return `<div class="card-line">${trimmedLine}</div>`;
-        }
+        if (trimmedLine.startsWith("【語意解釋")) return `<div class="card-line">${trimmedLine}</div>`;
 
         let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
         if (matchField && matchField[2].trim().length > 0) {
@@ -381,12 +373,10 @@ function renderChat() {
           let safeContent = contentText.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
           return `<div class="card-line">${trimmedLine} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
         }
-
         return `<div class="card-line">${trimmedLine}</div>`;
       });
 
       let finalHtmlText = processedLines.filter(l => l !== "").join('');
-
       return `<div class="msg-box"><div class="bubble ai-card">🤖 <b>DeepSeek 翻譯字卡 / Карточка перевода</b>${finalHtmlText}</div></div>`;
     }
   }).join("");
@@ -396,39 +386,20 @@ function renderChat() {
 function buildPrompt(input) {
   return `
 你是一個極度精準的「中俄跨語言翻譯與語言學習字卡器」。請根據用戶輸入，嚴格執行以下規則：
-
 【⚠️ 排版鐵律：標題與內容必須在同一行 ⚠️】
-任何欄位的內容都必須緊接在標題後方，嚴禁折行，且絕對不能輸出任何 Markdown 星號 (* 或 **)。
 請確保每一個標籤欄位獨立成行，絕對不要把多個標籤擠在同一個段落或同一行內！
 
 【欄位名稱規範（100% 固定不變）】
-你輸出的欄位標題，必須完完全全使用以下指定的中文/俄文雙語字串：
 【繁體中文 / Традиционный китайский】 內容
 【中文發音 / Пиньинь】 內容
 【簡體中文 / Упрощенный китайский】 內容
 【俄文翻譯 / Русский перевод】 內容
 【語意解釋 / Смысловое пояснение】 內容
 
-【核心語系分流生成機制】
-
-1. 當用戶輸入是「中文（繁體或簡體）」時：
-   * 必須完整產生所有 5 個欄位。
-   * 【繁體中文 / Традиционный китайский】這行必須完整輸出，不可自行省略。
-   * ⚠️【語意解釋 / Смысловое пояснение】內部的所有內容，必須「同時包含 中文：... 以及 Русский：...」，俄文是用來向對方解釋這個中文詞彙的，必須完整呈現，絕對不可漏掉。
-
-2. 當用戶輸入是「純俄文」時：
-   * ❌ 嚴禁輸出【俄文翻譯 / Русский перевод】這一行（直接全行省略）。
-   * 必須產生：【繁體中文 / Традиционный китайский】、【中文發音 / Пиньинь】、【簡體中文 / Упрощенный китайский】。
-   * ⚠️【語意解釋 / Смысловое пояснение】此時只需要輸出「中文：繁體解釋」，絕對不需要出現「Русский：」與任何俄文描述。
-
-3. 當用戶輸入是「英文或其他第三方語言（例如 WHY?, OMG, WTF）」時：
-   * 必須完整保留並換行輸出五個完整欄位，且【語意解釋】中「中文：...」與「Русский：...」均需完整保留。
-
-【⚠️ 繁簡分家與語意解釋繁體化 ⚠️】
-1.【繁體中文】欄位內必須是 100% 台灣繁體字。
-2. 任何情況下，【語意解釋】內部的「中文：」解釋，必須「100% 全為台灣繁體中文」，絕對不允許出現任何簡體字元！
-
-━━━━━━━━━━━━━━
+【處理規則】
+1. 若用戶輸入中文，請產生 5 個欄位；若輸入純俄文，則省略【俄文翻譯】。
+2.【繁體中文】欄位內必須是 100% 台灣繁體字。
+3.【語意解釋】內部請同時包含「中文：...」與「俄文：...」解釋。
 輸入：
 ${input}
 `;
@@ -449,9 +420,7 @@ async function callDeepSeek(text) {
       })
     });
     
-    if (!res.ok) {
-      return `【連線失敗原因】：DeepSeek 拒絕回應。`;
-    }
+    if (!res.ok) return `【連線失敗原因】：DeepSeek 拒絕回應。`;
 
     const data = await res.json();
     return data.choices[0].message.content || "（沒有回應 / Нет ответа）";
@@ -465,62 +434,39 @@ async function sendMsg() {
 
   const inputObj = document.getElementById("msg");
   const input = inputObj.value.trim();
-  if (!input || input.length === 0) {
-    inputObj.value = "";
-    inputObj.focus();
-    return;
-  }
+  if (!input) return;
 
   isSending = true;
   const sendBtn = document.getElementById("sendBtn");
   sendBtn.disabled = true;
   sendBtn.innerText = "處理中... / Обработка...";
   inputObj.value = "";
-  
   inputObj.focus();
 
-  db.ref("messages").push({
-    role: "user",
-    text: input,
-    timestamp: Date.now()
-  });
+  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
 
   const translatedText = await callDeepSeek(buildPrompt(input));
   
-  db.ref("messages").push({
-    role: "ai",
-    text: translatedText,
-    timestamp: Date.now()
-  });
+  db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
 
-  setTimeout(() => {
-    isSending = false;
-    sendBtn.disabled = false;
-    sendBtn.innerText = "送出 / Отправить";
-    inputObj.focus();
-  }, 500);
+  isSending = false;
+  sendBtn.disabled = false;
+  sendBtn.innerText = "送出 / Отправить";
 }
 
 function speakThisText(index) {
   const targetMsg = chatHistory[index];
   if (!targetMsg || !targetMsg.text) return;
-
   let textToSpeak = "";
   const matchTrad = targetMsg.text.match(/【繁體中文.*?】([\s\S]*?)(?=【|$)/);
-  if (matchTrad && matchTrad[1].trim().length > 0) {
-    textToSpeak = matchTrad[1].trim();
-  } else {
+  if (matchTrad) textToSpeak = matchTrad[1].trim();
+  else {
     for (let i = index; i >= 0; i--) {
-      if (chatHistory[i].role === "user") {
-        textToSpeak = chatHistory[i].text.trim();
-        break;
-      }
+      if (chatHistory[i].role === "user") { textToSpeak = chatHistory[i].text.trim(); break; }
     }
   }
-
   if (!textToSpeak) return;
   textToSpeak = textToSpeak.replace(/【.*?】/g, "").replace(/["'「」]/g, "").trim();
-
   speechSynthesis.cancel();
   const utteranceCorrect = new SpeechSynthesisUtterance(textToSpeak);
   utteranceCorrect.lang = "zh-TW";
@@ -529,24 +475,11 @@ function speakThisText(index) {
   speechSynthesis.speak(utteranceCorrect);
 }
 
-let isFirstLoad = true;
-db.ref("messages").orderByChild("timestamp").limitToLast(1).once("value", () => {
-  setTimeout(() => { isFirstLoad = false; }, 1000);
-});
-
 db.ref("messages").on("child_added", (snapshot) => {
   const newMsg = snapshot.val();
-  if (!newMsg || !newMsg.text || newMsg.text.trim() === "") return;
-  
+  if (!newMsg || !newMsg.text) return;
   chatHistory.push(newMsg);
   renderChat();
-
-  if (!isFirstLoad) {
-    playNotificationSound();
-    if (!isTabActive) {
-      flashTabTitle();
-    }
-  }
 });
 </script>
 </body>
