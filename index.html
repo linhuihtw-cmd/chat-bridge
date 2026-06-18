@@ -84,6 +84,7 @@
       font-size: 14px;
     }
 
+    /* 🔊 朗讀按鈕樣式 */
     .inner-audio-btn {
       display: inline-flex;
       align-items: center;
@@ -100,6 +101,7 @@
     }
     .inner-audio-btn:hover { background: #059669; }
 
+    /* 📋 精緻小巧的翻譯複製按鈕 */
     .inline-copy-btn {
       display: inline-flex;
       align-items: center;
@@ -157,6 +159,7 @@
     .btn-send:hover { background: #2563eb; }
     .btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
 
+    /* 🔒 後台清空按鈕樣式 */
     .btn-clear-db {
       background: none;
       border: none;
@@ -168,6 +171,7 @@
     }
     .btn-clear-db:hover { color: #ef4444; }
 
+    /* 學習卡片內部每一行的樣式排版 */
     .card-line {
       margin-top: 4px;
       margin-bottom: 4px;
@@ -191,6 +195,7 @@
 
 <script>
 
+// 🔑 請在這裡換上妳的全新專案 API Key
 const API_KEY = "AQ.Ab8RN6KDLL0RQcmjLwARJp8Y1vgrPrfCHDzJrYwFr9MzqsGscA"; 
 
 const firebaseConfig = {
@@ -257,6 +262,7 @@ function flashTabTitle() {
   }, 1000);
 }
 
+// 📋 智慧複製函式
 function copyThisLine(text, btnObj) {
   let cleanText = text.replace(/["'「」]/g, "").trim();
   if(!cleanText) return;
@@ -297,6 +303,8 @@ function secureClearDatabase() {
   }
 }
 
+// 🕵️‍♂️【v20.7 大偵探特調直覺法】
+// 核心邏輯：只要句子中含有任何一個簡體特徵字，就打破「全繁體狀態」，判定包含簡體！
 function detectSimplifiedByDetectiveLogic(str) {
   const detectiveCheckList = [
     '国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', 
@@ -316,10 +324,10 @@ function detectSimplifiedByDetectiveLogic(str) {
 
   for (let char of detectiveCheckList) {
     if (str.includes(char)) {
-      return true;
+      return true; // 抓到了！不是全繁體
     }
   }
-  return false;
+  return false; // 通通沒抓到，判定為全繁體
 }
 
 function renderChat() {
@@ -336,6 +344,7 @@ function renderChat() {
 
       rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
 
+      // 🔍 向上尋找 User 原始輸入內容
       let correspondingUserInput = "";
       for (let i = index - 1; i >= 0; i--) {
         if (chatHistory[i] && chatHistory[i].role === "user") {
@@ -344,6 +353,7 @@ function renderChat() {
         }
       }
 
+      // 🎯【標籤精密切片機制】
       let tagRegex = /(【[^】]+】[^【\n]*)/g;
       let matchedBlocks = rawText.match(tagRegex);
       
@@ -351,6 +361,7 @@ function renderChat() {
         matchedBlocks = rawText.split('\n');
       }
 
+      // 先抓出 Gemini 吐出來的繁體中文實際內容是什麼
       let tradContent = "";
       matchedBlocks.forEach(block => {
         if (block.includes("【繁體中文")) {
@@ -363,23 +374,27 @@ function renderChat() {
         let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
         if(!trimmedLine) return "";
 
+        // 🎯【智慧包容比對防線】：套用大偵探直覺邏輯
         if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
           let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
           let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
           
           if (!hasSimplified && isIncluded) {
-            return ""; 
+            return ""; // 如果是全繁體且內容包含，就把重複的繁中欄位藏起來！
           }
         }
 
+        // 2. 處理【中文發音】區塊 —— 綁定音效朗讀按鈕
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
         }
 
+        // 3. 處理【語意解釋】區塊 —— 保持原樣輸出
         if (trimmedLine.startsWith("【語意解釋")) {
           return `<div class="card-line">${trimmedLine}</div>`;
         }
 
+        // 4. 處理其餘要加上「複製按鈕」的標準欄位（繁中、簡中、俄文翻譯）
         let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
         if (matchField && matchField[2].trim().length > 0) {
           let contentText = matchField[2].trim();
@@ -442,7 +457,7 @@ ${input}
 async function callGemini(text) {
   try {
     const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       {
         method: "POST",
         headers: {
@@ -456,7 +471,14 @@ async function callGemini(text) {
     );
     
     if (!res.ok) {
-      return `【連線失敗原因】：Google 拒絕對話。 (Превышен бесплатный лимит запросов)`;
+      let errorDetail = "";
+      try {
+        const errJson = await res.json();
+        errorDetail = errJson?.error?.message || JSON.stringify(errJson);
+      } catch (parseErr) {
+        errorDetail = await res.text().catch(() => "(無法讀取錯誤內容)");
+      }
+      return `【連線失敗原因】：HTTP ${res.status} - ${errorDetail}`;
     }
 
     const data = await res.json();
