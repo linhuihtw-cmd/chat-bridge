@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🌉 雙語聊天橋 v20.7 (自動翻譯版)</title>
+  <title>🌉 雙語聊天橋 v20.8 (穩定版)</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <h2>🌉 雙語聊天橋 v20.7</h2>
+  <h2>🌉 雙語聊天橋 v20.8</h2>
   <div id="chat"></div>
   <div class="input-area">
     <input id="msg" placeholder="輸入中文或俄文..." onkeydown="if(event.keyCode==13) sendMsg()" />
@@ -41,52 +41,46 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-let chatHistory = [];
 
-// --- 安全設定 ---
 function getApiKey() { return localStorage.getItem("gemini_api_key"); }
 function setupApiKey() {
-  const key = prompt("請貼上你的全新 Google Gemini API Key：");
+  const key = prompt("請貼上你的 Google Gemini API Key：");
   if (key) { localStorage.setItem("gemini_api_key", key.trim()); alert("已儲存！"); location.reload(); }
 }
 
-// --- 翻譯核心 ---
 function buildPrompt(input) {
-  return `你是一個精準的翻譯器。請將用戶輸入內容翻譯為以下欄位（請嚴格遵守雙語標題）：
-【繁體中文 / Традиционный китайский】內容
-【中文發音 / Пиньинь】內容
-【簡體中文 / Упрощенный китайский】內容
-【俄文翻譯 / Русский перевод】內容
-【語意解釋 / Смысловое пояснение】中文與俄文解釋
-輸入：${input}`;
+  return `翻譯以下內容：【繁體中文 / Традиционный китайский】【中文發音 / Пиньинь】【簡體中文 / Упрощенный китайский】【俄文翻譯 / Русский перевод】【語意解釋 / Смысловое пояснение】輸入：${input}`;
 }
 
 async function sendMsg() {
   const inputObj = document.getElementById("msg");
   const input = inputObj.value.trim();
   if (!input) return;
-  inputObj.value = "";
   
-  // 1. 先顯示用戶發出的訊息
-  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
-
-  // 2. 自動翻譯並存入資料庫
   const key = getApiKey();
   if (!key) { alert("請先點擊鑰匙按鈕設定 API Key！"); return; }
   
+  inputObj.value = "";
+  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
+  
   try {
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({ contents: [{ parts: [{ text: buildPrompt(input) }] }] })
     });
+    
+    if (res.status === 429) {
+      alert("請求太頻繁，請休息 30 秒再試！");
+      return;
+    }
+    
     const data = await res.json();
     const result = data?.candidates?.[0]?.content?.parts?.[0]?.text || "翻譯失敗";
     db.ref("messages").push({ role: "ai", text: result, timestamp: Date.now() });
   } catch (e) { alert("連線錯誤：" + e.message); }
 }
 
-// 監聽並顯示訊息
 db.ref("messages").on("child_added", (snapshot) => {
   const m = snapshot.val();
   const chat = document.getElementById("chat");
