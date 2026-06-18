@@ -8,29 +8,178 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <style>
-    body { font-family: "Microsoft JhengHei", Helvetica, Arial, sans-serif; max-width: 950px; margin: auto; padding: 15px; background-color: #f4f6f9; }
-    h2 { text-align: center; color: #1a1a1a; margin-bottom: 15px; line-height: 1.3; }
-    #chat { border: 1px solid #e2e8f0; padding: 15px; height: 650px; overflow-y: auto; white-space: pre-wrap; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
-    .msg-box { margin-bottom: 10px; display: flex; flex-direction: column; width: 100%; }
-    .bubble { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 15px; line-height: 1.5; box-sizing: border-box; position: relative; }
-    .chat-text { background: #e6f7ff; color: #0b3a60; border: 1px solid #bae7ff; align-self: flex-start; border-top-left-radius: 4px; font-weight: bold; }
-    .ai-card { background: #f6ffed; color: #237804; border: 1px solid #d9f7be; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(0,0,0,0.02); padding-bottom: 10px; }
-    .error-card { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(255,0,0,0.05); padding: 12px 16px; font-size: 14px; }
-    .inner-audio-btn { display: inline-flex; align-items: center; margin-left: 6px; vertical-align: middle; background: #10b981; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+    body {
+      font-family: "Microsoft JhengHei", Helvetica, Arial, sans-serif;
+      max-width: 950px;
+      margin: auto;
+      padding: 15px;
+      background-color: #f4f6f9;
+    }
+
+    h2 {
+      text-align: center;
+      color: #1a1a1a;
+      margin-bottom: 15px;
+      line-height: 1.3;
+    }
+
+    #chat {
+      border: 1px solid #e2e8f0;
+      padding: 15px;
+      height: 650px; 
+      overflow-y: auto;
+      white-space: pre-wrap;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 15px;
+    }
+
+    .msg-box {
+      margin-bottom: 10px; 
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .bubble {
+      padding: 10px 14px; 
+      border-radius: 14px;
+      max-width: 75%;
+      font-size: 15px;
+      line-height: 1.5; 
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .chat-text {
+      background: #e6f7ff;
+      color: #0b3a60;
+      border: 1px solid #bae7ff;
+      align-self: flex-start;
+      border-top-left-radius: 4px;
+      font-weight: bold;
+    }
+
+    .ai-card {
+      background: #f6ffed;
+      color: #237804;
+      border: 1px solid #d9f7be;
+      align-self: flex-end;
+      border-top-right-radius: 4px;
+      width: 75%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      padding-bottom: 10px;
+    }
+
+    .error-card {
+      background: #fff1f0;
+      color: #cf1322;
+      border: 1px solid #ffa39e;
+      align-self: flex-end;
+      border-top-right-radius: 4px;
+      width: 75%;
+      box-shadow: 0 2px 6px rgba(255,0,0,0.05);
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+
+    /* 🔊 朗讀按鈕樣式 */
+    .inner-audio-btn {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 6px;
+      vertical-align: middle;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+    }
     .inner-audio-btn:hover { background: #059669; }
-    .inline-copy-btn { display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 6px; font-size: 11px; cursor: pointer; font-weight: normal; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-    .inline-copy-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
-    .input-area { display: flex; gap: 10px; align-items: center; }
-    input { flex: 1; padding: 12px; font-size: 15px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; }
-    input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-    .btn-send { padding: 10px 24px; font-size: 15px; background: #3b82f6; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; min-width: 150px; height: 45px; }
+
+    /* 📋 精緻小巧的翻譯複製按鈕 */
+    .inline-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 8px;
+      vertical-align: middle;
+      background: #ffffff;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: normal;
+      transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .inline-copy-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      font-size: 15px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .btn-send {
+      padding: 10px 24px;
+      font-size: 15px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      min-width: 150px;
+      height: 45px;
+    }
     .btn-send:hover { background: #2563eb; }
     .btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
-    .btn-clear-db { background: none; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; padding: 5px; transition: color 0.2s; }
+
+    /* 🔒 後台清空按鈕樣式 */
+    .btn-clear-db {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 5px;
+      transition: color 0.2s;
+    }
     .btn-clear-db:hover { color: #ef4444; }
-    .card-line { margin-top: 4px; margin-bottom: 4px; line-height: 1.6; }
+
+    /* 學習卡片內部每一行的樣式排版 */
+    .card-line {
+      margin-top: 4px;
+      margin-bottom: 4px;
+      line-height: 1.6;
+    }
   </style>
 </head>
+
 <body>
 
 <h2>🌉 雙語聊天橋 v20.7<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.7</span></h2>
@@ -40,12 +189,14 @@
 <div class="input-area">
   <input id="msg" placeholder="輸入中文或俄文... / Введите текст..." onkeydown="if(event.keyCode==13) sendMsg()" />
   <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
+  
   <button class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空">⚙️</button>
 </div>
 
 <script>
+
 // 🔑 請在這裡換上妳的全新專案 API Key
-const API_KEY = "貼你的全新金鑰"; 
+const API_KEY = "AQ.Ab8RN6IdpmjkExhvlsxNYpt1dM04CQRSKFUZ8s6IhAezclsWPw"; 
 
 const firebaseConfig = {
   apiKey: "AIzaSyDrjR4yYBjps4_5ZVligKwKnBSwF8_Pkws",
@@ -66,35 +217,17 @@ let isTabActive = true;
 let titleFlashInterval = null;
 let isSending = false; 
 
-// --- 【以下為功能與核心邏輯，完全保持原樣】 ---
+window.onload = function() {
+  document.getElementById("msg").focus();
+};
 
-// [修復] 使用 gemini-1.5-flash 模型，並將 key 放入 URL 參數以繞過 CORS 限制
-async function callGemini(text) {
-  try {
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + API_KEY.trim();
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
-    });
-    
-    if (!res.ok) {
-      const err = await res.json();
-      return `【連線失敗原因】：${err.error.message}`;
-    }
-
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "（沒有回應 / Нет ответа）";
-  } catch (e) {
-    return "錯誤 / Ошибка：" + e.message;
-  }
-}
-
-// [其餘函式保持完全一致]
-window.onload = function() { document.getElementById("msg").focus(); };
 document.addEventListener('visibilitychange', () => {
   isTabActive = !document.hidden;
-  if (isTabActive) { clearInterval(titleFlashInterval); titleFlashInterval = null; document.title = "🌉 雙語聊天橋 v20.7 / Двуязычный мост общения v20.7"; }
+  if (isTabActive) {
+    clearInterval(titleFlashInterval);
+    titleFlashInterval = null;
+    document.title = "🌉 雙語聊天橋 v20.7 / Двуязычный мост общения v20.7";
+  }
 });
 
 function playNotificationSound() {
@@ -102,16 +235,22 @@ function playNotificationSound() {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
+    
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
     oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); 
+    
     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+    
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
+    
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.4);
-  } catch (e) { console.log("音效阻擋"); }
+  } catch (e) {
+    console.log("音效阻擋");
+  }
 }
 
 function flashTabTitle() {
@@ -123,101 +262,313 @@ function flashTabTitle() {
   }, 1000);
 }
 
+// 📋 智慧複製函式
 function copyThisLine(text, btnObj) {
   let cleanText = text.replace(/["'「」]/g, "").trim();
   if(!cleanText) return;
+
   navigator.clipboard.writeText(cleanText).then(() => {
     btnObj.innerText = "✅ Скопировано";
     btnObj.style.background = "#10b981";
     btnObj.style.color = "white";
     btnObj.style.borderColor = "#10b981";
-    setTimeout(() => { btnObj.innerText = "📋 Скопировать"; btnObj.style.background = "#ffffff"; btnObj.style.color = "#475569"; btnObj.style.borderColor = "#cbd5e1"; }, 1500);
+    
+    setTimeout(() => {
+      btnObj.innerText = "📋 Скопировать";
+      btnObj.style.background = "#ffffff";
+      btnObj.style.color = "#475569";
+      btnObj.style.borderColor = "#cbd5e1";
+    }, 1500);
+  }).catch(err => {
+    alert("複製失敗：" + err);
   });
 }
 
 function secureClearDatabase() {
   const password = prompt("請輸入管理員密碼以清空聊天室歷史紀錄：\n(Введите пароль администратора)");
+  
   if (password === "0000") {
     if (confirm("確定要徹底清空 Firebase 資料庫中的所有對話紀錄嗎？此動作無法復原！")) {
-      db.ref("messages").remove().then(() => { location.reload(); });
+      db.ref("messages").remove()
+        .then(() => {
+          alert("資料庫已成功清空！網頁將自動重新整理。");
+          location.reload();
+        })
+        .catch((err) => {
+          alert("清空失敗：" + err.message);
+        });
     }
+  } else if (password !== null) {
+    alert("密碼錯誤！拒絕存取。");
   }
 }
 
+// 🕵️‍♂️【v20.7 大偵探特調直覺法】
+// 核心邏輯：只要句子中含有任何一個簡體特徵字，就打破「全繁體狀態」，判定包含簡體！
 function detectSimplifiedByDetectiveLogic(str) {
-  const detectiveCheckList = ['国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', '东', '乐', '个', '发', '动', '后', '团', '图', '处', '备', '复', '阳', '头', '妈', '丽', '学', '实', '宠', '审', '寻', '寿', '专', '将', '岁', '岛', '师', '带', '常', '广', '庆', '废', '开', '张', '弹', '强', '归', '当', '录', '总', '惩', '护', '报', '担', '压', '扩', '扫', '扬', '执', '联', '择', '挂', '换', '摇', '时', '明', '机', '权', '条', '来', '极', '构', '样', '欢', '欧', '死', '毁', '气', '汇', '汉', '没', '沦', '沧', '沪', '河', '治', '注', '泪', '波', '洁', '洋', '洒', '洗', '洞', '流', '浅', '测', '济', '浓', '滨', '海', '浪', '涉', '涛', '涨', '润', '清', '渐', '渔', '渠', '温', '游', '湾', '湿', '溃', '溅', '源', '溪', '灭', '灯', '灰', '灵', '炉', '烂', '炼', '烁', '烦', '烧', '热', '营', '烛', '烟', '随', '隐', '难', '雾', '震', '霜', '霞', '韩', '音', '页', '顶', '项', '顺', '须', '顽', '顾', '顿', '预', '颅', '领', '颇', '颈', '颊', '颔', '颖', '颗', '题', '颜', '额', '颠', '颤', '风', '飘', '飞', '食', '餐', '饥', '饭', '饮', '饰', '饱', '饲', '饿', '馆', '扬'];
-  for (let char of detectiveCheckList) { if (str.includes(char)) return true; }
-  return false;
+  const detectiveCheckList = [
+    '国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', 
+    '东', '乐', '个', '发', '动', '后', '团', '图', '处', '备', '复', '阳', '头', '妈', 
+    '丽', '学', '实', '宠', '审', '寻', '寿', '专', '将', '岁', '岛', '师', '带', '常', 
+    '广', '庆', '废', '开', '张', '弹', '强', '归', '当', '录', '总', '惩', '护', '报', 
+    '担', '压', '扩', '扫', '扬', '执', '联', '择', '挂', '换', '摇', '时', '明', '机', 
+    '权', '条', '来', '极', '构', '样', '欢', '欧', '死', '毁', '气', '汇', '汉', '没', 
+    '沦', '沧', '沪', '河', '治', '注', '泪', '波', '洁', '洋', '洒', '洗', '洞', '流', 
+    '浅', '测', '济', '浓', '滨', '海', '浪', '涉', '涛', '涨', '润', '清', '渐', '渔', 
+    '渠', '温', '游', '湾', '湿', '溃', '溅', '源', '溪', '灭', '灯', '灰', '灵', '炉', 
+    '烂', '炼', '烁', '烦', '烧', '热', '营', '烛', '烟', '随', '隐', '难', '雾', '震', 
+    '霜', '霞', '韩', '音', '页', '顶', '项', '顺', '须', '顽', '顾', '顿', '预', '颅', 
+    '领', '颇', '颈', '颊', '颔', '颖', '颗', '题', '颜', '额', '颠', '颤', '风', '飘', 
+    '飞', '食', '餐', '饥', '饭', '饮', '饰', '饱', '饲', '饿', '馆', '扬'
+  ];
+
+  for (let char of detectiveCheckList) {
+    if (str.includes(char)) {
+      return true; // 抓到了！不是全繁體
+    }
+  }
+  return false; // 通通沒抓到，判定為全繁體
 }
 
 function renderChat() {
   const chat = document.getElementById("chat");
   chat.innerHTML = chatHistory.map((m, index) => {
-    if (m.role === "user") return `<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div></div>`;
-    let rawText = m.text;
-    if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：")) return `<div class="msg-box"><div class="bubble error-card">🤖 <b>Gemini 系統回報 / Отчет системы</b><br>${rawText}</div></div>`;
-    rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
-    let correspondingUserInput = "";
-    for (let i = index - 1; i >= 0; i--) { if (chatHistory[i] && chatHistory[i].role === "user") { correspondingUserInput = chatHistory[i].text.trim(); break; } }
-    let tagRegex = /(【[^】]+】[^【\n]*)/g;
-    let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
-    let tradContent = "";
-    matchedBlocks.forEach(block => { if (block.includes("【繁體中文")) { let match = block.match(/^【[^】]+】([\s\S]*)$/); if (match) tradContent = match[1].trim(); } });
-    let processedLines = matchedBlocks.map(block => {
-      let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
-      if(!trimmedLine) return "";
-      if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
-        let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
-        let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
-        if (!hasSimplified && isIncluded) return "";
+    if (m.role === "user") {
+      return `<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div></div>`;
+    } else {
+      let rawText = m.text;
+      
+      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：")) {
+        return `<div class="msg-box"><div class="bubble error-card">🤖 <b>Gemini 系統回報 / Отчет системы</b><br>${rawText}</div></div>`;
       }
-      if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
-      if (trimmedLine.startsWith("【語意解釋")) return `<div class="card-line">${trimmedLine}</div>`;
-      let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
-      if (matchField && matchField[2].trim().length > 0) {
-        let safeContent = matchField[2].trim().replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        return `<div class="card-line">${trimmedLine} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
+
+      rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
+
+      // 🔍 向上尋找 User 原始輸入內容
+      let correspondingUserInput = "";
+      for (let i = index - 1; i >= 0; i--) {
+        if (chatHistory[i] && chatHistory[i].role === "user") {
+          correspondingUserInput = chatHistory[i].text.trim();
+          break;
+        }
       }
-      return `<div class="card-line">${trimmedLine}</div>`;
-    });
-    return `<div class="msg-box"><div class="bubble ai-card">🤖 <b>Gemini 翻譯字卡 / Карточка перевода</b>${processedLines.filter(l => l !== "").join('')}</div></div>`;
+
+      // 🎯【標籤精密切片機制】
+      let tagRegex = /(【[^】]+】[^【\n]*)/g;
+      let matchedBlocks = rawText.match(tagRegex);
+      
+      if (!matchedBlocks || matchedBlocks.length === 0) {
+        matchedBlocks = rawText.split('\n');
+      }
+
+      // 先抓出 Gemini 吐出來的繁體中文實際內容是什麼
+      let tradContent = "";
+      matchedBlocks.forEach(block => {
+        if (block.includes("【繁體中文")) {
+          let match = block.match(/^【[^】]+】([\s\S]*)$/);
+          if (match) tradContent = match[1].trim();
+        }
+      });
+
+      let processedLines = matchedBlocks.map(block => {
+        let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
+        if(!trimmedLine) return "";
+
+        // 🎯【智慧包容比對防線】：套用大偵探直覺邏輯
+        if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
+          let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
+          let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
+          
+          if (!hasSimplified && isIncluded) {
+            return ""; // 如果是全繁體且內容包含，就把重複的繁中欄位藏起來！
+          }
+        }
+
+        // 2. 處理【中文發音】區塊 —— 綁定音效朗讀按鈕
+        if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
+          return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
+        }
+
+        // 3. 處理【語意解釋】區塊 —— 保持原樣輸出
+        if (trimmedLine.startsWith("【語意解釋")) {
+          return `<div class="card-line">${trimmedLine}</div>`;
+        }
+
+        // 4. 處理其餘要加上「複製按鈕」的標準欄位（繁中、簡中、俄文翻譯）
+        let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
+        if (matchField && matchField[2].trim().length > 0) {
+          let contentText = matchField[2].trim();
+          let safeContent = contentText.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          return `<div class="card-line">${trimmedLine} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
+        }
+
+        return `<div class="card-line">${trimmedLine}</div>`;
+      });
+
+      let finalHtmlText = processedLines.filter(l => l !== "").join('');
+
+      return `<div class="msg-box"><div class="bubble ai-card">🤖 <b>Gemini 翻譯字卡 / Карточка перевода</b>${finalHtmlText}</div></div>`;
+    }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
 }
 
 function buildPrompt(input) {
-  return `翻譯以下內容，請保持嚴格格式：【繁體中文 / Традиционный китайский】【中文發音 / Пиньинь】【簡體中文 / Упрощенный китайский】【俄文翻譯 / Русский перевод】【語意解釋 / Смысловое пояснение】輸入：${input}`;
+  return `
+你是一個極度精準的「中俄跨語言翻譯與語言學習字卡器」。請根據用戶輸入，嚴格執行以下規則：
+
+【⚠️ 排版鐵律：標題與內容必須在同一行 ⚠️】
+任何欄位的內容都必須緊接在標題後方，嚴禁折行，且絕對不能輸出任何 Markdown 星號 (* 或 **)。
+請確保每一個標籤欄位獨立成行，絕對不要把多個標籤擠在同一個段落或同一行內！
+
+【欄位名稱規範（100% 固定不變）】
+你輸出的欄位標題，必須完完全全使用以下指定的中文/俄文雙語字串：
+【繁體中文 / Традиционный китайский】 內容
+【中文發音 / Пиньинь】 內容
+【簡體中文 / Упрощенный китайский】 內容
+【俄文翻譯 / Русский перевод】 內容
+【語意解釋 / Смысловое пояснение】 內容
+
+【核心語系分流生成機制】
+
+1. 當用戶輸入是「中文（繁體或簡體）」時：
+   * 必須完整產生所有 5 個欄位。
+   * 【繁體中文 / Традиционный китайский】這行必須完整輸出，不可自行省略。
+   * ⚠️【語意解釋 / Смысловое пояснение】內部的所有內容，必須「同時包含 中文：... 以及 Русский：...」，俄文是用來向對方解釋這個中文詞彙的，必須完整呈現，絕對不可漏掉。
+
+2. 當用戶輸入是「純俄文」時：
+   * ❌ 嚴禁輸出【俄文翻譯 / Русский перевод】這一行（直接全行省略）。
+   * 必須產生：【繁體中文 / Традиционный китайский】、【中文發音 / Пиньинь】、【簡體中文 / Упрощенный китайский】。
+   * ⚠️【語意解釋 / Смысловое пояснение】此時只需要輸出「中文：繁體解釋」，絕對不需要出現「Русский：」與任何俄文描述。
+
+3. 當用戶輸入是「英文或其他第三方語言（例如 WHY?, OMG, WTF）」時：
+   * 必須完整保留並換行輸出五個完整欄位，且【語意解釋】中「中文：...」與「Русский：...」均需完整保留。
+
+【⚠️ 繁簡分家與語意解釋繁體化 ⚠️】
+1.【繁體中文】欄位內必須是 100% 台灣繁體字。
+2. 任何情況下，【語意解釋】內部的「中文：」解釋，必須「100% 全為台灣繁體中文」，絕對不允許出現任何簡體字元！
+
+━━━━━━━━━━━━━━
+輸入：
+${input}
+`;
+}
+
+async function callGemini(text) {
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": API_KEY.trim()
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text }] }]
+        })
+      }
+    );
+    
+    if (!res.ok) {
+      return `【連線失敗原因】：Google 拒絕對話。 (Превышен бесплатный лимит запросов)`;
+    }
+
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "（沒有回應 / Нет ответа）";
+  } catch (e) {
+    return "錯誤 / Ошибка：" + e.message;
+  }
 }
 
 async function sendMsg() {
-  if (isSending) return;
+  if (isSending) return; 
+
   const inputObj = document.getElementById("msg");
   const input = inputObj.value.trim();
-  if (!input) return;
+  if (!input || input.length === 0) {
+    inputObj.value = "";
+    inputObj.focus();
+    return;
+  }
+
   isSending = true;
-  document.getElementById("sendBtn").disabled = true;
-  document.getElementById("sendBtn").innerText = "處理中... / Обработка...";
+  const sendBtn = document.getElementById("sendBtn");
+  sendBtn.disabled = true;
+  sendBtn.innerText = "處理中... / Обработка...";
   inputObj.value = "";
-  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
-  const translatedText = await callGemini(buildPrompt(input));
-  db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
-  isSending = false;
-  document.getElementById("sendBtn").disabled = false;
-  document.getElementById("sendBtn").innerText = "送出 / Отправить";
+  
   inputObj.focus();
+
+  db.ref("messages").push({
+    role: "user",
+    text: input,
+    timestamp: Date.now()
+  });
+
+  const translatedText = await callGemini(buildPrompt(input));
+  
+  db.ref("messages").push({
+    role: "ai",
+    text: translatedText,
+    timestamp: Date.now()
+  });
+
+  setTimeout(() => {
+    isSending = false;
+    sendBtn.disabled = false;
+    sendBtn.innerText = "送出 / Отправить";
+    inputObj.focus();
+  }, 500);
 }
 
 function speakThisText(index) {
   const targetMsg = chatHistory[index];
-  let textToSpeak = targetMsg.text.match(/【繁體中文.*?】([\s\S]*?)(?=【|$)/)?.[1]?.trim() || "";
-  if (!textToSpeak) textToSpeak = chatHistory.find(m => m.role === "user").text;
+  if (!targetMsg || !targetMsg.text) return;
+
+  let textToSpeak = "";
+  const matchTrad = targetMsg.text.match(/【繁體中文.*?】([\s\S]*?)(?=【|$)/);
+  if (matchTrad && matchTrad[1].trim().length > 0) {
+    textToSpeak = matchTrad[1].trim();
+  } else {
+    for (let i = index; i >= 0; i--) {
+      if (chatHistory[i].role === "user") {
+        textToSpeak = chatHistory[i].text.trim();
+        break;
+      }
+    }
+  }
+
+  if (!textToSpeak) return;
   textToSpeak = textToSpeak.replace(/【.*?】/g, "").replace(/["'「」]/g, "").trim();
+
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(textToSpeak);
-  u.lang = "zh-TW"; u.rate = 0.95; speechSynthesis.speak(u);
+  const utteranceCorrect = new SpeechSynthesisUtterance(textToSpeak);
+  utteranceCorrect.lang = "zh-TW";
+  utteranceCorrect.volume = 1.0; 
+  utteranceCorrect.rate = 0.95;  
+  speechSynthesis.speak(utteranceCorrect);
 }
 
-db.ref("messages").on("child_added", (snapshot) => { chatHistory.push(snapshot.val()); renderChat(); });
+let isFirstLoad = true;
+db.ref("messages").orderByChild("timestamp").limitToLast(1).once("value", () => {
+  setTimeout(() => { isFirstLoad = false; }, 1000);
+});
+
+db.ref("messages").on("child_added", (snapshot) => {
+  const newMsg = snapshot.val();
+  if (!newMsg || !newMsg.text || newMsg.text.trim() === "") return;
+  
+  chatHistory.push(newMsg);
+  renderChat();
+
+  if (!isFirstLoad) {
+    playNotificationSound();
+    if (!isTabActive) {
+      flashTabTitle();
+    }
+  }
+});
 </script>
 </body>
 </html>
