@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🌉 雙語聊天橋 v20.7</title>
+  <title>🌉 雙語聊天橋 v20.7 (自動翻譯版)</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
@@ -10,17 +10,13 @@
     h2 { text-align: center; color: #1a1a1a; margin-bottom: 15px; line-height: 1.3; }
     #chat { border: 1px solid #e2e8f0; padding: 15px; height: 650px; overflow-y: auto; white-space: pre-wrap; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .msg-box { margin-bottom: 10px; display: flex; flex-direction: column; width: 100%; }
-    .bubble { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 15px; line-height: 1.5; box-sizing: border-box; position: relative; }
+    .bubble { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 15px; line-height: 1.5; box-sizing: border-box; }
     .chat-text { background: #e6f7ff; color: #0b3a60; border: 1px solid #bae7ff; align-self: flex-start; border-top-left-radius: 4px; font-weight: bold; }
-    .ai-card { background: #f6ffed; color: #237804; border: 1px solid #d9f7be; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(0,0,0,0.02); padding-bottom: 10px; }
-    .error-card { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; align-self: flex-end; border-top-right-radius: 4px; width: 75%; box-shadow: 0 2px 6px rgba(255,0,0,0.05); padding: 12px 16px; font-size: 14px; }
-    .inner-audio-btn { display: inline-flex; align-items: center; margin-left: 6px; vertical-align: middle; background: #10b981; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
-    .inline-copy-btn { display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 6px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+    .ai-card { background: #f6ffed; color: #237804; border: 1px solid #d9f7be; align-self: flex-end; border-top-right-radius: 4px; width: 75%; padding-bottom: 10px; }
     .input-area { display: flex; gap: 10px; align-items: center; }
     input { flex: 1; padding: 12px; font-size: 15px; border: 1px solid #cbd5e1; border-radius: 10px; }
     .btn-send { padding: 10px 24px; background: #3b82f6; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
     .btn-clear-db { background: none; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; padding: 5px; }
-    .card-line { margin-top: 4px; margin-bottom: 4px; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -29,7 +25,6 @@
   <div class="input-area">
     <input id="msg" placeholder="輸入中文或俄文..." onkeydown="if(event.keyCode==13) sendMsg()" />
     <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
-    <button class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空">⚙️</button>
     <button class="btn-clear-db" onclick="setupApiKey()" title="設定 API Key">🔑</button>
   </div>
 
@@ -48,38 +43,22 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let chatHistory = [];
 
-// --- 安全金鑰設定 ---
+// --- 安全設定 ---
 function getApiKey() { return localStorage.getItem("gemini_api_key"); }
 function setupApiKey() {
   const key = prompt("請貼上你的全新 Google Gemini API Key：");
-  if (key) { localStorage.setItem("gemini_api_key", key.trim()); alert("金鑰已儲存！"); location.reload(); }
+  if (key) { localStorage.setItem("gemini_api_key", key.trim()); alert("已儲存！"); location.reload(); }
 }
 
-// --- 原有核心邏輯 (完整保留) ---
-function detectSimplifiedByDetectiveLogic(str) {
-  const list = ['国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', '东', '乐', '个', '发', '动', '后', '团', '图', '处', '备', '复', '阳', '头', '妈', '丽', '学', '实', '宠', '审', '寻', '寿', '专', '将', '岁', '岛', '师', '带', '常', '广', '庆', '废', '开', '张', '弹', '强', '归', '当', '录', '总', '惩', '护', '报', '担', '压', '扩', '扫', '扬', '执', '联', '择', '挂', '换', '摇', '时', '明', '机', '权', '条', '来', '极', '构', '样', '欢', '欧', '死', '毁', '气', '汇', '汉', '没', '沦', '沧', '沪', '河', '治', '注', '泪', '波', '洁', '洋', '洒', '洗', '洞', '流', '浅', '测', '济', '浓', '滨', '海', '浪', '涉', '涛', '涨', '润', '清', '渐', '渔', '渠', '温', '游', '湾', '湿', '溃', '溅', '源', '溪', '灭', '灯', '灰', '灵', '炉', '烂', '炼', '烁', '烦', '烧', '热', '营', '烛', '烟', '随', '隐', '难', '雾', '震', '霜', '霞', '韩', '音', '页', '顶', '项', '顺', '须', '顽', '顾', '顿', '預', '预', '颅', '领', '颇', '颈', '颊', '颔', '颖', '颗', '题', '颜', '额', '颠', '颤', '风', '飘', '飞', '食', '餐', '饥', '饭', '飲', '饮', '饰', '饱', '饲', '饿', '馆'];
-  return list.some(char => str.includes(char));
-}
-
+// --- 翻譯核心 ---
 function buildPrompt(input) {
-  return `你是一個極度精準的「中俄跨語言翻譯與語言學習字卡器」。請根據用戶輸入，嚴格執行以下規則：
-【排版鐵律】標題與內容必須在同一行，絕對不能輸出 Markdown 星號。
-【欄位名稱】固定使用：【繁體中文 / Традиционный китайский】, 【中文發音 / Пиньинь】, 【簡體中文 / Упрощенный китайский】, 【俄文翻譯 / Русский перевод】, 【語意解釋 / Смысловое пояснение】。
+  return `你是一個精準的翻譯器。請將用戶輸入內容翻譯為以下欄位（請嚴格遵守雙語標題）：
+【繁體中文 / Традиционный китайский】內容
+【中文發音 / Пиньинь】內容
+【簡體中文 / Упрощенный китайский】內容
+【俄文翻譯 / Русский перевод】內容
+【語意解釋 / Смысловое пояснение】中文與俄文解釋
 輸入：${input}`;
-}
-
-async function callGemini(text) {
-  const key = getApiKey();
-  if (!key) { setupApiKey(); return "錯誤：尚未設定 API Key，請點擊右下角🔑按鈕。"; }
-  try {
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({ contents: [{ parts: [{ text }] }] })
-    });
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "無回應";
-  } catch (e) { return "錯誤：" + e.message; }
 }
 
 async function sendMsg() {
@@ -87,13 +66,37 @@ async function sendMsg() {
   const input = inputObj.value.trim();
   if (!input) return;
   inputObj.value = "";
+  
+  // 1. 先顯示用戶發出的訊息
   db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
-  const response = await callGemini(buildPrompt(input));
-  db.ref("messages").push({ role: "ai", text: response, timestamp: Date.now() });
+
+  // 2. 自動翻譯並存入資料庫
+  const key = getApiKey();
+  if (!key) { alert("請先點擊鑰匙按鈕設定 API Key！"); return; }
+  
+  try {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({ contents: [{ parts: [{ text: buildPrompt(input) }] }] })
+    });
+    const data = await res.json();
+    const result = data?.candidates?.[0]?.content?.parts?.[0]?.text || "翻譯失敗";
+    db.ref("messages").push({ role: "ai", text: result, timestamp: Date.now() });
+  } catch (e) { alert("連線錯誤：" + e.message); }
 }
 
-function renderChat() { /* 保持你原本的渲染邏輯 */ }
-db.ref("messages").on("child_added", (snapshot) => { chatHistory.push(snapshot.val()); renderChat(); });
+// 監聽並顯示訊息
+db.ref("messages").on("child_added", (snapshot) => {
+  const m = snapshot.val();
+  const chat = document.getElementById("chat");
+  if (m.role === "user") {
+    chat.innerHTML += `<div class="msg-box"><div class="bubble chat-text">💬 ${m.text}</div></div>`;
+  } else {
+    chat.innerHTML += `<div class="msg-box"><div class="bubble ai-card">🤖 ${m.text.replace(/\n/g, '<br>')}</div></div>`;
+  }
+  chat.scrollTop = chat.scrollHeight;
+});
 </script>
 </body>
 </html>
