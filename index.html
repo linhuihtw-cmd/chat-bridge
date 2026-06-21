@@ -230,6 +230,29 @@
       margin: 0 8px;
     }
 
+    .presence-panel-wrapper {
+      background: var(--bg-panel);
+      border: 0.5px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 10px 16px;
+      margin-bottom: 16px;
+    }
+
+    .presence-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+      color: var(--text-primary);
+      gap: 12px;
+    }
+
+    .presence-status {
+      color: var(--text-tertiary);
+      text-align: right;
+    }
+
     .msg-time {
       font-size: 11px;
       color: var(--text-tertiary);
@@ -448,6 +471,11 @@
   <div id="pendingList"></div>
 </div>
 
+<!-- 在線狀態面板：僅管理員可見 -->
+<div id="presencePanelWrapper" class="presence-panel-wrapper" style="display: none;">
+  <div id="presencePanel"></div>
+</div>
+
 <!-- 聊天室主畫面：登入且已核准時顯示 -->
 <div id="mainApp" style="display: none;">
 
@@ -531,21 +559,30 @@ function approveUser(key, email) {
 }
 
 auth.onAuthStateChanged((user) => {
+  document.getElementById("adminPanel").style.display = "none";
+  document.getElementById("presencePanelWrapper").style.display = "none";
+  document.getElementById("presencePanel").innerHTML = "";
+  document.getElementById("pendingList").innerHTML = "";
+
   if (!user) {
     currentUser = null;
     showScreen("loginScreen");
-    document.getElementById("adminPanel").style.display = "none";
     return;
   }
 
   currentUser = user;
   const userKey = emailToKey(user.email);
+  setupPresence(userKey, user.email);
 
   if (user.email === ADMIN_EMAIL) {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
     showScreen("mainApp");
     db.ref("pendingUsers").on("value", (snapshot) => {
       renderPendingList(snapshot.val());
+    });
+    document.getElementById("presencePanelWrapper").style.display = "block";
+    db.ref("presence").on("value", (snapshot) => {
+      renderPresencePanel(snapshot.val());
     });
     return;
   }
@@ -694,6 +731,55 @@ const TIMEZONE_CITY_NAMES = {
   "Asia/Bangkok": "曼谷",
   "Asia/Singapore": "新加坡"
 };
+
+function setupPresence(userKey, email) {
+  const presenceRef = db.ref("presence/" + userKey);
+  const connectedRef = db.ref(".info/connected");
+  const myTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  connectedRef.on("value", (snap) => {
+    if (snap.val() === true) {
+      presenceRef.onDisconnect().set({ email: email, online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP, tz: myTz });
+      presenceRef.set({ email: email, online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP, tz: myTz });
+    }
+  });
+}
+
+let presenceClockInterval = null;
+let latestPresenceData = null;
+
+function renderPresencePanel(presenceData) {
+  latestPresenceData = presenceData;
+  const panel = document.getElementById("presencePanel");
+  if (!panel) return;
+  const entries = Object.values(presenceData || {});
+  if (entries.length === 0) {
+    panel.innerHTML = "";
+    return;
+  }
+  panel.innerHTML = entries.map(p => {
+    const statusDot = p.online ? "🟢" : "⚫";
+    const statusText = p.online ? "在線" : "離線";
+    let timeText = "";
+    if (!p.online && p.lastSeen) {
+      const diffMin = Math.round((Date.now() - p.lastSeen) / 60000);
+      timeText = diffMin < 1 ? "剛剛" : diffMin < 60 ? `${diffMin}分鐘前` : `${Math.round(diffMin/60)}小時前`;
+    }
+    let localTimeText = "";
+    if (p.tz) {
+      const cityName = getCityName(p.tz);
+      const localTime = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: p.tz });
+      localTimeText = ` · 當地 ${localTime}（${cityName}）`;
+    }
+    return `<div class="presence-row"><span>${statusDot} ${p.email}</span><span class="presence-status">${statusText}${timeText ? " · " + timeText : ""}${localTimeText}</span></div>`;
+  }).join("");
+}
+
+if (!presenceClockInterval) {
+  presenceClockInterval = setInterval(() => {
+    if (latestPresenceData) renderPresencePanel(latestPresenceData);
+  }, 60000);
+}
 
 function getCityName(tz) {
   if (!tz) return "";
