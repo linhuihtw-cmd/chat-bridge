@@ -742,6 +742,7 @@ function renderChat() {
       let processedLines = matchedBlocks.map(block => {
         let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
         if(!trimmedLine) return "";
+        const isAdminViewing = currentUser && currentUser.email === ADMIN_EMAIL;
 
         if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
           let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
@@ -749,13 +750,26 @@ function renderChat() {
           if (!hasSimplified && isIncluded) return "";
         }
 
+        if (trimmedLine.startsWith("【簡體中文") && isAdminViewing) return "";
+
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
         }
-        if (/【俄文翻譯[^】]*】/.test(trimmedLine) && currentUser && currentUser.email === ADMIN_EMAIL) {
+        if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isAdminViewing) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakRussianText(${index})">🔊 Слушать</button></div>`;
         }
-        if (trimmedLine.startsWith("【語意解釋")) return `<div class="card-line">${trimmedLine}</div>`;
+        if (trimmedLine.startsWith("【語意解釋")) {
+          let explanationContent = trimmedLine.replace(/^【語意解釋[^】]*】/, "");
+          if (isAdminViewing) {
+            let zhMatch = explanationContent.match(/中文[：:]\s*([\s\S]*?)(?=俄文[：:]|$)/);
+            let displayText = zhMatch ? zhMatch[1].trim() : explanationContent;
+            return `<div class="card-line">【語意解釋 / Смысловое пояснение】${displayText}</div>`;
+          } else {
+            let ruMatch = explanationContent.match(/俄文[：:]\s*([\s\S]*)$/);
+            let displayText = ruMatch ? ruMatch[1].trim() : explanationContent;
+            return `<div class="card-line">【語意解釋 / Смысловое пояснение】${displayText}</div>`;
+          }
+        }
 
         let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
         if (matchField && matchField[2].trim().length > 0) {
@@ -773,30 +787,14 @@ function renderChat() {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function buildPrompt(input, isAdmin) {
-  if (isAdmin) {
-    return `你是中俄翻譯與語言學習字卡產生器。依以下固定欄位輸出，每欄位獨立成行：
-
-【繁體中文 / Традиционный китайский】內容
-【中文發音 / Пиньинь】內容
-【俄文翻譯 / Русский перевод】內容（純俄文輸入時省略此欄）
-【語意解釋 / Смысловое пояснение】內容（只用中文解釋，不要俄文）
-
-規則：
-- 繁體中文欄位須為台灣繁體字
-- 不要產生簡體中文欄位
-- 成語/諺語/俚語解釋須中性、依語境而定，除非該詞語本身僅有單一褒貶義，否則需說明可用於正面與負面語境並各舉簡短例子；避免使用「壞人」「不好的」等主觀評價字眼
-
-輸入：${input}`;
-  }
-
+function buildPrompt(input) {
   return `你是中俄翻譯與語言學習字卡產生器。依以下固定欄位輸出，每欄位獨立成行：
 
 【繁體中文 / Традиционный китайский】內容
 【中文發音 / Пиньинь】內容
 【簡體中文 / Упрощенный китайский】內容
 【俄文翻譯 / Русский перевод】內容（純俄文輸入時省略此欄）
-【語意解釋 / Смысловое пояснение】內容（只用俄文解釋，不要中文）
+【語意解釋 / Смысловое пояснение】中文：...俄文：...
 
 規則：
 - 繁體中文欄位須為台灣繁體字
@@ -866,8 +864,7 @@ async function sendMsg() {
   db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
 
   const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
-  alert(`【除錯資訊】\n目前登入信箱：${currentUser ? currentUser.email : "無"}\n判定為管理員：${isAdmin}`);
-  const translatedText = await callDeepSeek(buildPrompt(input, isAdmin));
+  const translatedText = await callDeepSeek(buildPrompt(input));
   
   db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
 
