@@ -253,6 +253,18 @@
       text-align: right;
     }
 
+    .btn-kick {
+      background: rgba(217, 112, 112, 0.1);
+      color: var(--error-red);
+      border: 0.5px solid var(--error-red);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    .btn-kick:hover { background: rgba(217, 112, 112, 0.2); }
+
     .msg-time {
       font-size: 11px;
       color: var(--text-tertiary);
@@ -486,7 +498,6 @@
   <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
   
   <button class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空">⚙️</button>
-  <button class="btn-clear-db" onclick="logoutUser()" title="登出">🚪</button>
 </div>
 
 </div>
@@ -558,6 +569,12 @@ function approveUser(key, email) {
   db.ref("pendingUsers/" + key).remove();
 }
 
+function kickUser(key, email) {
+  if (!confirm(`確定要將 ${email} 登出嗎？`)) return;
+  db.ref("approvedUsers/" + key).remove();
+  db.ref("forceLogout/" + key).set(Date.now());
+}
+
 auth.onAuthStateChanged((user) => {
   document.getElementById("adminPanel").style.display = "none";
   document.getElementById("presencePanelWrapper").style.display = "none";
@@ -590,6 +607,12 @@ auth.onAuthStateChanged((user) => {
   db.ref("approvedUsers/" + userKey).once("value").then((snapshot) => {
     if (snapshot.exists()) {
       showScreen("mainApp");
+      db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
+        if (!approvedSnap.exists()) {
+          alert("您已被管理員登出 / Вы были разлогинены администратором");
+          logoutUser();
+        }
+      });
     } else {
       db.ref("pendingUsers/" + userKey).set({ email: user.email, requestedAt: Date.now() });
       document.getElementById("pendingEmail").innerText = user.email;
@@ -771,7 +794,10 @@ function renderPresencePanel(presenceData) {
       const localTime = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: p.tz });
       localTimeText = ` · 當地 ${localTime}（${cityName}）`;
     }
-    return `<div class="presence-row"><span>${statusDot} ${p.email}</span><span class="presence-status">${statusText}${timeText ? " · " + timeText : ""}${localTimeText}</span></div>`;
+    const isSelf = p.email === ADMIN_EMAIL;
+    const kickKey = emailToKey(p.email);
+    const kickBtn = isSelf ? "" : `<button class="btn-kick" onclick="kickUser('${kickKey}', '${p.email.replace(/'/g, "\\'")}')">登出</button>`;
+    return `<div class="presence-row"><span>${statusDot} ${p.email}</span><span class="presence-status">${statusText}${timeText ? " · " + timeText : ""}${localTimeText} ${kickBtn}</span></div>`;
   }).join("");
 }
 
