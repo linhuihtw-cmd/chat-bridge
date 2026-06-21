@@ -667,16 +667,51 @@ function formatLocalTime(timestamp) {
   return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
+const TIMEZONE_CITY_NAMES = {
+  "Asia/Taipei": "台北",
+  "Asia/Shanghai": "上海",
+  "Asia/Hong_Kong": "香港",
+  "Asia/Tokyo": "東京",
+  "Asia/Seoul": "首爾",
+  "Europe/Moscow": "莫斯科",
+  "Europe/Kaliningrad": "加里寧格勒",
+  "Europe/Samara": "薩馬拉",
+  "Asia/Yekaterinburg": "葉卡捷琳堡",
+  "Asia/Omsk": "鄂木斯克",
+  "Asia/Novosibirsk": "新西伯利亞",
+  "Asia/Krasnoyarsk": "克拉斯諾亞爾斯克",
+  "Asia/Irkutsk": "伊爾庫茨克",
+  "Asia/Yakutsk": "雅庫茨克",
+  "Asia/Vladivostok": "海參崴",
+  "Asia/Magadan": "馬加丹",
+  "Asia/Kamchatka": "堪察加",
+  "Europe/London": "倫敦",
+  "Europe/Paris": "巴黎",
+  "Europe/Berlin": "柏林",
+  "America/New_York": "紐約",
+  "America/Los_Angeles": "洛杉磯",
+  "Asia/Dubai": "杜拜",
+  "Asia/Bangkok": "曼谷",
+  "Asia/Singapore": "新加坡"
+};
+
+function getCityName(tz) {
+  if (!tz) return "";
+  return TIMEZONE_CITY_NAMES[tz] || tz.split("/").pop().replace(/_/g, " ");
+}
+
 function formatDualTime(timestamp, senderTz) {
   if (!timestamp) return "";
   const d = new Date(timestamp);
   const viewerTime = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   const viewerTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const viewerCity = getCityName(viewerTz);
   if (!senderTz || senderTz === viewerTz) {
-    return viewerTime;
+    return `${viewerTime}（${viewerCity}）`;
   }
   const senderTime = d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: senderTz });
-  return `${viewerTime}（對方當地：${senderTime}）`;
+  const senderCity = getCityName(senderTz);
+  return `${viewerTime}（${viewerCity}）· 對方當地 ${senderTime}（${senderCity}）`;
 }
 
 function formatLocalDate(timestamp) {
