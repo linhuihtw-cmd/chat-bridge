@@ -409,11 +409,10 @@ ${input}
 
 async function callDeepSeek(text) {
   try {
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
+    const res = await fetch(`https://${API_KEY.trim()}`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${API_KEY.trim()}`
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "deepseek-chat",
@@ -422,7 +421,16 @@ async function callDeepSeek(text) {
       })
     });
     
-    if (!res.ok) return `【連線失敗原因】：DeepSeek 拒絕回應。`;
+    if (!res.ok) {
+      let errorDetail = "";
+      try {
+        const errJson = await res.json();
+        errorDetail = errJson?.error?.message || JSON.stringify(errJson);
+      } catch (e) {
+        errorDetail = await res.text().catch(() => "(無法讀取錯誤內容)");
+      }
+      return `【連線失敗原因】：HTTP ${res.status} - ${errorDetail}`;
+    }
 
     const data = await res.json();
     return data.choices[0].message.content || "（沒有回應 / Нет ответа）";
