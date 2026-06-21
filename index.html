@@ -275,6 +275,57 @@
       color: var(--gold);
     }
 
+    .consensus-panel {
+      background: rgba(212, 175, 106, 0.08);
+      border: 0.5px solid var(--gold-dim);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .consensus-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gold);
+      margin: 0 0 6px;
+    }
+    .consensus-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 0 0 12px;
+    }
+    .consensus-status {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+    }
+    .consensus-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-consensus-agree {
+      flex: 1;
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-consensus-agree:hover { background: var(--gold); }
+    .btn-consensus-later {
+      flex: 1;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-consensus-later:hover { border-color: var(--gold-dim); }
+
     .backup-row {
       display: flex;
       align-items: center;
@@ -569,6 +620,8 @@
 <!-- 聊天室主畫面：登入且已核准時顯示 -->
 <div id="mainApp" style="display: none;">
 
+<div id="consensusPanel" class="consensus-panel" style="display:none;"></div>
+
 <div id="chat"></div>
 
 <div class="input-area">
@@ -678,6 +731,7 @@ auth.onAuthStateChanged((user) => {
   currentUser = user;
   const userKey = emailToKey(user.email);
   setupPresence(userKey, user.email);
+  setupConsensusListener();
 
   if (user.email === ADMIN_EMAIL) {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
@@ -871,14 +925,113 @@ function renderBackupPanel(backupData) {
 }
 
 const CAPACITY_WARNING_THRESHOLD = 300;
+function renderConsensusPanel(requestData, myDecision, otherDecision, otherEmail) {
+  const panel = document.getElementById("consensusPanel");
+  if (!panel) return;
+
+  if (!requestData) {
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "block";
+
+  let statusText = "";
+  if (myDecision && otherDecision) {
+    statusText = "雙方皆已確認，正在清空...";
+  } else if (myDecision) {
+    statusText = "您已確認，等待對方確認中...";
+  } else if (otherDecision) {
+    statusText = "對方已確認，請選擇您的處理方式";
+  } else {
+    statusText = "尚無人確認";
+  }
+
+  const buttonsHtml = myDecision
+    ? `<div class="consensus-status">您已選擇：${myDecision === "agree" ? "同意清空" : "封存後清空"}</div>`
+    : `<div class="consensus-buttons">
+        <button class="btn-consensus-agree" onclick="respondConsensus('agree')">✅ 同意清空</button>
+        <button class="btn-consensus-later" onclick="startBackupThenClear()">📦 封存後清空</button>
+      </div>`;
+
+  panel.innerHTML = `
+    <p class="consensus-title">📦 系統提醒：儲存空間即將滿載</p>
+    <p class="consensus-subtitle">為避免資料遺失，系統需要雙方都確認後才會清空聊天記錄。</p>
+    <p class="consensus-status">${statusText}</p>
+    ${buttonsHtml}
+  `;
+}
+
+function startBackupThenClear() {
+  pendingConsensusAfterBackup = true;
+  showExportMenu();
+}
+    <p class="consensus-subtitle">為避免資料遺失，系統需要雙方都確認後才會清空聊天記錄。建議先用下方📦按鈕匯出或封存重要對話。</p>
+    <p class="consensus-status">${statusText}</p>
+    ${buttonsHtml}
+  `;
+}
+
+let pendingConsensusAfterBackup = false;
+
+function respondConsensus(decision) {
+  if (!currentUser) return;
+  if (decision === "agree") {
+    if (!confirm("確定要同意清空聊天記錄嗎？此動作將不會先備份。")) return;
+  }
+  const userKey = emailToKey(currentUser.email);
+  db.ref("consensusRequest/responses/" + userKey).set({ email: currentUser.email, decision: decision, respondedAt: Date.now() });
+}
+
+function setupConsensusListener() {
+  db.ref("consensusRequest").on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      renderConsensusPanel(null);
+      return;
+    }
+    const myKey = currentUser ? emailToKey(currentUser.email) : null;
+    const responses = data.responses || {};
+    const myResponse = myKey ? responses[myKey] : null;
+    const otherEntry = Object.entries(responses).find(([key]) => key !== myKey);
+    const otherResponse = otherEntry ? otherEntry[1] : null;
+
+    renderConsensusPanel(data, myResponse ? myResponse.decision : null, otherResponse ? otherResponse.decision : null, otherResponse ? otherResponse.email : null);
+
+    const allDecisions = Object.values(responses);
+    const confirmedCount = allDecisions.filter(r => r.decision === "agree" || r.decision === "backup_then_clear").length;
+    if (confirmedCount >= 2 && currentUser && currentUser.email === ADMIN_EMAIL) {
+      executeConsensusClear();
+    }
+  });
+}
+
+function executeConsensusClear() {
+  db.ref("messages").remove().then(() => {
+    db.ref("consensusRequest").remove();
+    consensusTriggered = false;
+  });
+}
+
+let consensusTriggered = false;
 function checkCapacityWarning(messageCount) {
   const warningDiv = document.getElementById("capacityWarning");
-  if (!warningDiv) return;
-  if (messageCount >= CAPACITY_WARNING_THRESHOLD) {
-    warningDiv.style.display = "block";
-    warningDiv.innerText = `⚠️ 目前已累積 ${messageCount} 則訊息，建議考慮匯出備份並清空整理`;
-  } else {
-    warningDiv.style.display = "none";
+  if (warningDiv) {
+    if (messageCount >= CAPACITY_WARNING_THRESHOLD) {
+      warningDiv.style.display = "block";
+      warningDiv.innerText = `⚠️ 目前已累積 ${messageCount} 則訊息`;
+    } else {
+      warningDiv.style.display = "none";
+    }
+  }
+
+  if (messageCount >= CAPACITY_WARNING_THRESHOLD && !consensusTriggered) {
+    consensusTriggered = true;
+    db.ref("consensusRequest").once("value").then((snap) => {
+      if (!snap.exists()) {
+        db.ref("consensusRequest").set({ createdAt: Date.now(), messageCountAtCreation: messageCount });
+      }
+    });
   }
 }
 
@@ -886,6 +1039,12 @@ function markUserBackup() {
   if (!currentUser) return;
   const userKey = emailToKey(currentUser.email);
   db.ref("backupStatus/" + userKey).set({ email: currentUser.email, lastBackupAt: Date.now() });
+
+  if (pendingConsensusAfterBackup) {
+    pendingConsensusAfterBackup = false;
+    db.ref("consensusRequest/responses/" + userKey).set({ email: currentUser.email, decision: "backup_then_clear", respondedAt: Date.now() });
+    alert("✅ 已完成備份，您的清空確認已送出");
+  }
 }
 
 function secureClearDatabase() {
