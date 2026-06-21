@@ -966,11 +966,6 @@ function startBackupThenClear() {
   pendingConsensusAfterBackup = true;
   showExportMenu();
 }
-    <p class="consensus-subtitle">為避免資料遺失，系統需要雙方都確認後才會清空聊天記錄。建議先用下方📦按鈕匯出或封存重要對話。</p>
-    <p class="consensus-status">${statusText}</p>
-    ${buttonsHtml}
-  `;
-}
 
 let pendingConsensusAfterBackup = false;
 
