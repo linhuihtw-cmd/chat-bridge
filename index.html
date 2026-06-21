@@ -752,6 +752,9 @@ function renderChat() {
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
         }
+        if (/【俄文翻譯[^】]*】/.test(trimmedLine) && currentUser && currentUser.email === ADMIN_EMAIL) {
+          return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakRussianText(${index})">🔊 Слушать</button></div>`;
+        }
         if (trimmedLine.startsWith("【語意解釋")) return `<div class="card-line">${trimmedLine}</div>`;
 
         let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
@@ -770,14 +773,30 @@ function renderChat() {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function buildPrompt(input) {
+function buildPrompt(input, isAdmin) {
+  if (isAdmin) {
+    return `你是中俄翻譯與語言學習字卡產生器。依以下固定欄位輸出，每欄位獨立成行：
+
+【繁體中文 / Традиционный китайский】內容
+【中文發音 / Пиньинь】內容
+【俄文翻譯 / Русский перевод】內容（純俄文輸入時省略此欄）
+【語意解釋 / Смысловое пояснение】內容（只用中文解釋，不要俄文）
+
+規則：
+- 繁體中文欄位須為台灣繁體字
+- 不要產生簡體中文欄位
+- 成語/諺語/俚語解釋須中性、依語境而定，除非該詞語本身僅有單一褒貶義，否則需說明可用於正面與負面語境並各舉簡短例子；避免使用「壞人」「不好的」等主觀評價字眼
+
+輸入：${input}`;
+  }
+
   return `你是中俄翻譯與語言學習字卡產生器。依以下固定欄位輸出，每欄位獨立成行：
 
 【繁體中文 / Традиционный китайский】內容
 【中文發音 / Пиньинь】內容
 【簡體中文 / Упрощенный китайский】內容
 【俄文翻譯 / Русский перевод】內容（純俄文輸入時省略此欄）
-【語意解釋 / Смысловое пояснение】中文：...俄文：...
+【語意解釋 / Смысловое пояснение】內容（只用俄文解釋，不要中文）
 
 規則：
 - 繁體中文欄位須為台灣繁體字
@@ -846,7 +865,8 @@ async function sendMsg() {
 
   db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
 
-  const translatedText = await callDeepSeek(buildPrompt(input));
+  const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+  const translatedText = await callDeepSeek(buildPrompt(input, isAdmin));
   
   db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
 
@@ -874,6 +894,21 @@ function speakThisText(index) {
   utteranceCorrect.volume = 1.0; 
   utteranceCorrect.rate = 0.95;  
   speechSynthesis.speak(utteranceCorrect);
+}
+
+function speakRussianText(index) {
+  const targetMsg = chatHistory[index];
+  if (!targetMsg || !targetMsg.text) return;
+  const matchRu = targetMsg.text.match(/【俄文翻譯[^】]*】([\s\S]*?)(?=【|$)/);
+  if (!matchRu) return;
+  let textToSpeak = matchRu[1].trim().replace(/["'「」]/g, "").trim();
+  if (!textToSpeak) return;
+  speechSynthesis.cancel();
+  const utteranceRu = new SpeechSynthesisUtterance(textToSpeak);
+  utteranceRu.lang = "ru-RU";
+  utteranceRu.volume = 1.0;
+  utteranceRu.rate = 0.9;
+  speechSynthesis.speak(utteranceRu);
 }
 
 db.ref("messages").on("child_added", (snapshot) => {
