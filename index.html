@@ -924,7 +924,7 @@ function renderBackupPanel(backupData) {
   }).join("");
 }
 
-const CAPACITY_WARNING_THRESHOLD = 300;
+const CAPACITY_WARNING_THRESHOLD = 5;
 function renderConsensusPanel(requestData, myDecision, otherDecision, otherEmail) {
   const panel = document.getElementById("consensusPanel");
   if (!panel) return;
