@@ -213,6 +213,36 @@
     }
     .toggle-explain-btn:hover { background: rgba(212, 175, 106, 0.1); }
 
+    .date-separator {
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      margin: 16px 0 10px;
+      position: relative;
+    }
+    .date-separator::before, .date-separator::after {
+      content: "";
+      display: inline-block;
+      width: 60px;
+      height: 0.5px;
+      background: var(--border-subtle);
+      vertical-align: middle;
+      margin: 0 8px;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      display: block;
+    }
+    .chat-text + .msg-time, .error-card + .msg-time {
+      text-align: left;
+    }
+    .ai-card + .msg-time {
+      text-align: right;
+    }
+
     .card-line {
       margin-top: 4px;
       margin-bottom: 4px;
@@ -631,6 +661,37 @@ function secureClearDatabase() {
   }
 }
 
+function formatLocalTime(timestamp) {
+  if (!timestamp) return "";
+  const d = new Date(timestamp);
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDualTime(timestamp, senderTz) {
+  if (!timestamp) return "";
+  const d = new Date(timestamp);
+  const viewerTime = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const viewerTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (!senderTz || senderTz === viewerTz) {
+    return viewerTime;
+  }
+  const senderTime = d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', timeZone: senderTz });
+  return `${viewerTime}（對方當地：${senderTime}）`;
+}
+
+function formatLocalDate(timestamp) {
+  if (!timestamp) return "";
+  const d = new Date(timestamp);
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+}
+
+function isSameLocalDay(ts1, ts2) {
+  if (!ts1 || !ts2) return false;
+  const d1 = new Date(ts1);
+  const d2 = new Date(ts2);
+  return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+}
+
 function detectSimplifiedByDetectiveLogic(str) {
   const detectiveCheckList = [
     '国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', 
@@ -659,12 +720,19 @@ function detectSimplifiedByDetectiveLogic(str) {
 function renderChat() {
   const chat = document.getElementById("chat");
   chat.innerHTML = chatHistory.map((m, index) => {
+    let dateSeparator = "";
+    const prevMsg = index > 0 ? chatHistory[index - 1] : null;
+    if (m.timestamp && (!prevMsg || !prevMsg.timestamp || !isSameLocalDay(m.timestamp, prevMsg.timestamp))) {
+      dateSeparator = `<div class="date-separator">${formatLocalDate(m.timestamp)}</div>`;
+    }
+    const timeLabel = m.timestamp ? `<span class="msg-time">${formatDualTime(m.timestamp, m.tz)}</span>` : "";
+
     if (m.role === "user") {
-      return `<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div></div>`;
+      return `${dateSeparator}<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div>${timeLabel}</div>`;
     } else {
       let rawText = m.text;
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
-        return `<div class="msg-box"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div></div>`;
+        return `${dateSeparator}<div class="msg-box"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
       }
       rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
 
@@ -717,7 +785,7 @@ function renderChat() {
       let finalHtmlText = processedLines.filter(l => l !== "").join('');
       let hasExplanation = finalHtmlText.includes("collapsible-explanation");
       let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanation(${index})">📖 顯示詳細解釋</button></div>` : "";
-      return `<div class="msg-box"><div class="bubble ai-card">🤖 <b>DeepSeek 翻譯字卡 / Карточка перевода</b>${finalHtmlText}${toggleBtn}</div></div>`;
+      return `${dateSeparator}<div class="msg-box"><div class="bubble ai-card">🤖 <b>DeepSeek 翻譯字卡 / Карточка перевода</b>${finalHtmlText}${toggleBtn}</div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
@@ -798,7 +866,8 @@ async function sendMsg() {
   inputObj.value = "";
   inputObj.focus();
 
-  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
+  const senderTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone });
 
   const translatedText = await callDeepSeek(buildPrompt(input));
   
