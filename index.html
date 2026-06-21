@@ -287,6 +287,26 @@
       color: var(--text-tertiary);
     }
 
+    .export-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .export-menu-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0 0 12px;
+      text-align: center;
+    }
+
     .export-menu {
       display: flex;
       flex-direction: column;
@@ -294,15 +314,16 @@
       background: var(--bg-panel);
       border: 0.5px solid var(--border-strong);
       border-radius: 12px;
-      padding: 12px;
-      margin-top: 10px;
+      padding: 20px;
+      width: 300px;
+      max-width: 90vw;
     }
     .export-menu button {
       background: var(--bg-elevated);
       color: var(--text-primary);
       border: 0.5px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 10px;
+      padding: 12px;
       font-size: 14px;
       cursor: pointer;
       text-align: left;
@@ -557,10 +578,13 @@
   <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
 </div>
 
-<div id="exportMenu" class="export-menu" style="display:none;">
-  <button onclick="exportAsText(); hideExportMenu();">📄 匯出純文字 / Текстовый файл</button>
-  <button onclick="exportAsHtml(); hideExportMenu();">🌐 匯出網頁封存 / Веб-архив</button>
-  <button onclick="hideExportMenu();" class="export-menu-cancel">取消 / Отмена</button>
+<div id="exportMenu" class="export-modal-overlay" style="display:none;">
+  <div class="export-menu">
+    <p class="export-menu-title">📦 匯出聊天記錄 / Экспорт</p>
+    <button onclick="exportAsText(); hideExportMenu();">📄 匯出純文字 / Текстовый файл</button>
+    <button onclick="exportAsHtml(); hideExportMenu();">🌐 匯出網頁封存 / Веб-архив</button>
+    <button onclick="hideExportMenu();" class="export-menu-cancel">取消 / Отмена</button>
+  </div>
 </div>
 
 </div>
