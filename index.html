@@ -7,6 +7,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -206,6 +207,107 @@
       line-height: 1.6;
     }
 
+    .auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+    }
+
+    .auth-card {
+      background: var(--bg-panel);
+      border: 0.5px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 360px;
+    }
+
+    .auth-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0 0 6px;
+    }
+
+    .auth-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 0 0 24px;
+    }
+
+    .auth-email {
+      font-size: 14px;
+      color: var(--gold);
+      margin: 0 0 24px;
+      word-break: break-all;
+    }
+
+    .btn-google-login {
+      padding: 12px 28px;
+      font-size: 15px;
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-google-login:hover { background: var(--gold); }
+
+    .btn-logout-small {
+      padding: 8px 20px;
+      font-size: 13px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-logout-small:hover { color: var(--text-primary); border-color: var(--gold-dim); }
+
+    .admin-panel {
+      background: rgba(212, 175, 106, 0.08);
+      border: 0.5px solid var(--gold-dim);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .admin-panel-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gold);
+      margin: 0 0 10px;
+    }
+
+    .pending-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-elevated);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .pending-item-email {
+      color: var(--text-primary);
+    }
+
+    .btn-approve {
+      padding: 4px 12px;
+      font-size: 12px;
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-approve:hover { background: var(--gold); }
+
     /* 📱 手機響應式設計 */
     @media (max-width: 600px) {
       body {
@@ -279,6 +381,34 @@
 
 <h2>🌉 雙語聊天橋 v20.7<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.7</span></h2>
 
+<!-- 登入畫面：尚未登入時顯示 -->
+<div id="loginScreen" class="auth-screen" style="display: none;">
+  <div class="auth-card">
+    <p class="auth-title">請先登入才能使用聊天室</p>
+    <p class="auth-subtitle">Войдите, чтобы продолжить</p>
+    <button id="googleLoginBtn" class="btn-google-login" onclick="loginWithGoogle()">使用 Google 帳號登入</button>
+  </div>
+</div>
+
+<!-- 等待審核畫面：已登入但未被核准時顯示 -->
+<div id="pendingScreen" class="auth-screen" style="display: none;">
+  <div class="auth-card">
+    <p class="auth-title">⏳ 等待管理員核准</p>
+    <p class="auth-subtitle">Ожидание одобрения администратора</p>
+    <p class="auth-email" id="pendingEmail"></p>
+    <button class="btn-logout-small" onclick="logoutUser()">登出 / Выйти</button>
+  </div>
+</div>
+
+<!-- 管理員審核面板：有待審核名單時顯示 -->
+<div id="adminPanel" class="admin-panel" style="display: none;">
+  <p class="admin-panel-title">🔔 有新帳號申請加入</p>
+  <div id="pendingList"></div>
+</div>
+
+<!-- 聊天室主畫面：登入且已核准時顯示 -->
+<div id="mainApp" style="display: none;">
+
 <div id="chat"></div>
 
 <div class="input-area">
@@ -286,10 +416,14 @@
   <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
   
   <button class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空">⚙️</button>
+  <button class="btn-clear-db" onclick="logoutUser()" title="登出">🚪</button>
+</div>
+
 </div>
 
 <script>
 
+const ADMIN_EMAIL = "linhuihtw@gmail.com";
 const API_KEY = "holy-dew-9872.linhuihtw.workers.dev"; 
 
 const firebaseConfig = {
@@ -304,6 +438,93 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
+let currentUser = null;
+
+function loginWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch((err) => {
+    alert("登入失敗：" + err.message);
+  });
+}
+
+function logoutUser() {
+  auth.signOut();
+}
+
+function showScreen(screenId) {
+  ["loginScreen", "pendingScreen", "mainApp"].forEach(id => {
+    document.getElementById(id).style.display = (id === screenId) ? (id === "mainApp" ? "block" : "flex") : "none";
+  });
+}
+
+function emailToKey(email) {
+  return email.replace(/[.#$/[\]]/g, "_");
+}
+
+function renderPendingList(pendingUsers) {
+  const adminPanel = document.getElementById("adminPanel");
+  const pendingList = document.getElementById("pendingList");
+  const keys = Object.keys(pendingUsers || {});
+
+  if (keys.length === 0) {
+    adminPanel.style.display = "none";
+    return;
+  }
+
+  adminPanel.style.display = "block";
+  pendingList.innerHTML = keys.map(key => {
+    const userInfo = pendingUsers[key];
+    const safeEmail = (userInfo.email || "").replace(/'/g, "\\'");
+    return `<div class="pending-item">
+      <span class="pending-item-email">${userInfo.email || key}</span>
+      <button class="btn-approve" onclick="approveUser('${key}', '${safeEmail}')">核准 / Одобрить</button>
+    </div>`;
+  }).join("");
+}
+
+function approveUser(key, email) {
+  db.ref("approvedUsers/" + key).set({ email: email, approvedAt: Date.now() });
+  db.ref("pendingUsers/" + key).remove();
+}
+
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    currentUser = null;
+    showScreen("loginScreen");
+    document.getElementById("adminPanel").style.display = "none";
+    return;
+  }
+
+  currentUser = user;
+  const userKey = emailToKey(user.email);
+
+  if (user.email === ADMIN_EMAIL) {
+    db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
+    showScreen("mainApp");
+    db.ref("pendingUsers").on("value", (snapshot) => {
+      renderPendingList(snapshot.val());
+    });
+    return;
+  }
+
+  db.ref("approvedUsers/" + userKey).once("value").then((snapshot) => {
+    if (snapshot.exists()) {
+      showScreen("mainApp");
+    } else {
+      db.ref("pendingUsers/" + userKey).set({ email: user.email, requestedAt: Date.now() });
+      document.getElementById("pendingEmail").innerText = user.email;
+      showScreen("pendingScreen");
+
+      db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
+        if (approvedSnap.exists()) {
+          showScreen("mainApp");
+        }
+      });
+    }
+  });
+});
+
 
 let chatHistory = [];
 let isTabActive = true;
