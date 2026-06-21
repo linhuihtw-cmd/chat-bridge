@@ -497,7 +497,7 @@
   <input id="msg" placeholder="輸入中文或俄文... / Введите текст..." onkeydown="if(event.keyCode==13) sendMsg()" />
   <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
   
-  <button class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空">⚙️</button>
+  <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
 </div>
 
 </div>
@@ -580,6 +580,7 @@ auth.onAuthStateChanged((user) => {
   document.getElementById("presencePanelWrapper").style.display = "none";
   document.getElementById("presencePanel").innerHTML = "";
   document.getElementById("pendingList").innerHTML = "";
+  document.getElementById("clearDbBtn").style.display = "none";
 
   if (!user) {
     currentUser = null;
@@ -594,6 +595,7 @@ auth.onAuthStateChanged((user) => {
   if (user.email === ADMIN_EMAIL) {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
     showScreen("mainApp");
+    document.getElementById("clearDbBtn").style.display = "inline-block";
     db.ref("pendingUsers").on("value", (snapshot) => {
       renderPendingList(snapshot.val());
     });
