@@ -265,6 +265,54 @@
     }
     .btn-kick:hover { background: rgba(217, 112, 112, 0.2); }
 
+    .capacity-warning {
+      background: rgba(212, 175, 106, 0.1);
+      border: 0.5px solid var(--gold-dim);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--gold);
+    }
+
+    .backup-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+      color: var(--text-primary);
+    }
+    .backup-status-text {
+      color: var(--text-tertiary);
+    }
+
+    .export-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg-panel);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .export-menu button {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 0.5px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .export-menu button:hover { border-color: var(--gold-dim); }
+    .export-menu-cancel {
+      color: var(--text-tertiary) !important;
+      text-align: center !important;
+    }
+
     .msg-time {
       font-size: 11px;
       color: var(--text-tertiary);
@@ -488,6 +536,15 @@
   <div id="presencePanel"></div>
 </div>
 
+<!-- 容量警示：僅管理員可見 -->
+<div id="capacityWarning" class="capacity-warning" style="display: none;"></div>
+
+<!-- 備份狀態面板：僅管理員可見 -->
+<div id="backupPanelWrapper" class="presence-panel-wrapper" style="display: none;">
+  <p class="admin-panel-title" style="margin-bottom:8px;">📦 對方備份紀錄</p>
+  <div id="backupPanel"></div>
+</div>
+
 <!-- 聊天室主畫面：登入且已核准時顯示 -->
 <div id="mainApp" style="display: none;">
 
@@ -496,8 +553,14 @@
 <div class="input-area">
   <input id="msg" placeholder="輸入中文或俄文... / Введите текст..." onkeydown="if(event.keyCode==13) sendMsg()" />
   <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
-  
+  <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
   <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
+</div>
+
+<div id="exportMenu" class="export-menu" style="display:none;">
+  <button onclick="exportAsText(); hideExportMenu();">📄 匯出純文字 / Текстовый файл</button>
+  <button onclick="exportAsHtml(); hideExportMenu();">🌐 匯出網頁封存 / Веб-архив</button>
+  <button onclick="hideExportMenu();" class="export-menu-cancel">取消 / Отмена</button>
 </div>
 
 </div>
@@ -603,6 +666,14 @@ auth.onAuthStateChanged((user) => {
     db.ref("presence").on("value", (snapshot) => {
       renderPresencePanel(snapshot.val());
     });
+    document.getElementById("backupPanelWrapper").style.display = "block";
+    db.ref("backupStatus").on("value", (snapshot) => {
+      renderBackupPanel(snapshot.val());
+    });
+    db.ref("messages").on("value", (snapshot) => {
+      const count = snapshot.numChildren();
+      checkCapacityWarning(count);
+    });
     return;
   }
 
@@ -702,6 +773,95 @@ function copyThisLine(text, btnObj) {
   }).catch(err => {
     alert("複製失敗：" + err);
   });
+}
+
+function showExportMenu() {
+  document.getElementById("exportMenu").style.display = "flex";
+}
+function hideExportMenu() {
+  document.getElementById("exportMenu").style.display = "none";
+}
+
+function exportAsText() {
+  let lines = chatHistory.map(m => {
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleString('zh-TW') : "";
+    if (m.role === "user") {
+      return `[${time}] 訊息：${m.text}`;
+    } else {
+      return `[${time}] 翻譯字卡：\n${m.text}\n`;
+    }
+  });
+  const content = lines.join("\n\n");
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  downloadBlob(blob, `雙語聊天橋紀錄_${formatExportDate()}.txt`);
+  markUserBackup();
+}
+
+function exportAsHtml() {
+  let rows = chatHistory.map(m => {
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleString('zh-TW') : "";
+    if (m.role === "user") {
+      return `<div style="margin:10px 0;"><b>${time}</b><br>💬 ${escapeHtmlText(m.text)}</div>`;
+    } else {
+      return `<div style="margin:10px 0; background:#f6ffed; padding:10px; border-radius:8px;"><b>${time}</b><br><pre style="white-space:pre-wrap; font-family:inherit;">${escapeHtmlText(m.text)}</pre></div>`;
+    }
+  });
+  const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>雙語聊天橋封存記錄</title></head><body style="font-family:sans-serif; max-width:800px; margin:auto; padding:20px;"><h2>🌉 雙語聊天橋封存記錄</h2><p>封存時間：${new Date().toLocaleString('zh-TW')}</p><hr>${rows.join("")}</body></html>`;
+  const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+  downloadBlob(blob, `雙語聊天橋封存_${formatExportDate()}.html`);
+  markUserBackup();
+}
+
+function escapeHtmlText(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function formatExportDate() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function renderBackupPanel(backupData) {
+  const panel = document.getElementById("backupPanel");
+  if (!panel) return;
+  const entries = Object.values(backupData || {}).filter(b => b.email !== ADMIN_EMAIL);
+  if (entries.length === 0) {
+    panel.innerHTML = `<div class="backup-row"><span class="backup-status-text">尚無備份紀錄</span></div>`;
+    return;
+  }
+  panel.innerHTML = entries.map(b => {
+    const lastBackup = new Date(b.lastBackupAt).toLocaleString('zh-TW');
+    return `<div class="backup-row"><span>${b.email}</span><span class="backup-status-text">最後備份：${lastBackup}</span></div>`;
+  }).join("");
+}
+
+const CAPACITY_WARNING_THRESHOLD = 300;
+function checkCapacityWarning(messageCount) {
+  const warningDiv = document.getElementById("capacityWarning");
+  if (!warningDiv) return;
+  if (messageCount >= CAPACITY_WARNING_THRESHOLD) {
+    warningDiv.style.display = "block";
+    warningDiv.innerText = `⚠️ 目前已累積 ${messageCount} 則訊息，建議考慮匯出備份並清空整理`;
+  } else {
+    warningDiv.style.display = "none";
+  }
+}
+
+function markUserBackup() {
+  if (!currentUser) return;
+  const userKey = emailToKey(currentUser.email);
+  db.ref("backupStatus/" + userKey).set({ email: currentUser.email, lastBackupAt: Date.now() });
 }
 
 function secureClearDatabase() {
@@ -1016,11 +1176,23 @@ async function sendMsg() {
   inputObj.focus();
 
   const senderTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  db.ref("messages").push({ role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone });
+  try {
+    await db.ref("messages").push({ role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone });
+  } catch (e) {
+    alert("⚠️ 訊息儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
+    isSending = false;
+    sendBtn.disabled = false;
+    sendBtn.innerText = "送出 / Отправить";
+    return;
+  }
 
   const translatedText = await callDeepSeek(buildPrompt(input));
   
-  db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
+  try {
+    await db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
+  } catch (e) {
+    alert("⚠️ 翻譯結果儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
+  }
 
   isSending = false;
   sendBtn.disabled = false;
