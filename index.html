@@ -328,7 +328,7 @@ function renderChat() {
       return `<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div></div>`;
     } else {
       let rawText = m.text;
-      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：")) {
+      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
         return `<div class="msg-box"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div></div>`;
       }
       rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
@@ -433,7 +433,11 @@ async function callDeepSeek(text) {
     }
 
     const data = await res.json();
-    return data.choices[0].message.content || "（沒有回應 / Нет ответа）";
+    if (data && data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content || "（沒有回應 / Нет ответа）";
+    } else {
+      return `【除錯資訊】HTTP狀態正常，但內容結構異常，Worker實際回傳：\n${JSON.stringify(data, null, 2)}`;
+    }
   } catch (e) {
     return "錯誤 / Ошибка：" + e.message;
   }
