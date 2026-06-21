@@ -210,6 +210,9 @@ let chatHistory = [];
 let isTabActive = true;
 let titleFlashInterval = null;
 let isSending = false; 
+let lastSentText = "";
+let lastSentTime = 0;
+const COOLDOWN_MS = 2000;
 
 window.onload = function() {
   document.getElementById("msg").focus();
@@ -441,6 +444,14 @@ async function sendMsg() {
   const inputObj = document.getElementById("msg");
   const input = inputObj.value.trim();
   if (!input) return;
+
+  const now = Date.now();
+  if (input === lastSentText && (now - lastSentTime) < COOLDOWN_MS) {
+    alert("請稍候，同一句話剛剛已經送出過了 / Подождите, это сообщение уже было отправлено");
+    return;
+  }
+  lastSentText = input;
+  lastSentTime = now;
 
   isSending = true;
   const sendBtn = document.getElementById("sendBtn");
