@@ -866,6 +866,7 @@ async function sendMsg() {
   db.ref("messages").push({ role: "user", text: input, timestamp: Date.now() });
 
   const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+  alert(`【除錯資訊】\n目前登入信箱：${currentUser ? currentUser.email : "無"}\n判定為管理員：${isAdmin}`);
   const translatedText = await callDeepSeek(buildPrompt(input, isAdmin));
   
   db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
