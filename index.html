@@ -1179,6 +1179,11 @@ function isSameLocalDay(ts1, ts2) {
   return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
 }
 
+function isPureNumeric(str) {
+  const trimmed = str.trim();
+  return /^[0-9０-９\-－:：.．,，/／()（）\s+#]+$/.test(trimmed) && /[0-9０-９]/.test(trimmed);
+}
+
 function detectSimplifiedByDetectiveLogic(str) {
   const detectiveCheckList = [
     '国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', 
@@ -1359,6 +1364,13 @@ async function sendMsg() {
     await db.ref("messages").push({ role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone });
   } catch (e) {
     alert("⚠️ 訊息儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
+    isSending = false;
+    sendBtn.disabled = false;
+    sendBtn.innerText = "送出 / Отправить";
+    return;
+  }
+
+  if (isPureNumeric(input)) {
     isSending = false;
     sendBtn.disabled = false;
     sendBtn.innerText = "送出 / Отправить";
