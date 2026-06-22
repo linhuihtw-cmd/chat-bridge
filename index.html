@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v20.92</title>
+  <title>🌉 雙語聊天橋 v20.93</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -595,7 +595,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v20.92<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.92</span></h2>
+<h2>🌉 雙語聊天橋 v20.93<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.93</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -817,7 +817,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v20.92 / Двуязычный мост общения v20.92";
+    document.title = "🌉 雙語聊天橋 v20.93 / Двуязычный мост общения v20.93";
   }
 });
 
@@ -848,7 +848,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.92";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.93";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -924,18 +924,25 @@ function exportAsHtml() {
   });
 
   const fullHtml = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>雙語聊天橋封存記錄</title>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>雙語聊天橋封存記錄</title>
 <style>
-body { font-family: "Microsoft JhengHei", sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #1a1a1a; color: #e8e6e0; }
-h2 { text-align: center; }
-.export-msg { margin: 12px 0; }
-.export-time { font-size: 12px; color: #7a766e; margin-bottom: 4px; }
-.export-bubble { padding: 12px; border-radius: 10px; }
+body { font-family: "Microsoft JhengHei", sans-serif; max-width: 800px; margin: auto; padding: 16px; background: #1a1a1a; color: #e8e6e0; font-size: 16px; line-height: 1.6; }
+h2 { text-align: center; font-size: 20px; }
+.export-msg { margin: 14px 0; }
+.export-time { font-size: 13px; color: #7a766e; margin-bottom: 4px; }
+.export-bubble { padding: 14px; border-radius: 10px; font-size: 16px; }
 .export-user { background: #2a2a2a; }
 .export-ai { background: #232323; border: 0.5px solid #3a3a3a; }
 .export-error { background: rgba(184,92,92,0.1); color: #b85c5c; }
-.export-line { margin: 4px 0; }
-button { background: #a8946f; color: #1a1a1a; border: none; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; margin-left: 6px; }
+.export-line { margin: 6px 0; }
+button { background: #a8946f; color: #1a1a1a; border: none; border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; margin-left: 6px; }
+@media (max-width: 600px) {
+  body { padding: 12px; font-size: 15px; }
+  h2 { font-size: 18px; }
+  .export-bubble { padding: 12px; font-size: 15px; }
+  .export-line { font-size: 14px; }
+  button { font-size: 12px; padding: 6px 10px; }
+}
 </style>
 </head><body>
 <h2>🌉 雙語聊天橋封存記錄</h2>
