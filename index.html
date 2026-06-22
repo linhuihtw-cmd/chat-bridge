@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v20.94</title>
+  <title>🌉 雙語聊天橋 v20.95</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -595,7 +595,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v20.94<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.94</span></h2>
+<h2>🌉 雙語聊天橋 v20.95<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.95</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -662,7 +662,7 @@
 
 <script>
 
-const APP_VERSION = "20.94";
+const APP_VERSION = "20.95";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -831,7 +831,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v20.94 / Двуязычный мост общения v20.94";
+    document.title = "🌉 雙語聊天橋 v20.95 / Двуязычный мост общения v20.95";
   }
 });
 
@@ -862,7 +862,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.94";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.95";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -922,6 +922,7 @@ function exportAsHtml() {
       }
       let tagRegex = /(【[^】]+】[^【\n]*)/g;
       let blocks = rawText.match(tagRegex) || [rawText];
+      let hasExplain = false;
       let lines = blocks.map(block => {
         let trimmed = block.trim();
         if (!trimmed) return "";
@@ -931,8 +932,15 @@ function exportAsHtml() {
         if (/【俄文翻譯[^】]*】/.test(trimmed)) {
           return `<div class="export-line">${escapeHtmlText(trimmed)} <button onclick="exportSpeak(${idx}, 'ru')">🔊 朗讀俄文</button></div>`;
         }
+        if (trimmed.startsWith("【語意解釋")) {
+          hasExplain = true;
+          return `<div class="export-line export-explain" data-idx="${idx}" style="display:none;">${escapeHtmlText(trimmed)}</div>`;
+        }
         return `<div class="export-line">${escapeHtmlText(trimmed)}</div>`;
       });
+      if (hasExplain) {
+        lines.push(`<div class="export-line"><button class="export-toggle-btn" onclick="exportToggleExplain(${idx}, this)">📖 顯示詳細解釋 / Показать пояснение</button></div>`);
+      }
       return `<div class="export-msg"><div class="export-time">${time}</div><div class="export-bubble export-ai" data-text="${escapeHtmlText(rawText).replace(/"/g, '&quot;')}">${lines.join("")}</div></div>`;
     }
   });
@@ -950,6 +958,7 @@ h2 { text-align: center; font-size: 20px; }
 .export-error { background: rgba(184,92,92,0.1); color: #b85c5c; }
 .export-line { margin: 6px 0; }
 button { background: #a8946f; color: #1a1a1a; border: none; border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; margin-left: 6px; }
+.export-toggle-btn { background: transparent; color: #c9a876; border: 0.5px solid #a8946f; margin-left: 0; padding: 6px 12px; }
 @media (max-width: 600px) {
   body { padding: 12px; font-size: 15px; }
   h2 { font-size: 18px; }
@@ -983,6 +992,13 @@ function exportSpeak(idx, lang) {
   u.lang = lang === "zh" ? "zh-TW" : "ru-RU";
   u.rate = lang === "zh" ? 0.95 : 0.9;
   speechSynthesis.speak(u);
+}
+function exportToggleExplain(idx, btn) {
+  const div = document.querySelector('.export-explain[data-idx="' + idx + '"]');
+  if (!div) return;
+  const isHidden = div.style.display === "none";
+  div.style.display = isHidden ? "block" : "none";
+  btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
 }
 <` + `/script>
 </body></html>`;
