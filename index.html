@@ -306,8 +306,8 @@
     }
     .btn-consensus-agree {
       flex: 1;
-      background: var(--accent-green);
-      color: #f0f4ec;
+      background: var(--error-red);
+      color: #fbeeee;
       border: none;
       border-radius: 8px;
       padding: 12px;
@@ -319,8 +319,8 @@
     .btn-consensus-agree:hover { filter: brightness(1.15); }
     .btn-consensus-later {
       flex: 1;
-      background: var(--accent-blue);
-      color: #eef1f4;
+      background: var(--accent-green);
+      color: #f0f4ec;
       border: none;
       border-radius: 8px;
       padding: 12px;
@@ -956,9 +956,9 @@ function renderConsensusPanel(requestData, myDecision, otherDecision, otherEmail
   }
 
   const buttonsHtml = myDecision
-    ? `<div class="consensus-status">您已選擇：${myDecision === "agree" ? "同意清空 / Согласен на очистку" : "匯出聊天紀錄後清空 / Экспорт истории, затем очистка"}</div>`
+    ? `<div class="consensus-status">您已選擇：${myDecision === "agree" ? "不匯出聊天內容直接清空 / Очистить без экспорта" : "匯出聊天紀錄後清空 / Экспорт истории, затем очистка"}</div>`
     : `<div class="consensus-buttons">
-        <button class="btn-consensus-agree" onclick="respondConsensus('agree')">✅ 同意清空<br>Согласен на очистку</button>
+        <button class="btn-consensus-agree" onclick="respondConsensus('agree')">⚠️ 不匯出聊天內容直接清空<br>Очистить без экспорта</button>
         <button class="btn-consensus-later" onclick="startBackupThenClear()">📦 匯出聊天紀錄後清空<br>Экспорт истории, затем очистка</button>
       </div>`;
 
@@ -980,7 +980,7 @@ let pendingConsensusAfterBackup = false;
 function respondConsensus(decision) {
   if (!currentUser) return;
   if (decision === "agree") {
-    if (!confirm("確定要同意清空聊天記錄嗎？此動作將不會先備份。\nВы уверены, что хотите очистить историю? Без предварительного резервного копирования.")) return;
+    if (!confirm("確定要不匯出聊天內容、直接清空聊天記錄嗎？\nВы уверены, что хотите очистить историю без экспорта?")) return;
   }
   const userKey = emailToKey(currentUser.email);
   db.ref("consensusRequest/responses/" + userKey).set({ email: currentUser.email, decision: decision, respondedAt: Date.now() });
