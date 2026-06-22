@@ -1264,25 +1264,39 @@ function renderChat() {
 
       let tagRegex = /(【[^】]+】[^【\n]*)/g;
       let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
-      
+
       let tradContent = "";
+      let blockMap = { trad: null, pinyin: null, simp: null, ru: null, explain: null };
       matchedBlocks.forEach(block => {
-        if (block.includes("【繁體中文")) {
-          let match = block.match(/^【[^】]+】([\s\S]*)$/);
+        let trimmed = block.replace(/^\s*\*\s*/, "").trim();
+        if (!trimmed) return;
+        if (trimmed.startsWith("【繁體中文")) {
+          blockMap.trad = trimmed;
+          let match = trimmed.match(/^【[^】]+】([\s\S]*)$/);
           if (match) tradContent = match[1].trim();
+        } else if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmed)) {
+          blockMap.pinyin = trimmed;
+        } else if (trimmed.startsWith("【簡體中文")) {
+          blockMap.simp = trimmed;
+        } else if (/【俄文翻譯[^】]*】/.test(trimmed)) {
+          blockMap.ru = trimmed;
+        } else if (trimmed.startsWith("【語意解釋")) {
+          blockMap.explain = trimmed;
         }
       });
 
-      let processedLines = matchedBlocks.map(block => {
-        let trimmedLine = block.replace(/^\s*\*\s*/, "").trim();
-        if(!trimmedLine) return "";
+      let hideTrad = false;
+      if (blockMap.trad && tradContent !== "" && correspondingUserInput !== "") {
+        let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
+        let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
+        if (!hasSimplified && isIncluded) hideTrad = true;
+      }
 
-        if (trimmedLine.startsWith("【繁體中文") && tradContent !== "" && correspondingUserInput !== "") {
-          let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
-          let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
-          if (!hasSimplified && isIncluded) return "";
-        }
+      let orderedBlocks = blockMap.ru
+        ? [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain]
+        : [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain];
 
+      let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
         }
