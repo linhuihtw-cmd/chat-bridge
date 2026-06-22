@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v20.83</title>
+  <title>🌉 雙語聊天橋 v20.9</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -343,6 +343,20 @@
       color: var(--text-tertiary);
     }
 
+    .backup-toggle-btn {
+      width: 100%;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border: 0.5px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .backup-toggle-btn:hover { border-color: var(--gold-dim); }
+    .backup-toggle-btn:disabled { cursor: default; color: var(--text-tertiary); }
+
     .export-modal-overlay {
       position: fixed;
       top: 0;
@@ -581,7 +595,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v20.83<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.83</span></h2>
+<h2>🌉 雙語聊天橋 v20.9<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.9</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -751,7 +765,7 @@ auth.onAuthStateChanged((user) => {
       renderPresencePanel(snapshot.val());
     });
     document.getElementById("backupPanelWrapper").style.display = "block";
-    db.ref("backupStatus").on("value", (snapshot) => {
+    db.ref("backupHistory").on("value", (snapshot) => {
       renderBackupPanel(snapshot.val());
     });
     db.ref("messages").on("value", (snapshot) => {
@@ -804,7 +818,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v20.83 / Двуязычный мост общения v20.83";
+    document.title = "🌉 雙語聊天橋 v20.9 / Двуязычный мост общения v20.9";
   }
 });
 
@@ -835,7 +849,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.83";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.9";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -921,15 +935,38 @@ function formatExportDate() {
 function renderBackupPanel(backupData) {
   const panel = document.getElementById("backupPanel");
   if (!panel) return;
-  const entries = Object.values(backupData || {}).filter(b => b.email !== ADMIN_EMAIL);
-  if (entries.length === 0) {
-    panel.innerHTML = `<div class="backup-row"><span class="backup-status-text">尚無備份紀錄</span></div>`;
+
+  let allRecords = [];
+  Object.entries(backupData || {}).forEach(([userKey, records]) => {
+    Object.values(records || {}).forEach(r => {
+      if (r.email !== ADMIN_EMAIL) allRecords.push(r);
+    });
+  });
+  allRecords.sort((a, b) => b.backupAt - a.backupAt);
+
+  if (allRecords.length === 0) {
+    panel.innerHTML = `<button class="backup-toggle-btn" disabled>📁 尚無備份紀錄</button>`;
     return;
   }
-  panel.innerHTML = entries.map(b => {
-    const lastBackup = new Date(b.lastBackupAt).toLocaleString('zh-TW');
-    return `<div class="backup-row"><span>${b.email}</span><span class="backup-status-text">最後備份：${lastBackup}</span></div>`;
+
+  const latest = allRecords[0];
+  const latestTime = new Date(latest.backupAt).toLocaleString('zh-TW');
+
+  const historyRows = allRecords.map(r => {
+    const t = new Date(r.backupAt).toLocaleString('zh-TW');
+    return `<div class="backup-row"><span>${r.email}</span><span class="backup-status-text">${t}</span></div>`;
   }).join("");
+
+  panel.innerHTML = `
+    <button class="backup-toggle-btn" onclick="toggleBackupHistory()">📁 ${latest.email} 最後備份：${latestTime}（共${allRecords.length}次） ▾</button>
+    <div id="backupHistoryList" style="display:none; margin-top:8px;">${historyRows}</div>
+  `;
+}
+
+function toggleBackupHistory() {
+  const list = document.getElementById("backupHistoryList");
+  if (!list) return;
+  list.style.display = list.style.display === "none" ? "block" : "none";
 }
 
 const CAPACITY_WARNING_THRESHOLD = 5;
@@ -1041,7 +1078,7 @@ function checkCapacityWarning(messageCount) {
 function markUserBackup() {
   if (!currentUser) return;
   const userKey = emailToKey(currentUser.email);
-  db.ref("backupStatus/" + userKey).set({ email: currentUser.email, lastBackupAt: Date.now() });
+  db.ref("backupHistory/" + userKey).push({ email: currentUser.email, backupAt: Date.now() });
 
   if (pendingConsensusAfterBackup) {
     pendingConsensusAfterBackup = false;
