@@ -1210,6 +1210,20 @@ function isPureNumeric(str) {
   return /^[0-9０-９\-－:：.．,，/／()（）\s+#]+$/.test(trimmed) && /[0-9０-９]/.test(trimmed);
 }
 
+function normalizeForCompare(str) {
+  return str
+    .replace(/～/g, "~")
+    .replace(/，/g, ",")
+    .replace(/。/g, ".")
+    .replace(/！/g, "!")
+    .replace(/？/g, "?")
+    .replace(/：/g, ":")
+    .replace(/；/g, ";")
+    .replace(/、/g, ",")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
 function detectSimplifiedByDetectiveLogic(str) {
   const detectiveCheckList = [
     '国', '为', '会', '过', '么', '这', '书', '对', '门', '问', '间', '关', '与', '业', 
@@ -1288,7 +1302,9 @@ function renderChat() {
       let hideTrad = false;
       if (blockMap.trad && tradContent !== "" && correspondingUserInput !== "") {
         let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
-        let isIncluded = correspondingUserInput.includes(tradContent) || tradContent.includes(correspondingUserInput);
+        let normalizedInput = normalizeForCompare(correspondingUserInput);
+        let normalizedTrad = normalizeForCompare(tradContent);
+        let isIncluded = normalizedInput.includes(normalizedTrad) || normalizedTrad.includes(normalizedInput);
         if (!hasSimplified && isIncluded) hideTrad = true;
       }
 
