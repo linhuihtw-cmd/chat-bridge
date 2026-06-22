@@ -1302,7 +1302,7 @@ function renderChat() {
 
       let finalHtmlText = processedLines.filter(l => l !== "").join('');
       let hasExplanation = finalHtmlText.includes("collapsible-explanation");
-      let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanation(${index})">📖 顯示詳細解釋</button></div>` : "";
+      let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanation(${index})">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
       return `${dateSeparator}<div class="msg-box"><div class="bubble ai-card">🤖 <b>DeepSeek 翻譯字卡 / Карточка перевода</b>${finalHtmlText}${toggleBtn}</div>${timeLabel}</div>`;
     }
   }).join("");
@@ -1461,7 +1461,7 @@ function toggleExplanation(index) {
   if (!explanationDiv || !btn) return;
   const isHidden = explanationDiv.style.display === "none";
   explanationDiv.style.display = isHidden ? "block" : "none";
-  btn.innerText = isHidden ? "📖 隱藏詳細解釋" : "📖 顯示詳細解釋";
+  btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
 }
 
 let messageListenerStarted = false;
