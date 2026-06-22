@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v20.91</title>
+  <title>🌉 雙語聊天橋 v20.92</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -595,7 +595,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v20.91<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.91</span></h2>
+<h2>🌉 雙語聊天橋 v20.92<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.92</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -817,7 +817,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v20.91 / Двуязычный мост общения v20.91";
+    document.title = "🌉 雙語聊天橋 v20.92 / Двуязычный мост общения v20.92";
   }
 });
 
@@ -848,7 +848,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.91";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.92";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -897,15 +897,75 @@ function exportAsText() {
 }
 
 function exportAsHtml() {
-  let rows = chatHistory.map(m => {
+  let rows = chatHistory.map((m, idx) => {
     const time = m.timestamp ? new Date(m.timestamp).toLocaleString('zh-TW') : "";
     if (m.role === "user") {
-      return `<div style="margin:10px 0;"><b>${time}</b><br>💬 ${escapeHtmlText(m.text)}</div>`;
+      return `<div class="export-msg"><div class="export-time">${time}</div><div class="export-bubble export-user">💬 ${escapeHtmlText(m.text)}</div></div>`;
     } else {
-      return `<div style="margin:10px 0; background:#f6ffed; padding:10px; border-radius:8px;"><b>${time}</b><br><pre style="white-space:pre-wrap; font-family:inherit;">${escapeHtmlText(m.text)}</pre></div>`;
+      let rawText = m.text;
+      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
+        return `<div class="export-msg"><div class="export-time">${time}</div><div class="export-bubble export-error">${escapeHtmlText(rawText)}</div></div>`;
+      }
+      let tagRegex = /(【[^】]+】[^【\n]*)/g;
+      let blocks = rawText.match(tagRegex) || [rawText];
+      let lines = blocks.map(block => {
+        let trimmed = block.trim();
+        if (!trimmed) return "";
+        if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】)/i.test(trimmed)) {
+          return `<div class="export-line">${escapeHtmlText(trimmed)} <button onclick="exportSpeak(${idx}, 'zh')">🔊 Озвучить</button></div>`;
+        }
+        if (/【俄文翻譯[^】]*】/.test(trimmed)) {
+          return `<div class="export-line">${escapeHtmlText(trimmed)} <button onclick="exportSpeak(${idx}, 'ru')">🔊 朗讀俄文</button></div>`;
+        }
+        return `<div class="export-line">${escapeHtmlText(trimmed)}</div>`;
+      });
+      return `<div class="export-msg"><div class="export-time">${time}</div><div class="export-bubble export-ai" data-text="${escapeHtmlText(rawText).replace(/"/g, '&quot;')}">${lines.join("")}</div></div>`;
     }
   });
-  const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>雙語聊天橋封存記錄</title></head><body style="font-family:sans-serif; max-width:800px; margin:auto; padding:20px;"><h2>🌉 雙語聊天橋封存記錄</h2><p>封存時間：${new Date().toLocaleString('zh-TW')}</p><hr>${rows.join("")}</body></html>`;
+
+  const fullHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>雙語聊天橋封存記錄</title>
+<style>
+body { font-family: "Microsoft JhengHei", sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #1a1a1a; color: #e8e6e0; }
+h2 { text-align: center; }
+.export-msg { margin: 12px 0; }
+.export-time { font-size: 12px; color: #7a766e; margin-bottom: 4px; }
+.export-bubble { padding: 12px; border-radius: 10px; }
+.export-user { background: #2a2a2a; }
+.export-ai { background: #232323; border: 0.5px solid #3a3a3a; }
+.export-error { background: rgba(184,92,92,0.1); color: #b85c5c; }
+.export-line { margin: 4px 0; }
+button { background: #a8946f; color: #1a1a1a; border: none; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; margin-left: 6px; }
+</style>
+</head><body>
+<h2>🌉 雙語聊天橋封存記錄</h2>
+<p style="text-align:center; color:#7a766e;">封存時間：${new Date().toLocaleString('zh-TW')}</p>
+<hr>
+${rows.join("")}
+<script>
+const EXPORT_DATA = ${JSON.stringify(chatHistory)};
+function exportSpeak(idx, lang) {
+  const msg = EXPORT_DATA[idx];
+  if (!msg || !msg.text) return;
+  let textToSpeak = "";
+  if (lang === "zh") {
+    const m = msg.text.match(/【繁體中文.*?】([\\s\\S]*?)(?=【|$)/);
+    textToSpeak = m ? m[1].trim() : "";
+  } else {
+    const m = msg.text.match(/【俄文翻譯[^】]*】([\\s\\S]*?)(?=【|$)/);
+    textToSpeak = m ? m[1].trim() : "";
+  }
+  textToSpeak = textToSpeak.replace(/["'「」]/g, "").trim();
+  if (!textToSpeak) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(textToSpeak);
+  u.lang = lang === "zh" ? "zh-TW" : "ru-RU";
+  u.rate = lang === "zh" ? 0.95 : 0.9;
+  speechSynthesis.speak(u);
+}
+<` + `/script>
+</body></html>`;
+
   const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
   downloadBlob(blob, `雙語聊天橋封存_${formatExportDate()}.html`);
   markUserBackup();
