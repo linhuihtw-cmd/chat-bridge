@@ -736,6 +736,7 @@ auth.onAuthStateChanged((user) => {
   if (user.email === ADMIN_EMAIL) {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
     showScreen("mainApp");
+    startMessageListenerOnce();
     document.getElementById("clearDbBtn").style.display = "inline-block";
     db.ref("pendingUsers").on("value", (snapshot) => {
       renderPendingList(snapshot.val());
@@ -758,6 +759,7 @@ auth.onAuthStateChanged((user) => {
   db.ref("approvedUsers/" + userKey).once("value").then((snapshot) => {
     if (snapshot.exists()) {
       showScreen("mainApp");
+      startMessageListenerOnce();
       db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
         if (!approvedSnap.exists()) {
           alert("您已被管理員登出 / Вы были разлогинены администратором");
@@ -772,6 +774,7 @@ auth.onAuthStateChanged((user) => {
       db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
         if (approvedSnap.exists()) {
           showScreen("mainApp");
+          startMessageListenerOnce();
         }
       });
     }
@@ -1438,12 +1441,21 @@ function toggleExplanation(index) {
   btn.innerText = isHidden ? "📖 隱藏詳細解釋" : "📖 顯示詳細解釋";
 }
 
-db.ref("messages").on("child_added", (snapshot) => {
-  const newMsg = snapshot.val();
-  if (!newMsg || !newMsg.text) return;
-  chatHistory.push(newMsg);
-  renderChat();
-});
+let messageListenerStarted = false;
+function startMessageListenerOnce() {
+  if (messageListenerStarted) return;
+  messageListenerStarted = true;
+  setupMessageListener();
+}
+
+function setupMessageListener() {
+  db.ref("messages").on("child_added", (snapshot) => {
+    const newMsg = snapshot.val();
+    if (!newMsg || !newMsg.text) return;
+    chatHistory.push(newMsg);
+    renderChat();
+  });
+}
 </script>
 </body>
 </html>
