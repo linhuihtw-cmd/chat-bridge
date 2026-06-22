@@ -11,19 +11,21 @@
 
   <style>
     :root {
-      --bg-deep: #14161b;
-      --bg-panel: #1a1d24;
-      --bg-elevated: #20242c;
-      --bg-input: #20242c;
-      --border-subtle: #2c3038;
-      --border-strong: #3a3f4a;
+      --bg-deep: #1a1a1a;
+      --bg-panel: #232323;
+      --bg-elevated: #2a2a2a;
+      --bg-input: #2a2a2a;
+      --border-subtle: #3a3a3a;
+      --border-strong: #4a4a4a;
       --text-primary: #e8e6e0;
-      --text-secondary: #9aa0ab;
-      --text-tertiary: #6b7280;
-      --gold: #d4af6a;
-      --gold-dim: #a8854f;
-      --gold-bright: #e8c87d;
-      --error-red: #d97070;
+      --text-secondary: #a8a39a;
+      --text-tertiary: #7a766e;
+      --gold: #c9a876;
+      --gold-dim: #a8946f;
+      --gold-bright: #d9bd8e;
+      --error-red: #b85c5c;
+      --accent-green: #5d7a4f;
+      --accent-blue: #6b7b8c;
     }
 
     body {
@@ -304,27 +306,30 @@
     }
     .btn-consensus-agree {
       flex: 1;
-      background: var(--gold-dim);
-      color: var(--bg-deep);
+      background: var(--accent-green);
+      color: #f0f4ec;
       border: none;
       border-radius: 8px;
-      padding: 10px;
+      padding: 12px;
       font-size: 13px;
       cursor: pointer;
       font-weight: 500;
+      line-height: 1.4;
     }
-    .btn-consensus-agree:hover { background: var(--gold); }
+    .btn-consensus-agree:hover { filter: brightness(1.15); }
     .btn-consensus-later {
       flex: 1;
-      background: transparent;
-      color: var(--text-secondary);
-      border: 0.5px solid var(--border-strong);
+      background: var(--accent-blue);
+      color: #eef1f4;
+      border: none;
       border-radius: 8px;
-      padding: 10px;
+      padding: 12px;
       font-size: 13px;
       cursor: pointer;
+      font-weight: 500;
+      line-height: 1.4;
     }
-    .btn-consensus-later:hover { border-color: var(--gold-dim); }
+    .btn-consensus-later:hover { filter: brightness(1.15); }
 
     .backup-row {
       display: flex;
@@ -941,25 +946,25 @@ function renderConsensusPanel(requestData, myDecision, otherDecision, otherEmail
 
   let statusText = "";
   if (myDecision && otherDecision) {
-    statusText = "雙方皆已確認，正在清空...";
+    statusText = "雙方皆已確認，正在清空... / Оба подтвердили, очистка...";
   } else if (myDecision) {
-    statusText = "您已確認，等待對方確認中...";
+    statusText = "您已確認，等待對方確認中... / Вы подтвердили, ожидание другой стороны...";
   } else if (otherDecision) {
-    statusText = "對方已確認，請選擇您的處理方式";
+    statusText = "對方已確認，請選擇您的處理方式 / Другая сторона подтвердила, выберите ваш вариант";
   } else {
-    statusText = "尚無人確認";
+    statusText = "尚無人確認 / Пока никто не подтвердил";
   }
 
   const buttonsHtml = myDecision
-    ? `<div class="consensus-status">您已選擇：${myDecision === "agree" ? "同意清空" : "封存後清空"}</div>`
+    ? `<div class="consensus-status">您已選擇：${myDecision === "agree" ? "同意清空 / Согласен на очистку" : "匯出聊天紀錄後清空 / Экспорт истории, затем очистка"}</div>`
     : `<div class="consensus-buttons">
-        <button class="btn-consensus-agree" onclick="respondConsensus('agree')">✅ 同意清空</button>
-        <button class="btn-consensus-later" onclick="startBackupThenClear()">📦 封存後清空</button>
+        <button class="btn-consensus-agree" onclick="respondConsensus('agree')">✅ 同意清空<br>Согласен на очистку</button>
+        <button class="btn-consensus-later" onclick="startBackupThenClear()">📦 匯出聊天紀錄後清空<br>Экспорт истории, затем очистка</button>
       </div>`;
 
   panel.innerHTML = `
-    <p class="consensus-title">📦 系統提醒：儲存空間即將滿載</p>
-    <p class="consensus-subtitle">為避免資料遺失，系統需要雙方都確認後才會清空聊天記錄。</p>
+    <p class="consensus-title">📦 系統提醒：儲存空間即將滿載<br><span style="font-size:12px; font-weight:400;">Системное уведомление: хранилище почти заполнено</span></p>
+    <p class="consensus-subtitle">為避免資料遺失，系統需要雙方都確認後才會清空聊天記錄。<br>Чтобы избежать потери данных, для очистки истории чата требуется подтверждение обеих сторон.</p>
     <p class="consensus-status">${statusText}</p>
     ${buttonsHtml}
   `;
@@ -975,7 +980,7 @@ let pendingConsensusAfterBackup = false;
 function respondConsensus(decision) {
   if (!currentUser) return;
   if (decision === "agree") {
-    if (!confirm("確定要同意清空聊天記錄嗎？此動作將不會先備份。")) return;
+    if (!confirm("確定要同意清空聊天記錄嗎？此動作將不會先備份。\nВы уверены, что хотите очистить историю? Без предварительного резервного копирования.")) return;
   }
   const userKey = emailToKey(currentUser.email);
   db.ref("consensusRequest/responses/" + userKey).set({ email: currentUser.email, decision: decision, respondedAt: Date.now() });
@@ -1041,7 +1046,7 @@ function markUserBackup() {
   if (pendingConsensusAfterBackup) {
     pendingConsensusAfterBackup = false;
     db.ref("consensusRequest/responses/" + userKey).set({ email: currentUser.email, decision: "backup_then_clear", respondedAt: Date.now() });
-    alert("✅ 已完成備份，您的清空確認已送出");
+    alert("✅ 已完成備份，您的清空確認已送出\nЭкспорт завершён, ваше подтверждение отправлено");
   }
 }
 
@@ -1180,6 +1185,24 @@ function isSameLocalDay(ts1, ts2) {
   const d1 = new Date(ts1);
   const d2 = new Date(ts2);
   return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+}
+
+function isSkippableContent(str) {
+  const trimmed = str.trim();
+  if (!trimmed) return false;
+
+  const isPureNumeric = /^[0-9０-９\-－:：.．,，/／()（）\s+#]+$/.test(trimmed) && /[0-9０-９]/.test(trimmed);
+  if (isPureNumeric) return true;
+
+  const emojiPattern = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}]/gu;
+  const withoutEmoji = trimmed.replace(emojiPattern, "").trim();
+  if (withoutEmoji === "" && emojiPattern.test(trimmed)) return true;
+
+  const textEmoticonPattern = /^[:;=8xX][\-^]?[)D(\]\[pP\/\\|3oO]+$|^<3+$|^\^[_.]?\^$|^[)(\]\[]+[\-^]?[:;=8]$/;
+  const segments = trimmed.split(/\s+/);
+  if (segments.length > 0 && segments.every(seg => textEmoticonPattern.test(seg))) return true;
+
+  return false;
 }
 
 function isPureNumeric(str) {
@@ -1373,7 +1396,7 @@ async function sendMsg() {
     return;
   }
 
-  if (isPureNumeric(input)) {
+  if (isSkippableContent(input)) {
     isSending = false;
     sendBtn.disabled = false;
     sendBtn.innerText = "送出 / Отправить";
