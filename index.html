@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.01</title>
+  <title>🌉 雙語聊天橋 v21.02</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -603,7 +603,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.01<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.01</span></h2>
+<h2>🌉 雙語聊天橋 v21.02<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.02</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -671,7 +671,7 @@
 
 <script>
 
-const APP_VERSION = "21.01";
+const APP_VERSION = "21.02";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -849,7 +849,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.01 / Двуязычный мост общения v21.01";
+    document.title = "🌉 雙語聊天橋 v21.02 / Двуязычный мост общения v21.02";
   }
 });
 
@@ -880,7 +880,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.01";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.02";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1680,9 +1680,13 @@ function promptSetDisplayName() {
   if (newName === null) return;
   const userKey = emailToKey(currentUser.email);
   if (newName.trim() === "") {
-    db.ref("displayNames/" + userKey).remove();
+    db.ref("displayNames/" + userKey).remove()
+      .then(() => alert("已清除自訂名稱"))
+      .catch(e => alert("清除失敗：" + e.message));
   } else {
-    db.ref("displayNames/" + userKey).set({ name: newName.trim() });
+    db.ref("displayNames/" + userKey).set({ name: newName.trim() })
+      .then(() => alert("✅ 名稱已設定為：" + newName.trim()))
+      .catch(e => alert("❌ 設定失敗：" + e.message));
   }
 }
 
