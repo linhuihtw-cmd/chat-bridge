@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.0</title>
+  <title>🌉 雙語聊天橋 v21.01</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -154,10 +154,10 @@
     .input-area {
       display: flex;
       gap: 10px;
-      align-items: center;
+      align-items: stretch;
     }
 
-    input {
+    textarea#msg {
       flex: 1;
       padding: 12px;
       font-size: 15px;
@@ -166,28 +166,32 @@
       outline: none;
       background: var(--bg-input);
       color: var(--text-primary);
+      resize: none;
+      font-family: inherit;
+      line-height: 1.4;
     }
 
-    input::placeholder {
+    textarea#msg::placeholder {
       color: var(--text-tertiary);
     }
 
-    input:focus {
+    textarea#msg:focus {
       border-color: var(--gold-dim);
       box-shadow: 0 0 0 3px rgba(212, 175, 106, 0.12);
     }
 
     .btn-send {
-      padding: 10px 24px;
-      font-size: 15px;
+      padding: 8px 16px;
+      font-size: 14px;
       background: var(--gold-dim);
       color: var(--bg-deep);
       border: none;
       border-radius: 10px;
       cursor: pointer;
       font-weight: 500;
-      min-width: 150px;
-      height: 45px;
+      min-width: 80px;
+      line-height: 1.3;
+      white-space: pre-line;
     }
     .btn-send:hover { background: var(--gold); }
     .btn-send:disabled { background: var(--border-subtle); color: var(--text-tertiary); cursor: not-allowed; }
@@ -196,9 +200,9 @@
       background: none;
       border: none;
       color: var(--text-tertiary);
-      font-size: 12px;
+      font-size: 22px;
       cursor: pointer;
-      padding: 5px;
+      padding: 5px 8px;
       transition: color 0.2s;
     }
     .btn-clear-db:hover { color: var(--error-red); }
@@ -560,16 +564,20 @@
         gap: 6px;
       }
 
-      input {
+      textarea#msg {
         font-size: 14px;
         padding: 10px;
       }
 
       .btn-send {
-        padding: 10px 14px;
-        font-size: 13px;
-        min-width: 80px;
-        height: 42px;
+        padding: 6px 10px;
+        font-size: 12px;
+        min-width: 60px;
+      }
+
+      .btn-clear-db {
+        font-size: 20px;
+        padding: 4px 6px;
       }
 
       .inner-audio-btn, .inline-copy-btn {
@@ -585,9 +593,9 @@
 
     @media (max-width: 380px) {
       .btn-send {
-        min-width: 65px;
-        padding: 10px 8px;
-        font-size: 12px;
+        min-width: 55px;
+        padding: 6px 6px;
+        font-size: 11px;
       }
     }
   </style>
@@ -595,7 +603,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.0<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.0</span></h2>
+<h2>🌉 雙語聊天橋 v21.01<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.01</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -643,8 +651,8 @@
 <div id="chat"></div>
 
 <div class="input-area">
-  <input id="msg" placeholder="輸入中文或俄文... / Введите текст..." onkeydown="if(event.keyCode==13) sendMsg()" />
-  <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
+  <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2"></textarea>
+  <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出<br>Отправить</button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
   <button class="btn-clear-db" onclick="promptSetDisplayName()" title="設定顯示名稱 / Имя">😊</button>
   <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
@@ -663,7 +671,7 @@
 
 <script>
 
-const APP_VERSION = "21.0";
+const APP_VERSION = "21.01";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -841,7 +849,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.0 / Двуязычный мост общения v21.0";
+    document.title = "🌉 雙語聊天橋 v21.01 / Двуязычный мост общения v21.01";
   }
 });
 
@@ -872,7 +880,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.0";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.01";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1584,14 +1592,14 @@ async function sendMsg() {
     alert("⚠️ 訊息儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
     isSending = false;
     sendBtn.disabled = false;
-    sendBtn.innerText = "送出 / Отправить";
+    sendBtn.innerHTML = "送出<br>Отправить";
     return;
   }
 
   if (isSkippableContent(input)) {
     isSending = false;
     sendBtn.disabled = false;
-    sendBtn.innerText = "送出 / Отправить";
+    sendBtn.innerHTML = "送出<br>Отправить";
     return;
   }
 
@@ -1605,7 +1613,7 @@ async function sendMsg() {
 
   isSending = false;
   sendBtn.disabled = false;
-  sendBtn.innerText = "送出 / Отправить";
+  sendBtn.innerHTML = "送出<br>Отправить";
 }
 
 function speakThisText(index) {
