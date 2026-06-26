@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v20.96</title>
+  <title>🌉 雙語聊天橋 v21.0</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -595,7 +595,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v20.96<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v20.96</span></h2>
+<h2>🌉 雙語聊天橋 v21.0<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.0</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -646,6 +646,7 @@
   <input id="msg" placeholder="輸入中文或俄文... / Введите текст..." onkeydown="if(event.keyCode==13) sendMsg()" />
   <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 / Отправить</button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
+  <button class="btn-clear-db" onclick="promptSetDisplayName()" title="設定顯示名稱 / Имя">😊</button>
   <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
 </div>
 
@@ -662,7 +663,7 @@
 
 <script>
 
-const APP_VERSION = "20.96";
+const APP_VERSION = "21.0";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -775,6 +776,7 @@ auth.onAuthStateChanged((user) => {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
     showScreen("mainApp");
     startMessageListenerOnce();
+    startDisplayNameListenerOnce();
     document.getElementById("clearDbBtn").style.display = "inline-block";
     db.ref("pendingUsers").on("value", (snapshot) => {
       renderPendingList(snapshot.val());
@@ -798,6 +800,7 @@ auth.onAuthStateChanged((user) => {
     if (snapshot.exists()) {
       showScreen("mainApp");
       startMessageListenerOnce();
+    startDisplayNameListenerOnce();
       db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
         if (!approvedSnap.exists()) {
           alert("您已被管理員登出 / Вы были разлогинены администратором");
@@ -813,6 +816,7 @@ auth.onAuthStateChanged((user) => {
         if (approvedSnap.exists()) {
           showScreen("mainApp");
           startMessageListenerOnce();
+    startDisplayNameListenerOnce();
         }
       });
     }
@@ -837,7 +841,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v20.96 / Двуязычный мост общения v20.96";
+    document.title = "🌉 雙語聊天橋 v21.0 / Двуязычный мост общения v21.0";
   }
 });
 
@@ -868,7 +872,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v20.96";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.0";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1407,7 +1411,8 @@ function renderChat() {
     const timeLabel = m.timestamp ? `<span class="msg-time">${formatDualTime(m.timestamp, m.tz)}</span>` : "";
 
     if (m.role === "user") {
-      return `${dateSeparator}<div class="msg-box"><div class="bubble chat-text">💬 訊息 / Сообщение： ${m.text}</div>${timeLabel}</div>`;
+      const displayName = getDisplayName(m.senderEmail);
+      return `${dateSeparator}<div class="msg-box"><div class="bubble chat-text">💬 ${displayName}： ${m.text}</div>${timeLabel}</div>`;
     } else {
       let rawText = m.text;
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
@@ -1574,7 +1579,7 @@ async function sendMsg() {
 
   const senderTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   try {
-    await db.ref("messages").push({ role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone });
+    await db.ref("messages").push({ role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone, senderEmail: currentUser.email });
   } catch (e) {
     alert("⚠️ 訊息儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
     isSending = false;
@@ -1649,6 +1654,42 @@ function toggleExplanation(index) {
   const isHidden = explanationDiv.style.display === "none";
   explanationDiv.style.display = isHidden ? "block" : "none";
   btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
+}
+
+let displayNamesCache = {};
+
+function setupDisplayNameListener() {
+  db.ref("displayNames").on("value", (snapshot) => {
+    displayNamesCache = snapshot.val() || {};
+    renderChat();
+  });
+}
+
+function promptSetDisplayName() {
+  if (!currentUser) return;
+  const current = displayNamesCache[emailToKey(currentUser.email)]?.name || "";
+  const newName = prompt("請輸入您想顯示的名字（留空則顯示原本的Email）\nВведите имя для отображения (оставьте пустым для Email)", current);
+  if (newName === null) return;
+  const userKey = emailToKey(currentUser.email);
+  if (newName.trim() === "") {
+    db.ref("displayNames/" + userKey).remove();
+  } else {
+    db.ref("displayNames/" + userKey).set({ name: newName.trim() });
+  }
+}
+
+function getDisplayName(email) {
+  if (!email) return "訊息 / Сообщение";
+  const userKey = emailToKey(email);
+  const custom = displayNamesCache[userKey]?.name;
+  return custom || email;
+}
+
+let displayNameListenerStarted = false;
+function startDisplayNameListenerOnce() {
+  if (displayNameListenerStarted) return;
+  displayNameListenerStarted = true;
+  setupDisplayNameListener();
 }
 
 let messageListenerStarted = false;
