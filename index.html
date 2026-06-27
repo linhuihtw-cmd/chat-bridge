@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.05</title>
+  <title>🌉 雙語聊天橋 v21.1</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
 
   <style>
     :root {
@@ -610,7 +611,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.05<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.05</span></h2>
+<h2>🌉 雙語聊天橋 v21.1<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.1</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -677,7 +678,7 @@
 
 <script>
 
-const APP_VERSION = "21.05";
+const APP_VERSION = "21.1";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -858,7 +859,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.05 / Двуязычный мост общения v21.05";
+    document.title = "🌉 雙語聊天橋 v21.1 / Двуязычный мост общения v21.1";
   }
 });
 
@@ -889,7 +890,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.05";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.1";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1781,9 +1782,29 @@ function triggerNewMessageAlert(newMsg) {
   }
 }
 
-function requestNotificationPermission() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
+const VAPID_KEY = "BLgS2XDTuhEy50KSqbc0o2kOxVKkQAXxf5StoFaM4IU_T5nhSdDQgmEiakFJU2o_DH8XlAHY_pJokKsLExG4ddY";
+let fcmInitialized = false;
+
+async function requestNotificationPermission() {
+  if (fcmInitialized) return;
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+  if (Notification.permission === "denied") return;
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return;
+
+    const registration = await navigator.serviceWorker.register("/chat-bridge/firebase-messaging-sw.js");
+    const messaging = firebase.messaging();
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+
+    if (token && currentUser) {
+      const userKey = emailToKey(currentUser.email);
+      await db.ref("fcmTokens/" + userKey).set({ token: token, email: currentUser.email, updatedAt: Date.now() });
+      fcmInitialized = true;
+    }
+  } catch (e) {
+    console.log("FCM初始化失敗：", e.message);
   }
 }
 </script>
