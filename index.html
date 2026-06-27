@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.02</title>
+  <title>🌉 雙語聊天橋 v21.03</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -87,6 +87,13 @@
       border-top-left-radius: 4px;
       font-weight: 500;
     }
+
+    .clickable-name {
+      cursor: pointer;
+      text-decoration: underline dotted;
+      text-decoration-color: var(--text-tertiary);
+    }
+    .clickable-name:hover { color: var(--gold); }
 
     .ai-card {
       background: var(--bg-elevated);
@@ -603,7 +610,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.02<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.02</span></h2>
+<h2>🌉 雙語聊天橋 v21.03<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.03</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -654,7 +661,6 @@
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出<br>Отправить</button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
-  <button class="btn-clear-db" onclick="promptSetDisplayName()" title="設定顯示名稱 / Имя">😊</button>
   <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
 </div>
 
@@ -671,7 +677,7 @@
 
 <script>
 
-const APP_VERSION = "21.02";
+const APP_VERSION = "21.03";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -785,6 +791,7 @@ auth.onAuthStateChanged((user) => {
     showScreen("mainApp");
     startMessageListenerOnce();
     startDisplayNameListenerOnce();
+    checkFirstTimeSetName();
     document.getElementById("clearDbBtn").style.display = "inline-block";
     db.ref("pendingUsers").on("value", (snapshot) => {
       renderPendingList(snapshot.val());
@@ -809,6 +816,7 @@ auth.onAuthStateChanged((user) => {
       showScreen("mainApp");
       startMessageListenerOnce();
     startDisplayNameListenerOnce();
+    checkFirstTimeSetName();
       db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
         if (!approvedSnap.exists()) {
           alert("您已被管理員登出 / Вы были разлогинены администратором");
@@ -825,6 +833,7 @@ auth.onAuthStateChanged((user) => {
           showScreen("mainApp");
           startMessageListenerOnce();
     startDisplayNameListenerOnce();
+    checkFirstTimeSetName();
         }
       });
     }
@@ -849,7 +858,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.02 / Двуязычный мост общения v21.02";
+    document.title = "🌉 雙語聊天橋 v21.03 / Двуязычный мост общения v21.03";
   }
 });
 
@@ -880,7 +889,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.02";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.03";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1420,7 +1429,11 @@ function renderChat() {
 
     if (m.role === "user") {
       const displayName = getDisplayName(m.senderEmail);
-      return `${dateSeparator}<div class="msg-box"><div class="bubble chat-text">💬 ${displayName}： ${m.text}</div>${timeLabel}</div>`;
+      const isOwnMessage = currentUser && m.senderEmail === currentUser.email;
+      const nameHtml = isOwnMessage
+        ? `<span class="clickable-name" onclick="promptSetDisplayName()">${displayName} ✏️</span>`
+        : `<span>${displayName}</span>`;
+      return `${dateSeparator}<div class="msg-box"><div class="bubble chat-text">💬 ${nameHtml}： ${m.text}</div>${timeLabel}</div>`;
     } else {
       let rawText = m.text;
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
@@ -1662,6 +1675,21 @@ function toggleExplanation(index) {
   const isHidden = explanationDiv.style.display === "none";
   explanationDiv.style.display = isHidden ? "block" : "none";
   btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
+}
+
+function checkFirstTimeSetName() {
+  if (!currentUser) return;
+  const userKey = emailToKey(currentUser.email);
+  db.ref("displayNames/" + userKey).once("value").then((snapshot) => {
+    if (!snapshot.exists()) {
+      setTimeout(() => {
+        const newName = prompt("歡迎！請設定您想顯示的名字（之後可隨時點擊自己的名字修改）\nДобро пожаловать! Введите имя для отображения (можно изменить позже)");
+        if (newName && newName.trim() !== "") {
+          db.ref("displayNames/" + userKey).set({ name: newName.trim() });
+        }
+      }, 300);
+    }
+  });
 }
 
 let displayNamesCache = {};
