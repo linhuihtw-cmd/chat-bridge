@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.17</title>
+  <title>🌉 雙語聊天橋 v21.2</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -205,6 +205,56 @@
     }
     .btn-send:hover { background: var(--gold); }
     .btn-send:disabled { background: var(--border-subtle); color: var(--text-tertiary); cursor: not-allowed; }
+
+    .send-arrow {
+      display: inline-block;
+      transform: rotate(-45deg);
+    }
+
+    .emoji-panel {
+      background: var(--bg-panel);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 12px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .emoji-tabs {
+      display: flex;
+      border-bottom: 0.5px solid var(--border-subtle);
+      overflow-x: auto;
+    }
+    .emoji-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+    .emoji-tab.active {
+      color: var(--gold);
+      border-bottom: 2px solid var(--gold);
+    }
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 2px;
+      padding: 10px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .emoji-item {
+      background: none;
+      border: none;
+      font-size: 22px;
+      padding: 6px;
+      cursor: pointer;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .emoji-item:hover { background: var(--bg-elevated); }
 
     .btn-clear-db {
       background: none;
@@ -618,7 +668,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.17<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.17</span></h2>
+<h2>🌉 雙語聊天橋 v21.2<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.2</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -667,9 +717,15 @@
 
 <div class="input-area">
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)"></textarea>
-  <button id="sendBtn" class="btn-send" onclick="sendMsg()">➤</button>
+  <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
+  <button class="btn-clear-db" onclick="toggleEmojiPanel()" title="表情符號 / Эмодзи">😊</button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
   <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
+</div>
+
+<div id="emojiPanel" class="emoji-panel" style="display:none;">
+  <div class="emoji-tabs" id="emojiTabs"></div>
+  <div class="emoji-grid" id="emojiGrid"></div>
 </div>
 
 <div id="exportMenu" class="export-modal-overlay" style="display:none;">
@@ -685,7 +741,7 @@
 
 <script>
 
-const APP_VERSION = "21.17";
+const APP_VERSION = "21.2";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -866,7 +922,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.17 / Двуязычный мост общения v21.17";
+    document.title = "🌉 雙語聊天橋 v21.2 / Двуязычный мост общения v21.2";
   }
 });
 
@@ -897,7 +953,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.17";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.2";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -921,6 +977,59 @@ function copyThisLine(text, btnObj) {
   }).catch(err => {
     alert("複製失敗：" + err);
   });
+}
+
+const EMOJI_CATEGORIES = {
+  "😊": ["😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","🥰","😘","😗","😙","😚","🙂","🤗","🤩","🤔","🤨","😐","😑","😶","🙄","😏","😣","😥","😮","🤐","😯","😪","😫","😴","😌","😛","😜","😝","🤤","😒","😓","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😞","😟","😤","😢","😭","😦","😧","😨","😩","🤯","😬","😰","😱","🥵","🥶","😳","🤪","😵","😡","😠","🤬","😷","🤒","🤕","🤢","🤮"],
+  "❤️": ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","😻","🥰","💋","💌"],
+  "👍": ["👍","👎","👌","🤞","✌️","🤟","🤘","👊","✊","🤛","🤜","👏","🙌","👐","🤲","🙏","💪","🤝","👋","🖐️","✋","🖖","👆","👇","👈","👉","☝️","✍️"],
+  "🐱": ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🦆","🦉","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐢","🐍","🐳","🐬","🐠","🐙","🦀","🐡","🐾"],
+  "🍎": ["🍎","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🌽","🥕","🍞","🥐","🥖","🧀","🍔","🍟","🍕","🌭","🍿","🍩","🍪","🎂","🍰","🍫","🍬","🍭","🍦","☕","🍵","🍺","🍷","🥤"],
+  "⚽": ["⚽","🏀","🏈","⚾","🎾","🏐","🏉","🎱","🏓","🏸","🥊","🎮","🎲","🎯","🎵","🎤","🎸","🎹","🎨","📷","🎬","✈️","🚗","🚀","⛵","🏖️","🏔️","🌈","⭐","🌙","☀️","☁️","⛅","🌧️","❄️","🔥","💧","🎉","🎁","🎈"]
+};
+
+let activeEmojiCategory = "😊";
+
+function toggleEmojiPanel() {
+  const panel = document.getElementById("emojiPanel");
+  if (!panel) return;
+  const isHidden = panel.style.display === "none";
+  if (isHidden) {
+    renderEmojiPanel();
+    panel.style.display = "block";
+  } else {
+    panel.style.display = "none";
+  }
+}
+
+function renderEmojiPanel() {
+  const tabsDiv = document.getElementById("emojiTabs");
+  const gridDiv = document.getElementById("emojiGrid");
+  if (!tabsDiv || !gridDiv) return;
+
+  tabsDiv.innerHTML = Object.keys(EMOJI_CATEGORIES).map(cat =>
+    `<button class="emoji-tab ${cat === activeEmojiCategory ? 'active' : ''}" onclick="switchEmojiCategory('${cat}')">${cat}</button>`
+  ).join("");
+
+  gridDiv.innerHTML = EMOJI_CATEGORIES[activeEmojiCategory].map(emoji =>
+    `<button class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</button>`
+  ).join("");
+}
+
+function switchEmojiCategory(cat) {
+  activeEmojiCategory = cat;
+  renderEmojiPanel();
+}
+
+function insertEmoji(emoji) {
+  const inputObj = document.getElementById("msg");
+  const start = inputObj.selectionStart;
+  const end = inputObj.selectionEnd;
+  const text = inputObj.value;
+  inputObj.value = text.slice(0, start) + emoji + text.slice(end);
+  const newPos = start + emoji.length;
+  inputObj.focus();
+  inputObj.setSelectionRange(newPos, newPos);
 }
 
 function showExportMenu() {
@@ -1639,14 +1748,14 @@ async function sendMsg() {
     alert("⚠️ 訊息儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
     isSending = false;
     sendBtn.disabled = false;
-    sendBtn.innerHTML = "➤";
+    sendBtn.innerHTML = "<span class=\"send-arrow\">➤</span>";
     return;
   }
 
   if (isSkippableContent(input)) {
     isSending = false;
     sendBtn.disabled = false;
-    sendBtn.innerHTML = "➤";
+    sendBtn.innerHTML = "<span class=\"send-arrow\">➤</span>";
     return;
   }
 
@@ -1660,7 +1769,7 @@ async function sendMsg() {
 
   isSending = false;
   sendBtn.disabled = false;
-  sendBtn.innerHTML = "➤";
+  sendBtn.innerHTML = "<span class=\"send-arrow\">➤</span>";
 }
 
 function speakThisText(index) {
