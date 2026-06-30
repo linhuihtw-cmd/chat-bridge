@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.21</title>
+  <title>🌉 雙語聊天橋 v21.22</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -265,6 +265,12 @@
     .emoji-quick-row .emoji-item {
       font-size: 20px;
       flex-shrink: 0;
+    }
+    .emoji-plus-btn {
+      font-size: 16px !important;
+      color: var(--gold);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 6px;
     }
 
     .btn-clear-db {
@@ -679,7 +685,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.21<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.21</span></h2>
+<h2>🌉 雙語聊天橋 v21.22<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.22</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -734,7 +740,7 @@
 <div id="emojiQuickRow" class="emoji-quick-row"></div>
 
 <div class="input-area">
-  <button class="btn-clear-db" onclick="toggleEmojiPanel()" title="表情符號 / Эмодзи">😊</button>
+  <button class="btn-clear-db" onclick="alert('圖片功能即將推出 / Функция изображений скоро появится')" title="傳送圖片 / Изображение">📷</button>
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
@@ -754,7 +760,7 @@
 
 <script>
 
-const APP_VERSION = "21.21";
+const APP_VERSION = "21.22";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -938,7 +944,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.21 / Двуязычный мост общения v21.21";
+    document.title = "🌉 雙語聊天橋 v21.22 / Двуязычный мост общения v21.22";
   }
 });
 
@@ -969,7 +975,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.21";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.22";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1077,7 +1083,8 @@ function renderEmojiQuickRow() {
   const row = document.getElementById("emojiQuickRow");
   if (!row) return;
   const list = getRecentEmojiList();
-  row.innerHTML = list.map(emoji =>
+  const plusBtn = `<button class="emoji-item emoji-plus-btn" onclick="toggleEmojiPanel()" title="更多表情 / Больше эмодзи">➕</button>`;
+  row.innerHTML = plusBtn + list.map(emoji =>
     `<button class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</button>`
   ).join("");
 }
