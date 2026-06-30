@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.10</title>
+  <title>🌉 雙語聊天橋 v21.11</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -103,7 +103,8 @@
       align-self: flex-end;
       border-top-right-radius: 4px;
       width: 75%;
-      padding: 0;
+      position: relative;
+      padding: 10px 44px 10px 14px;
     }
 
     .ai-card b {
@@ -362,38 +363,27 @@
     }
     .correction-inline-send:hover { background: var(--gold); }
 
-    .card-collapse-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 10px 14px 8px 14px;
-      cursor: pointer;
-    }
-    .card-preview-text {
-      flex: 1;
-      font-size: 14px;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
     .card-collapse-arrow {
+      position: absolute;
+      top: 8px;
+      right: 8px;
       color: var(--gold-dim);
-      font-size: 20px;
+      background: var(--bg-elevated);
+      font-size: 16px;
       line-height: 1;
       flex-shrink: 0;
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
       border: 0.5px solid var(--border-strong);
       border-radius: 8px;
+      cursor: pointer;
       transition: transform 0.2s;
     }
     .card-body {
-      padding: 0 14px 10px 14px;
+      margin-top: 4px;
     }
 
     @keyframes msgHighlightFlash {
@@ -746,7 +736,7 @@
         width: 88%;
       }
       .ai-card {
-        padding: 0;
+        padding: 8px 40px 8px 12px;
       }
 
       .input-area {
@@ -797,7 +787,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.10<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.10</span></h2>
+<h2>🌉 雙語聊天橋 v21.11<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.11</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -872,7 +862,7 @@
 
 <script>
 
-const APP_VERSION = "21.10";
+const APP_VERSION = "21.11";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1056,7 +1046,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.10 / Двуязычный мост общения v21.10";
+    document.title = "🌉 雙語聊天橋 v21.11 / Двуязычный мост общения v21.11";
   }
 });
 
@@ -1087,7 +1077,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.10";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.11";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1773,11 +1763,11 @@ function renderChat() {
         if (!hasSimplified && isIncluded) hideTrad = true;
       }
 
-      let orderedBlocks = blockMap.ru
-        ? [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain]
-        : [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain];
-
       let isInputRussian = isPrimarilyRussian(correspondingUserInput);
+
+      let orderedBlocks = isInputRussian
+        ? [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain]
+        : [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain];
 
       let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
         if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isInputRussian) return "";
@@ -1806,18 +1796,11 @@ function renderChat() {
         return `<div class="card-line">${trimmedLine}</div>`;
       });
 
-      let finalHtmlText = processedLines.filter(l => l !== "").join('');
-      let hasExplanation = finalHtmlText.includes("collapsible-explanation");
+      let nonEmptyLines = processedLines.filter(l => l !== "");
+      let firstLineHtml = nonEmptyLines.length > 0 ? nonEmptyLines[0] : "";
+      let finalHtmlText = nonEmptyLines.slice(1).join('');
+      let hasExplanation = nonEmptyLines.join('').includes("collapsible-explanation");
       let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanation(${index})">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
-
-      let previewSourceLine = orderedBlocks.find(b => b !== null && b !== undefined && !b.startsWith("【語意解釋"));
-      let cardPreviewText = "";
-      if (previewSourceLine) {
-        let previewMatch = previewSourceLine.match(/^【[^】]+】([\s\S]*)$/);
-        cardPreviewText = previewMatch ? previewMatch[1].trim() : previewSourceLine.trim();
-      }
-      if (cardPreviewText.length > 32) cardPreviewText = cardPreviewText.slice(0, 32) + "…";
-      cardPreviewText = escapeHtmlText(cardPreviewText);
 
       let correctionBtns = "";
       let correctedContentHtml = "";
@@ -1852,7 +1835,7 @@ function renderChat() {
         }
       }
 
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><div class="card-collapse-header" onclick="toggleCard(${index})"><span class="card-preview-text">${cardPreviewText}</span><span class="card-collapse-arrow">▾</span></div><div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><button class="card-collapse-arrow" onclick="toggleCard(${index})">▾</button>${firstLineHtml}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
