@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.8</title>
+  <title>🌉 雙語聊天橋 v21.9</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -377,6 +377,10 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .card-preview-action {
+      flex-shrink: 0;
+      margin: 0 2px;
     }
     .card-collapse-arrow {
       color: var(--gold-dim);
@@ -797,7 +801,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.8<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.8</span></h2>
+<h2>🌉 雙語聊天橋 v21.9<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.9</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -872,7 +876,7 @@
 
 <script>
 
-const APP_VERSION = "21.8";
+const APP_VERSION = "21.9";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1056,7 +1060,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.8 / Двуязычный мост общения v21.8";
+    document.title = "🌉 雙語聊天橋 v21.9 / Двуязычный мост общения v21.9";
   }
 });
 
@@ -1087,7 +1091,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.8";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.9";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1783,12 +1787,26 @@ function renderChat() {
         ? (hideTrad ? null : blockMap.trad) || blockMap.simp || blockMap.pinyin || blockMap.explain || null
         : blockMap.ru || blockMap.trad || blockMap.simp || blockMap.pinyin || null;
       let cardPreviewText = "";
+      let previewFullContent = "";
       if (previewSourceLine) {
         let previewMatch = previewSourceLine.match(/^【[^】]+】([\s\S]*)$/);
-        cardPreviewText = previewMatch ? previewMatch[1].trim() : previewSourceLine.trim();
+        previewFullContent = previewMatch ? previewMatch[1].trim() : previewSourceLine.trim();
+        cardPreviewText = previewFullContent;
       }
       if (cardPreviewText.length > 32) cardPreviewText = cardPreviewText.slice(0, 32) + "…";
       cardPreviewText = escapeHtmlText(cardPreviewText);
+
+      let previewActionBtn = "";
+      if (previewSourceLine && previewFullContent.length > 0) {
+        if (/【俄文翻譯[^】]*】/.test(previewSourceLine)) {
+          previewActionBtn = `<button class="inner-audio-btn card-preview-action" onclick="event.stopPropagation(); speakRussianText(${index})">🔊</button>`;
+        } else if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(previewSourceLine)) {
+          previewActionBtn = `<button class="inner-audio-btn card-preview-action" onclick="event.stopPropagation(); speakThisText(${index})">🔊</button>`;
+        } else if (!previewSourceLine.startsWith("【語意解釋")) {
+          let safeContent = previewFullContent.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          previewActionBtn = `<button class="inline-copy-btn card-preview-action" onclick="event.stopPropagation(); copyThisLine('${safeContent}', this)">📋</button>`;
+        }
+      }
 
       let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
         if (trimmedLine === previewSourceLine) return "";
@@ -1856,7 +1874,7 @@ function renderChat() {
         }
       }
 
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><div class="card-collapse-header" onclick="toggleCard(${index})"><span class="card-preview-text">${cardPreviewText}</span><span class="card-collapse-arrow">▾</span></div><div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><div class="card-collapse-header" onclick="toggleCard(${index})"><span class="card-preview-text">${cardPreviewText}</span>${previewActionBtn}<span class="card-collapse-arrow">▾</span></div><div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
