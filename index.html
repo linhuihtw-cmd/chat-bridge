@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.7</title>
+  <title>🌉 雙語聊天橋 v21.8</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -797,7 +797,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.7<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.7</span></h2>
+<h2>🌉 雙語聊天橋 v21.8<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.8</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -872,7 +872,7 @@
 
 <script>
 
-const APP_VERSION = "21.7";
+const APP_VERSION = "21.8";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1056,7 +1056,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.7 / Двуязычный мост общения v21.7";
+    document.title = "🌉 雙語聊天橋 v21.8 / Двуязычный мост общения v21.8";
   }
 });
 
@@ -1087,7 +1087,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.7";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.8";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1773,11 +1773,11 @@ function renderChat() {
         if (!hasSimplified && isIncluded) hideTrad = true;
       }
 
-      let orderedBlocks = blockMap.ru
-        ? [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain]
-        : [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain];
-
       let isInputRussian = isPrimarilyRussian(correspondingUserInput);
+
+      let orderedBlocks = isInputRussian
+        ? [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain]
+        : [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain];
 
       let previewSourceLine = isInputRussian
         ? (hideTrad ? null : blockMap.trad) || blockMap.simp || blockMap.pinyin || blockMap.explain || null
@@ -2085,7 +2085,7 @@ function toggleCorrectionInput(index) {
     return;
   }
   area.innerHTML = `<div class="correction-inline-row">
-    <input type="text" class="correction-inline-input" id="correctionInput-${index}" placeholder="用您自己的語言輸入真正的意思 / Введите, что вы хотели сказать" />
+    <input type="text" class="correction-inline-input" id="correctionInput-${index}" placeholder="Введите, что вы хотели сказать / 用您自己的語言輸入真正的意思" />
     <button class="correction-inline-send" onclick="submitCorrection(${index})"><span class="send-arrow">➤</span></button>
   </div>`;
   const inputEl = document.getElementById("correctionInput-" + index);
