@@ -380,8 +380,16 @@
     }
     .card-collapse-arrow {
       color: var(--gold-dim);
-      font-size: 12px;
+      font-size: 20px;
+      line-height: 1;
       flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
       transition: transform 0.2s;
     }
     .card-body {
@@ -1771,7 +1779,17 @@ function renderChat() {
 
       let isInputRussian = isPrimarilyRussian(correspondingUserInput);
 
+      let previewSourceLine = orderedBlocks.find(b => b !== null && b !== undefined && !b.startsWith("【語意解釋") && !(/【俄文翻譯[^】]*】/.test(b) && isInputRussian));
+      let cardPreviewText = "";
+      if (previewSourceLine) {
+        let previewMatch = previewSourceLine.match(/^【[^】]+】([\s\S]*)$/);
+        cardPreviewText = previewMatch ? previewMatch[1].trim() : previewSourceLine.trim();
+      }
+      if (cardPreviewText.length > 32) cardPreviewText = cardPreviewText.slice(0, 32) + "…";
+      cardPreviewText = escapeHtmlText(cardPreviewText);
+
       let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
+        if (trimmedLine === previewSourceLine) return "";
         if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isInputRussian) return "";
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
           return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
@@ -1802,14 +1820,6 @@ function renderChat() {
       let hasExplanation = finalHtmlText.includes("collapsible-explanation");
       let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanation(${index})">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
 
-      let previewSourceLine = orderedBlocks.find(b => b !== null && b !== undefined && !b.startsWith("【語意解釋"));
-      let cardPreviewText = "";
-      if (previewSourceLine) {
-        let previewMatch = previewSourceLine.match(/^【[^】]+】([\s\S]*)$/);
-        cardPreviewText = previewMatch ? previewMatch[1].trim() : previewSourceLine.trim();
-      }
-      if (cardPreviewText.length > 32) cardPreviewText = cardPreviewText.slice(0, 32) + "…";
-      cardPreviewText = escapeHtmlText(cardPreviewText);
 
       let correctionBtns = "";
       let correctedContentHtml = "";
