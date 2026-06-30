@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.11</title>
+  <title>🌉 雙語聊天橋 v21.12</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -787,7 +787,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.11<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.11</span></h2>
+<h2>🌉 雙語聊天橋 v21.12<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.12</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -862,7 +862,7 @@
 
 <script>
 
-const APP_VERSION = "21.11";
+const APP_VERSION = "21.12";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1046,7 +1046,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.11 / Двуязычный мост общения v21.11";
+    document.title = "🌉 雙語聊天橋 v21.12 / Двуязычный мост общения v21.12";
   }
 });
 
@@ -1077,7 +1077,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.11";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.12";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1852,6 +1852,7 @@ function buildPrompt(input) {
 【語意解釋 / Смысловое пояснение】中文 / Китайский：（給中文使用者看的解釋）俄文 / Русский：（給俄羅斯母語者看的道地俄語解釋）
 
 規則：
+- 繁體中文、簡體中文、俄文翻譯這三個欄位必須是純粹的字面直翻，絕對不可以在這些欄位裡用括號夾帶任何AI自己的猜測、補充說明、反問、或對句中人名/暱稱身分的推測，這些欄位只能呈現「這句話字面上說了什麼」，不可呈現「這句話可能是什麼意思」；任何解讀、推測、補充說明，一律只能放在語意解釋欄位，不可混入翻譯欄位
 - 繁體中文欄位須為台灣繁體字
 - 此規則只適用於「真正的固定成語、諺語、俚語」（例如「物以類聚」「狐群狗黨」這類已經是固定詞組、本身帶有約定俗成意涵的用法）：解釋須中性、依語境而定，除非該詞語本身僅有單一褒貶義，否則需說明可用於正面與負面語境並各舉簡短例子；避免使用「壞人」「不好的」等主觀評價字眼。**一般日常口語句子（例如「我來了」「你好嗎」「我今天去採買」這類單純陳述、沒有固定成語典故的句子）不適用此規則，不要主動延伸出正面/負面情境的例子，直接客觀說明這句話的字面意思跟使用情境即可，不要過度解讀**
 - 語意解釋欄位是絕對強制項目，沒有任何例外，絕對不可以讓整個語意解釋欄位完全空白、只留標籤沒有內容。如果這句話字面意思已經很清楚直白、沒有特殊典故或雙關需要說明，最低限度的寫法是：用一句話客觀重述這句話表達或詢問的內容是什麼（例如「這是在詢問某個物品使用後是否會自動收回原位」），不需要過度延伸聯想、不需要猜測弦外之音，單純做字面意思的重述說明即可
