@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.14</title>
+  <title>🌉 雙語聊天橋 v21.15</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -190,16 +190,15 @@
 
     .btn-send {
       padding: 8px 16px;
-      font-size: 14px;
+      font-size: 15px;
       background: var(--gold-dim);
       color: var(--bg-deep);
       border: none;
       border-radius: 10px;
       cursor: pointer;
       font-weight: 500;
-      min-width: 80px;
-      line-height: 1.3;
-      white-space: pre-line;
+      min-width: 70px;
+      white-space: nowrap;
     }
     .btn-send:hover { background: var(--gold); }
     .btn-send:disabled { background: var(--border-subtle); color: var(--text-tertiary); cursor: not-allowed; }
@@ -578,9 +577,9 @@
       }
 
       .btn-send {
-        padding: 4px 8px;
-        font-size: 11px;
-        min-width: 44px;
+        padding: 8px 10px;
+        font-size: 13px;
+        min-width: 56px;
       }
 
       .btn-clear-db {
@@ -601,9 +600,9 @@
 
     @media (max-width: 380px) {
       .btn-send {
-        min-width: 38px;
-        padding: 4px 5px;
-        font-size: 10px;
+        min-width: 50px;
+        padding: 7px 8px;
+        font-size: 12px;
       }
 
       .btn-clear-db {
@@ -616,7 +615,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.14<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.14</span></h2>
+<h2>🌉 雙語聊天橋 v21.15<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.15</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -665,7 +664,7 @@
 
 <div class="input-area">
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)"></textarea>
-  <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出<br>Отправить</button>
+  <button id="sendBtn" class="btn-send" onclick="sendMsg()">送出 ✈️</button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
   <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
 </div>
@@ -683,7 +682,7 @@
 
 <script>
 
-const APP_VERSION = "21.14";
+const APP_VERSION = "21.15";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -864,7 +863,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.14 / Двуязычный мост общения v21.14";
+    document.title = "🌉 雙語聊天橋 v21.15 / Двуязычный мост общения v21.15";
   }
 });
 
@@ -895,7 +894,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.14";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.15";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1637,14 +1636,14 @@ async function sendMsg() {
     alert("⚠️ 訊息儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
     isSending = false;
     sendBtn.disabled = false;
-    sendBtn.innerHTML = "送出<br>Отправить";
+    sendBtn.innerHTML = "送出 ✈️";
     return;
   }
 
   if (isSkippableContent(input)) {
     isSending = false;
     sendBtn.disabled = false;
-    sendBtn.innerHTML = "送出<br>Отправить";
+    sendBtn.innerHTML = "送出 ✈️";
     return;
   }
 
@@ -1658,7 +1657,7 @@ async function sendMsg() {
 
   isSending = false;
   sendBtn.disabled = false;
-  sendBtn.innerHTML = "送出<br>Отправить";
+  sendBtn.innerHTML = "送出 ✈️";
 }
 
 function speakThisText(index) {
