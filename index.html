@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.2</title>
+  <title>🌉 雙語聊天橋 v21.21</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -215,7 +215,7 @@
       background: var(--bg-panel);
       border: 0.5px solid var(--border-strong);
       border-radius: 12px;
-      margin-top: 8px;
+      margin-bottom: 8px;
       overflow: hidden;
     }
     .emoji-tabs {
@@ -255,6 +255,17 @@
       line-height: 1;
     }
     .emoji-item:hover { background: var(--bg-elevated); }
+
+    .emoji-quick-row {
+      display: flex;
+      gap: 4px;
+      padding: 4px 0;
+      overflow-x: auto;
+    }
+    .emoji-quick-row .emoji-item {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
 
     .btn-clear-db {
       background: none;
@@ -668,7 +679,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.2<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.2</span></h2>
+<h2>🌉 雙語聊天橋 v21.21<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.21</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -715,17 +726,19 @@
 
 <div id="chat"></div>
 
-<div class="input-area">
-  <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)"></textarea>
-  <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
-  <button class="btn-clear-db" onclick="toggleEmojiPanel()" title="表情符號 / Эмодзи">😊</button>
-  <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
-  <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
-</div>
-
 <div id="emojiPanel" class="emoji-panel" style="display:none;">
   <div class="emoji-tabs" id="emojiTabs"></div>
   <div class="emoji-grid" id="emojiGrid"></div>
+</div>
+
+<div id="emojiQuickRow" class="emoji-quick-row"></div>
+
+<div class="input-area">
+  <button class="btn-clear-db" onclick="toggleEmojiPanel()" title="表情符號 / Эмодзи">😊</button>
+  <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)"></textarea>
+  <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
+  <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
+  <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
 </div>
 
 <div id="exportMenu" class="export-modal-overlay" style="display:none;">
@@ -741,7 +754,7 @@
 
 <script>
 
-const APP_VERSION = "21.2";
+const APP_VERSION = "21.21";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -855,6 +868,7 @@ auth.onAuthStateChanged((user) => {
     showScreen("mainApp");
     startMessageListenerOnce();
     startDisplayNameListenerOnce();
+    renderEmojiQuickRow();
     checkFirstTimeSetName();
     document.getElementById("clearDbBtn").style.display = "inline-block";
     db.ref("pendingUsers").on("value", (snapshot) => {
@@ -880,6 +894,7 @@ auth.onAuthStateChanged((user) => {
       showScreen("mainApp");
       startMessageListenerOnce();
     startDisplayNameListenerOnce();
+    renderEmojiQuickRow();
     checkFirstTimeSetName();
       db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
         if (!approvedSnap.exists()) {
@@ -897,6 +912,7 @@ auth.onAuthStateChanged((user) => {
           showScreen("mainApp");
           startMessageListenerOnce();
     startDisplayNameListenerOnce();
+    renderEmojiQuickRow();
     checkFirstTimeSetName();
         }
       });
@@ -922,7 +938,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.2 / Двуязычный мост общения v21.2";
+    document.title = "🌉 雙語聊天橋 v21.21 / Двуязычный мост общения v21.21";
   }
 });
 
@@ -953,7 +969,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.2";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.21";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1030,6 +1046,40 @@ function insertEmoji(emoji) {
   const newPos = start + emoji.length;
   inputObj.focus();
   inputObj.setSelectionRange(newPos, newPos);
+
+  recordRecentEmoji(emoji);
+}
+
+const RECENT_EMOJI_KEY = "recentEmojiList";
+const RECENT_EMOJI_MAX = 10;
+
+function getRecentEmojiList() {
+  try {
+    const stored = localStorage.getItem(RECENT_EMOJI_KEY);
+    return stored ? JSON.parse(stored) : ["😊","❤️","😂","👍","🎉","😢","🔥","🙏"];
+  } catch (e) {
+    return ["😊","❤️","😂","👍","🎉","😢","🔥","🙏"];
+  }
+}
+
+function recordRecentEmoji(emoji) {
+  let list = getRecentEmojiList();
+  list = list.filter(e => e !== emoji);
+  list.unshift(emoji);
+  list = list.slice(0, RECENT_EMOJI_MAX);
+  try {
+    localStorage.setItem(RECENT_EMOJI_KEY, JSON.stringify(list));
+  } catch (e) {}
+  renderEmojiQuickRow();
+}
+
+function renderEmojiQuickRow() {
+  const row = document.getElementById("emojiQuickRow");
+  if (!row) return;
+  const list = getRecentEmojiList();
+  row.innerHTML = list.map(emoji =>
+    `<button class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</button>`
+  ).join("");
 }
 
 function showExportMenu() {
