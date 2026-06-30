@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.23</title>
+  <title>🌉 雙語聊天橋 v21.24</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -685,7 +685,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.23<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.23</span></h2>
+<h2>🌉 雙語聊天橋 v21.24<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.24</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -760,7 +760,7 @@
 
 <script>
 
-const APP_VERSION = "21.23";
+const APP_VERSION = "21.24";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -944,7 +944,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.23 / Двуязычный мост общения v21.23";
+    document.title = "🌉 雙語聊天橋 v21.24 / Двуязычный мост общения v21.24";
   }
 });
 
@@ -975,7 +975,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.23";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.24";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1014,13 +1014,14 @@ let activeEmojiCategory = "😊";
 
 function toggleEmojiPanel() {
   const panel = document.getElementById("emojiPanel");
+  const inputObj = document.getElementById("msg");
   if (!panel) return;
   const isHidden = panel.style.display === "none";
   if (isHidden) {
     renderEmojiPanel();
     panel.style.display = "block";
     setTimeout(() => {
-      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (inputObj) inputObj.scrollIntoView({ behavior: "smooth", block: "end" });
     }, 50);
   } else {
     panel.style.display = "none";
