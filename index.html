@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.5</title>
+  <title>🌉 雙語聊天橋 v21.6</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -797,7 +797,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.3<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.3</span></h2>
+<h2>🌉 雙語聊天橋 v21.6<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.6</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -872,7 +872,7 @@
 
 <script>
 
-const APP_VERSION = "21.3";
+const APP_VERSION = "21.6";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1056,7 +1056,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.3 / Двуязычный мост общения v21.3";
+    document.title = "🌉 雙語聊天橋 v21.6 / Двуязычный мост общения v21.6";
   }
 });
 
@@ -1087,7 +1087,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.3";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.6";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -2237,7 +2237,14 @@ function setupMessageListener() {
       const newCorrection = updatedMsg.correction || {};
 
       if (currentUser && !isInitialMessageLoad) {
-        const isSpeaker = currentUser.email === updatedMsg.senderEmail;
+        let realSenderEmail = "";
+        for (let i = idx - 1; i >= 0; i--) {
+          if (chatHistory[i] && chatHistory[i].role === "user") {
+            realSenderEmail = chatHistory[i].senderEmail || "";
+            break;
+          }
+        }
+        const isSpeaker = currentUser.email === realSenderEmail;
         if (isSpeaker && newCorrection.confused && !prevCorrection.confused) {
           triggerCorrectionAlert("❓ 對方表示「我不太明白」/ Я не понимаю", snapshot.key);
         }
