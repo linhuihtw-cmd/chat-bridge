@@ -103,7 +103,7 @@
       align-self: flex-end;
       border-top-right-radius: 4px;
       width: 75%;
-      padding-bottom: 10px;
+      padding: 0;
     }
 
     .ai-card b {
@@ -297,34 +297,26 @@
     .toggle-explain-btn:hover { background: rgba(212, 175, 106, 0.1); }
 
     .correction-buttons {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
+      margin-top: 6px;
     }
-    .btn-correction-ok, .btn-correction-fix {
-      flex: 1;
+    .btn-correction-confused, .btn-correction-fix {
+      width: 100%;
       border-radius: 8px;
-      padding: 8px;
+      padding: 7px 10px;
       font-size: 12px;
       cursor: pointer;
-      border: none;
-    }
-    .btn-correction-ok {
-      background: var(--accent-green);
-      color: #f0f4ec;
-    }
-    .btn-correction-ok:hover { filter: brightness(1.15); }
-    .btn-correction-fix {
-      background: transparent;
       border: 0.5px solid var(--border-strong);
+      background: transparent;
       color: var(--text-secondary);
+      text-align: left;
     }
+    .btn-correction-confused:hover { border-color: var(--error-red); color: var(--error-red); }
     .btn-correction-fix:hover { border-color: var(--gold-dim); color: var(--gold); }
 
     .correction-status {
       font-size: 12px;
       color: var(--text-tertiary);
-      margin-top: 4px;
+      margin-top: 6px;
     }
 
     .correction-result {
@@ -334,6 +326,75 @@
       margin-top: 6px;
       font-size: 13px;
       border-radius: 4px;
+    }
+
+    .correction-inline-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      align-items: stretch;
+    }
+    .correction-inline-input {
+      flex: 1;
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 12px;
+      padding: 7px 10px;
+      outline: none;
+      font-family: inherit;
+    }
+    .correction-inline-input:focus {
+      border-color: var(--gold-dim);
+    }
+    .correction-inline-send {
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .correction-inline-send:hover { background: var(--gold); }
+
+    .card-collapse-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 14px 8px 14px;
+      cursor: pointer;
+    }
+    .card-preview-text {
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-collapse-arrow {
+      color: var(--gold-dim);
+      font-size: 12px;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    .card-body {
+      padding: 0 14px 10px 14px;
+    }
+
+    @keyframes msgHighlightFlash {
+      0%, 100% { background: transparent; }
+      30%, 70% { background: rgba(212, 175, 106, 0.22); }
+    }
+    .msg-box.msg-highlight {
+      animation: msgHighlightFlash 1.6s ease-in-out;
+      border-radius: 10px;
     }
 
     .date-separator {
@@ -675,6 +736,9 @@
 
       .ai-card, .error-card {
         width: 88%;
+      }
+      .ai-card {
+        padding: 0;
       }
 
       .input-area {
@@ -1651,11 +1715,11 @@ function renderChat() {
       const nameHtml = isOwnMessage
         ? `<span class="clickable-name" onclick="promptSetDisplayName()">${displayName} ✏️</span>`
         : `<span>${displayName}</span>`;
-      return `${dateSeparator}<div class="msg-box"><div class="bubble chat-text">💬 ${nameHtml}： ${m.text}</div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble chat-text">💬 ${nameHtml}： ${m.text}</div>${timeLabel}</div>`;
     } else {
       let rawText = m.text;
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
-        return `${dateSeparator}<div class="msg-box"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
+        return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
       }
       rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
 
@@ -1738,6 +1802,15 @@ function renderChat() {
       let hasExplanation = finalHtmlText.includes("collapsible-explanation");
       let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanation(${index})">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
 
+      let previewSourceLine = orderedBlocks.find(b => b !== null && b !== undefined && !b.startsWith("【語意解釋"));
+      let cardPreviewText = "";
+      if (previewSourceLine) {
+        let previewMatch = previewSourceLine.match(/^【[^】]+】([\s\S]*)$/);
+        cardPreviewText = previewMatch ? previewMatch[1].trim() : previewSourceLine.trim();
+      }
+      if (cardPreviewText.length > 32) cardPreviewText = cardPreviewText.slice(0, 32) + "…";
+      cardPreviewText = escapeHtmlText(cardPreviewText);
+
       let correctionBtns = "";
       let correctedContentHtml = "";
       if (hasExplanation && currentUser) {
@@ -1754,29 +1827,24 @@ function renderChat() {
 
         if (isSpeaker) {
           if (correction.correctedText) {
-            correctionBtns = `<div class="card-line correction-status">✏️ 已更正說明 / Уточнение отправлено</div>`;
+            correctionBtns = `<div class="card-line correction-status">✎ 已送出更正說明 / Уточнение отправлено</div>`;
           } else {
-            correctionBtns = `<div class="card-line correction-buttons">
-              <button class="btn-correction-ok" onclick="markTranslationCorrect(${index})">✅ 翻得對 / Перевод верный</button>
-              <button class="btn-correction-fix" onclick="promptCorrection(${index})">✏️ 不是這個意思，更正 / Не то, исправить</button>
+            correctionBtns = `<div class="card-line correction-buttons" id="correctionArea-${index}">
+              <button class="btn-correction-fix" onclick="toggleCorrectionInput(${index})">✎ Я не про это</button>
             </div>`;
           }
         } else {
-          const understood = correction.understood;
-          if (understood === true) {
-            correctionBtns = `<div class="card-line correction-status">✅ 已標記為看懂了 / Понятно</div>`;
-          } else if (understood === false) {
-            correctionBtns = `<div class="card-line correction-status">❌ 已標記為看不太懂，等待對方更正 / Не совсем понятно</div>`;
+          if (correction.confused) {
+            correctionBtns = `<div class="card-line correction-status">❓ 已告知對方「我不太明白」/ Отправлено: Я не понимаю</div>`;
           } else {
             correctionBtns = `<div class="card-line correction-buttons">
-              <button class="btn-correction-ok" onclick="markUnderstanding(${index}, true)">✅ 我看懂了 / Понятно</button>
-              <button class="btn-correction-fix" onclick="markUnderstanding(${index}, false)">❌ 看不太懂 / Не совсем понятно</button>
+              <button class="btn-correction-confused" onclick="markConfused(${index})">❓ Я не понимаю</button>
             </div>`;
           }
         }
       }
 
-      return `${dateSeparator}<div class="msg-box"><div class="bubble ai-card">🤖 <b>DeepSeek 翻譯字卡 / Карточка перевода</b>${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><div class="card-collapse-header" onclick="toggleCard(${index})"><span class="card-preview-text">${cardPreviewText}</span><span class="card-collapse-arrow">▾</span></div><div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
@@ -1962,35 +2030,86 @@ function speakRussianText(index) {
   speechSynthesis.speak(utteranceRu);
 }
 
-function markTranslationCorrect(index) {
-  const msg = chatHistory[index];
-  if (!msg) return;
-  db.ref("messages/" + msg.firebaseKey + "/correction/markedCorrectAt").set(Date.now());
+function toggleCard(index) {
+  const allCards = document.querySelectorAll(".msg-box");
+  const targetCard = allCards[index] ? allCards[index].querySelector(".ai-card") : null;
+  if (!targetCard) return;
+  const body = targetCard.querySelector(".card-body");
+  const arrow = targetCard.querySelector(".card-collapse-arrow");
+  if (!body) return;
+  const isHidden = body.style.display === "none";
+  body.style.display = isHidden ? "block" : "none";
+  if (arrow) arrow.style.transform = isHidden ? "rotate(180deg)" : "rotate(0deg)";
 }
 
-async function promptCorrection(index) {
+function expandCard(index) {
+  const allCards = document.querySelectorAll(".msg-box");
+  const targetCard = allCards[index] ? allCards[index].querySelector(".ai-card") : null;
+  if (!targetCard) return;
+  const body = targetCard.querySelector(".card-body");
+  const arrow = targetCard.querySelector(".card-collapse-arrow");
+  if (!body) return;
+  body.style.display = "block";
+  if (arrow) arrow.style.transform = "rotate(180deg)";
+}
+
+function markConfused(index) {
   const msg = chatHistory[index];
   if (!msg) return;
-  const correctionInput = prompt("請用您自己的語言，輸入您真正想表達的意思\nВведите на своём языке, что вы на самом деле хотели сказать");
-  if (!correctionInput || correctionInput.trim() === "") return;
+  db.ref("messages/" + msg.firebaseKey + "/correction").update({
+    confused: true,
+    confusedAt: Date.now()
+  });
+}
+
+function toggleCorrectionInput(index) {
+  const allCards = document.querySelectorAll(".msg-box");
+  const targetCard = allCards[index] ? allCards[index].querySelector(".ai-card") : null;
+  if (!targetCard) return;
+  const area = targetCard.querySelector("#correctionArea-" + index);
+  if (!area) return;
+  if (area.querySelector(".correction-inline-input")) {
+    area.innerHTML = `<button class="btn-correction-fix" onclick="toggleCorrectionInput(${index})">✎ Я не про это</button>`;
+    return;
+  }
+  area.innerHTML = `<div class="correction-inline-row">
+    <input type="text" class="correction-inline-input" id="correctionInput-${index}" placeholder="用您自己的語言輸入真正的意思 / Введите, что вы хотели сказать" />
+    <button class="correction-inline-send" onclick="submitCorrection(${index})"><span class="send-arrow">➤</span></button>
+  </div>`;
+  const inputEl = document.getElementById("correctionInput-" + index);
+  if (inputEl) {
+    inputEl.focus();
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitCorrection(index);
+      }
+    });
+  }
+}
+
+async function submitCorrection(index) {
+  const msg = chatHistory[index];
+  if (!msg) return;
+  const inputEl = document.getElementById("correctionInput-" + index);
+  if (!inputEl) return;
+  const correctionInput = inputEl.value.trim();
+  if (correctionInput === "") return;
+
+  const area = inputEl.closest(".correction-buttons");
+  if (area) area.innerHTML = `<div class="correction-status">✎ 正在送出更正... / Отправка...</div>`;
 
   const explainPrompt = `你是中俄翻譯字卡的校正助手。使用者原本表達了一句話，但對方沒有完全理解，現在使用者提供了更精確的說明，請將這個說明翻譯成對方需要的語言，並產生一段簡短的客觀解釋（不要過度延伸或舉例，只需要清楚說明原意），格式如下：
 
 【更正說明 / Уточнение】中文 / Китайский：（用中文呈現更正後的意思）俄文 / Русский：（用道地俄語呈現更正後的意思）
 
-使用者提供的更正內容：${correctionInput.trim()}`;
+使用者提供的更正內容：${correctionInput}`;
 
   const correctedResult = await callDeepSeek(explainPrompt);
   db.ref("messages/" + msg.firebaseKey + "/correction").update({
     correctedText: correctedResult,
     correctedAt: Date.now()
   });
-}
-
-function markUnderstanding(index, understood) {
-  const msg = chatHistory[index];
-  if (!msg) return;
-  db.ref("messages/" + msg.firebaseKey + "/correction/understood").set(understood);
 }
 
 function toggleExplanation(index) {
@@ -2004,6 +2123,20 @@ function toggleExplanation(index) {
   explanationDiv.style.display = isHidden ? "block" : "none";
   btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
 }
+
+function scrollToMessage(firebaseKey) {
+  if (!firebaseKey) return;
+  const el = document.getElementById("msg-" + firebaseKey);
+  if (!el) return;
+  const idx = chatHistory.findIndex(m => m.firebaseKey === firebaseKey);
+  if (idx !== -1) expandCard(idx);
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("msg-highlight");
+  void el.offsetWidth;
+  el.classList.add("msg-highlight");
+}
+
+
 
 function checkFirstTimeSetName() {
   if (!currentUser) return;
@@ -2090,6 +2223,19 @@ function setupMessageListener() {
     if (!updatedMsg) return;
     const idx = chatHistory.findIndex(m => m.firebaseKey === snapshot.key);
     if (idx !== -1) {
+      const prevCorrection = chatHistory[idx].correction || {};
+      const newCorrection = updatedMsg.correction || {};
+
+      if (currentUser && !isInitialMessageLoad) {
+        const isSpeaker = currentUser.email === updatedMsg.senderEmail;
+        if (isSpeaker && newCorrection.confused && !prevCorrection.confused) {
+          triggerCorrectionAlert("❓ 對方表示「我不太明白」/ Я не понимаю", snapshot.key);
+        }
+        if (!isSpeaker && newCorrection.correctedText && !prevCorrection.correctedText) {
+          triggerCorrectionAlert("✎ 對方送出了更正說明 / Я не про это", snapshot.key);
+        }
+      }
+
       updatedMsg.firebaseKey = snapshot.key;
       chatHistory[idx] = updatedMsg;
       renderChat();
@@ -2115,6 +2261,32 @@ function triggerNewMessageAlert(newMsg) {
         icon: "🌉"
       });
       notif.onclick = () => { window.focus(); notif.close(); };
+    } catch (e) {}
+  }
+}
+
+function triggerCorrectionAlert(bodyText, firebaseKey) {
+  playNotificationSound();
+
+  if (!isTabActive) {
+    flashTabTitle();
+  }
+
+  if (isTabActive) {
+    scrollToMessage(firebaseKey);
+  }
+
+  if ("Notification" in window && Notification.permission === "granted" && !isTabActive) {
+    try {
+      const notif = new Notification("🌉 雙語聊天橋 — 需要補充說明", {
+        body: bodyText,
+        icon: "🌉"
+      });
+      notif.onclick = () => {
+        window.focus();
+        scrollToMessage(firebaseKey);
+        notif.close();
+      };
     } catch (e) {}
   }
 }
