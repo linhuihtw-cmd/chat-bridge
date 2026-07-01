@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.47</title>
+  <title>🌉 雙語聊天橋 v21.48</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1071,7 +1071,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.47<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.47</span></h2>
+<h2>🌉 雙語聊天橋 v21.48<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.48</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1162,6 +1162,8 @@
     <button id="settingsConfirm" onclick="saveSettings()">儲存 / Сохранить</button>
     <button id="settingsClose" onclick="closeSettings()">取消 / Отмена</button>
     <div id="adminClearBtn" style="display:none; margin-top:16px;">
+      <div class="profile-setup-label" style="margin-top:0;">成員管理 / Управление участниками</div>
+      <div id="adminMemberList" style="margin-bottom:12px;"></div>
       <button onclick="secureClearDatabase()" style="width:100%;background:#5c3428;color:#d4bfb0;border:none;border-radius:10px;padding:10px;font-size:13px;font-family:inherit;cursor:pointer;">⚠️ 清除歷史紀錄（管理者）</button>
     </div>
   </div>
@@ -1207,7 +1209,7 @@
 
 <script>
 
-const APP_VERSION = "21.47";
+const APP_VERSION = "21.48";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1397,7 +1399,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.47 / Двуязычный мост общения v21.47";
+    document.title = "🌉 雙語聊天橋 v21.48 / Двуязычный мост общения v21.48";
   }
 });
 
@@ -1428,7 +1430,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.47";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.48";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -2716,7 +2718,22 @@ function openSettings() {
   }
   const adminBtn = document.getElementById("adminClearBtn");
   if (adminBtn) {
-    adminBtn.style.display = currentUser.email === ADMIN_EMAIL ? "block" : "none";
+    const isAdmin = currentUser.email === ADMIN_EMAIL;
+    adminBtn.style.display = isAdmin ? "block" : "none";
+    if (isAdmin) {
+      db.ref("approvedUsers").once("value").then(snap => {
+        const users = snap.val() || {};
+        const memberList = document.getElementById("adminMemberList");
+        memberList.innerHTML = Object.entries(users).map(([key, u]) => {
+          const isSelf = u.email === currentUser.email;
+          const name = getDisplayName(u.email);
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border-subtle);">
+            <span style="font-size:13px;color:var(--text-primary);">${name}<span style="color:var(--text-tertiary);font-size:11px;margin-left:6px;">${u.email}</span></span>
+            ${isSelf ? "" : `<button class="btn-kick" onclick="kickUser('${key}','${u.email.replace(/'/g,"\\'")}');closeSettings();" style="font-size:11px;padding:3px 8px;">移除</button>`}
+          </div>`;
+        }).join("");
+      });
+    }
   }
 }
 
