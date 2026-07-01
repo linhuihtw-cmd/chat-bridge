@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.34</title>
+  <title>🌉 雙語聊天橋 v21.35</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -439,25 +439,17 @@
     #correctionAlertGo:hover { background: var(--gold); }
 
     .msg-box.needs-correction .ai-card {
-      background: #f0e8d4;
-      border-color: #d4c8a8;
+      background: var(--bg-elevated);
+      border-color: var(--border-strong);
+      border-left: 3px solid #c09040;
     }
     .msg-box.needs-correction .ai-card .card-collapse-arrow {
-      background: #857860;
-      border-color: #6a6050;
-      color: #f0e8d4;
+      background: var(--bg-elevated);
+      border-color: var(--border-strong);
+      color: var(--gold-dim);
     }
     .msg-box.needs-correction .ai-card .card-line {
-      color: #2a2010;
-    }
-    .msg-box.needs-correction .ai-card .inner-audio-btn,
-    .msg-box.needs-correction .ai-card .inline-copy-btn,
-    .msg-box.needs-correction .ai-card .toggle-explain-btn,
-    .msg-box.needs-correction .ai-card .btn-correction-fix,
-    .msg-box.needs-correction .ai-card .btn-correction-confused {
-      background: #857860 !important;
-      color: #f0e8d4 !important;
-      border-color: #6a6050 !important;
+      color: var(--text-primary);
     }
     .msg-box.needs-correction .card-status-icon::before {
       content: "⚠";
@@ -466,12 +458,13 @@
       margin-right: 4px;
     }
     .msg-box.correction-done .ai-card {
-      background: #2e2e2e;
-      border-color: #484848;
+      background: var(--bg-elevated);
+      border-color: var(--border-strong);
+      border-left: 3px solid #5a7a4a;
     }
     .msg-box.correction-done .ai-card .card-collapse-arrow {
-      background: #2e2e2e;
-      border-color: #484848;
+      background: var(--bg-elevated);
+      border-color: var(--border-strong);
     }
     .msg-box.correction-done .card-status-icon::before {
       content: "✓";
@@ -904,7 +897,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.34<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.34</span></h2>
+<h2>🌉 雙語聊天橋 v21.35<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.35</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -987,7 +980,7 @@
 
 <script>
 
-const APP_VERSION = "21.34";
+const APP_VERSION = "21.35";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1171,7 +1164,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.34 / Двуязычный мост общения v21.34";
+    document.title = "🌉 雙語聊天橋 v21.35 / Двуязычный мост общения v21.35";
   }
 });
 
@@ -1202,7 +1195,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.34";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.35";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
