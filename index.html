@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.50</title>
+  <title>🌉 雙語聊天橋 v21.51</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>∞ We are L⇄V<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост общения v21.50</span></h2>
+<h2>∞ We are L⇄V<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.51</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1212,7 +1212,7 @@
 
 <script>
 
-const APP_VERSION = "21.50";
+const APP_VERSION = "21.51";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1402,7 +1402,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.50 / Двуязычный мост общения v21.50";
+    document.title = "🌉 雙語聊天橋 v21.51 / Двуязычный мост общения v21.51";
   }
 });
 
@@ -1433,7 +1433,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.50";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.51";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1941,7 +1941,7 @@ function renderPresencePanel(presenceData) {
     const isSelf = p.email === ADMIN_EMAIL;
     const kickKey = emailToKey(p.email);
     const kickBtn = isSelf ? "" : `<button class="btn-kick" onclick="kickUser('${kickKey}', '${p.email.replace(/'/g, "\\'")}')">登出</button>`;
-    return `<div class="presence-row"><span>${statusDot} ${p.email}</span><span class="presence-status">${statusText}${timeText ? " · " + timeText : ""}${localTimeText} ${kickBtn}</span></div>`;
+    return `<div class="presence-row"><span>${statusDot} <strong>${getDisplayName(p.email)}</strong><span style="font-size:11px;color:var(--text-tertiary);margin-left:6px;">${p.email}</span></span><span class="presence-status">${statusText}${timeText ? " · " + timeText : ""}${localTimeText} ${kickBtn}</span></div>`;
   }).join("");
 }
 
