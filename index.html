@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.36</title>
+  <title>🌉 雙語聊天橋 v21.37</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1002,7 +1002,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.36<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.36</span></h2>
+<h2>🌉 雙語聊天橋 v21.37<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.37</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1125,7 +1125,7 @@
 
 <script>
 
-const APP_VERSION = "21.36";
+const APP_VERSION = "21.37";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1309,7 +1309,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.36 / Двуязычный мост общения v21.36";
+    document.title = "🌉 雙語聊天橋 v21.37 / Двуязычный мост общения v21.37";
   }
 });
 
@@ -1340,7 +1340,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.36";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.37";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -2601,6 +2601,7 @@ function setupMessageListener() {
     const isOwnMessage = currentUser && newMsg.senderEmail === currentUser.email;
     if (!isOwnMessage) {
       triggerNewMessageAlert(newMsg);
+      sendFcmToOtherUsers("🌉 雙語聊天橋有新訊息", newMsg.role === "user" ? newMsg.text.slice(0,60) : "翻譯字卡已送達");
     }
   });
 
@@ -2629,6 +2630,7 @@ function setupMessageListener() {
             snapshot.key
           );
           markCardNeedsCorrection(snapshot.key);
+          sendFcmToOtherUsers("🌉 雙語聊天橋", "❓ 對方表示「我不太明白」");
         }
         if (!isSpeaker && newCorrection.correctedText && !prevCorrection.correctedText) {
           showCorrectionAlert(
@@ -2637,6 +2639,7 @@ function setupMessageListener() {
             snapshot.key
           );
           markCardCorrectionDone(snapshot.key);
+          sendFcmToOtherUsers("🌉 雙語聊天橋", "✎ 對方送出了更正說明");
         }
         if (newCorrection.confused && !prevCorrection.confused && !isSpeaker) {
           markCardNeedsCorrection(snapshot.key);
@@ -2702,6 +2705,24 @@ function triggerCorrectionAlert(bodyText, firebaseKey) {
 }
 
 const VAPID_KEY = "BLgS2XDTuhEy50KSqbc0o2kOxVKkQAXxf5StoFaM4IU_T5nhSdDQgmEiakFJU2o_DH8XlAHY_pJokKsLExG4ddY";
+async function sendFcmToOtherUsers(title, body) {
+  if (!currentUser) return;
+  try {
+    const snapshot = await db.ref("fcmTokens").once("value");
+    const tokens = snapshot.val() || {};
+    const myKey = emailToKey(currentUser.email);
+    for (const [key, data] of Object.entries(tokens)) {
+      if (key === myKey) continue;
+      if (!data.token) continue;
+      fetch("https://holy-dew-9872.linhuihtw.workers.dev/fcm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: data.token, title, bodyText: body })
+      }).catch(() => {});
+    }
+  } catch(e) {}
+}
+
 let fcmInitialized = false;
 
 async function requestNotificationPermission() {
