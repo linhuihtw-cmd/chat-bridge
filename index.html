@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.21</title>
+  <title>🌉 雙語聊天橋 v21.22</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -432,18 +432,18 @@
     #correctionAlertGo:hover { background: var(--gold); }
 
     .msg-box.needs-correction .ai-card {
-      background: #2a2318;
-      border-color: #6b5e3e;
+      background: #2e2416;
+      border-color: #7a6440;
     }
     .msg-box.needs-correction .ai-card .card-collapse-arrow {
-      background: #2a2318;
+      background: #2e2416;
     }
     .msg-box.correction-done .ai-card {
-      background: #1c2620;
-      border-color: #3d5c42;
+      background: #232018;
+      border-color: #5a5038;
     }
     .msg-box.correction-done .ai-card .card-collapse-arrow {
-      background: #1c2620;
+      background: #232018;
     }
     @keyframes msgHighlightFlash {
       0%, 100% { background: transparent; }
@@ -545,8 +545,8 @@
     }
     .btn-consensus-agree {
       flex: 1;
-      background: var(--error-red);
-      color: #fbeeee;
+      background: #5c3428;
+      color: #d4bfb0;
       border: none;
       border-radius: 8px;
       padding: 12px;
@@ -558,8 +558,8 @@
     .btn-consensus-agree:hover { filter: brightness(1.15); }
     .btn-consensus-later {
       flex: 1;
-      background: var(--accent-green);
-      color: #f0f4ec;
+      background: #3a4228;
+      color: #c8c9b0;
       border: none;
       border-radius: 8px;
       padding: 12px;
@@ -860,7 +860,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.21<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.21</span></h2>
+<h2>🌉 雙語聊天橋 v21.22<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.22</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -943,7 +943,7 @@
 
 <script>
 
-const APP_VERSION = "21.21";
+const APP_VERSION = "21.22";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1127,7 +1127,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.21 / Двуязычный мост общения v21.21";
+    document.title = "🌉 雙語聊天橋 v21.22 / Двуязычный мост общения v21.22";
   }
 });
 
@@ -1158,7 +1158,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.21";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.22";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
