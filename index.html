@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.19</title>
+  <title>🌉 雙語聊天橋 v21.20</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -387,6 +387,70 @@
       margin-top: 4px;
     }
 
+    #correctionAlertOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    #correctionAlertBox {
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 16px;
+      padding: 28px 24px 20px;
+      max-width: 320px;
+      width: 88%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    #correctionAlertIcon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    #correctionAlertMsg {
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    #correctionAlertGo {
+      width: 100%;
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    #correctionAlertGo:hover { background: var(--gold); }
+    #correctionAlertClose {
+      width: 100%;
+      background: transparent;
+      color: var(--text-tertiary);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    #correctionAlertClose:hover { color: var(--text-secondary); }
+
+    .msg-box.needs-correction .ai-card {
+      background: #3a2e1e;
+      border-color: var(--gold-dim);
+    }
+    .msg-box.needs-correction .ai-card .card-collapse-arrow {
+      background: #3a2e1e;
+    }
     @keyframes msgHighlightFlash {
       0%, 100% { background: transparent; }
       30%, 70% { background: rgba(212, 175, 106, 0.22); }
@@ -802,7 +866,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.19<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.19</span></h2>
+<h2>🌉 雙語聊天橋 v21.20<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.20</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -845,6 +909,15 @@
 <!-- 聊天室主畫面：登入且已核准時顯示 -->
 <div id="mainApp" style="display: none;">
 
+<div id="correctionAlertOverlay" style="display:none;">
+  <div id="correctionAlertBox">
+    <div id="correctionAlertIcon">❓</div>
+    <div id="correctionAlertMsg"></div>
+    <button id="correctionAlertGo" onclick="correctionAlertGoTo()">前往查看 / Перейти</button>
+    <button id="correctionAlertClose" onclick="correctionAlertDismiss()">稍後再說 / Позже</button>
+  </div>
+</div>
+
 <div id="consensusPanel" class="consensus-panel" style="display:none;"></div>
 
 <div id="chat"></div>
@@ -877,7 +950,7 @@
 
 <script>
 
-const APP_VERSION = "21.19";
+const APP_VERSION = "21.20";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1061,7 +1134,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.19 / Двуязычный мост общения v21.19";
+    document.title = "🌉 雙語聊天橋 v21.20 / Двуязычный мост общения v21.20";
   }
 });
 
@@ -1092,7 +1165,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.19";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.20";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1843,6 +1916,23 @@ function renderChat() {
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
+
+  if (currentUser) {
+    chatHistory.forEach((m, idx) => {
+      if (m.role !== "ai" || !m.correction || !m.correction.confused || m.firebaseKey === undefined) return;
+      if (m.correction.correctedText) return;
+      let realSenderEmail = "";
+      for (let i = idx - 1; i >= 0; i--) {
+        if (chatHistory[i] && chatHistory[i].role === "user") {
+          realSenderEmail = chatHistory[i].senderEmail || "";
+          break;
+        }
+      }
+      if (currentUser.email === realSenderEmail) {
+        markCardNeedsCorrection(m.firebaseKey);
+      }
+    });
+  }
 }
 
 function buildPrompt(input) {
@@ -2122,6 +2212,40 @@ function toggleExplanation(index) {
   btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
 }
 
+let correctionAlertFirebaseKey = null;
+
+function showCorrectionAlert(icon, msg, firebaseKey) {
+  correctionAlertFirebaseKey = firebaseKey;
+  document.getElementById("correctionAlertIcon").textContent = icon;
+  document.getElementById("correctionAlertMsg").textContent = msg;
+  document.getElementById("correctionAlertOverlay").style.display = "flex";
+  playNotificationSound();
+  flashTabTitle();
+}
+
+function correctionAlertGoTo() {
+  correctionAlertDismiss();
+  if (correctionAlertFirebaseKey) {
+    scrollToMessage(correctionAlertFirebaseKey);
+  }
+}
+
+function correctionAlertDismiss() {
+  document.getElementById("correctionAlertOverlay").style.display = "none";
+}
+
+function markCardNeedsCorrection(firebaseKey) {
+  if (!firebaseKey) return;
+  const el = document.getElementById("msg-" + firebaseKey);
+  if (el) el.classList.add("needs-correction");
+}
+
+function clearCardNeedsCorrection(firebaseKey) {
+  if (!firebaseKey) return;
+  const el = document.getElementById("msg-" + firebaseKey);
+  if (el) el.classList.remove("needs-correction");
+}
+
 function scrollToMessage(firebaseKey) {
   if (!firebaseKey) return;
   const el = document.getElementById("msg-" + firebaseKey);
@@ -2218,7 +2342,6 @@ function setupMessageListener() {
     const updatedMsg = snapshot.val();
     if (!updatedMsg) return;
     const idx = chatHistory.findIndex(m => m.firebaseKey === snapshot.key);
-    console.log("[child_changed] key:", snapshot.key, "idx:", idx, "correction:", JSON.stringify(updatedMsg.correction));
     if (idx !== -1) {
       const prevCorrection = chatHistory[idx].correction || {};
       const newCorrection = updatedMsg.correction || {};
@@ -2232,25 +2355,28 @@ function setupMessageListener() {
           }
         }
         const isSpeaker = currentUser.email === realSenderEmail;
-        console.log("[child_changed] isSpeaker:", isSpeaker, "currentUser:", currentUser.email, "realSenderEmail:", realSenderEmail);
-        console.log("[child_changed] confused:", newCorrection.confused, "prevConfused:", prevCorrection.confused);
+
         if (isSpeaker && newCorrection.confused && !prevCorrection.confused) {
-          console.log("[child_changed] → triggerCorrectionAlert (confused)");
-          triggerCorrectionAlert("❓ 對方表示「我不太明白」/ Я не понимаю", snapshot.key);
+          showCorrectionAlert(
+            "❓",
+            "對方表示「我不太明白這句話的意思」\nЯ не понимаю — нажмите, чтобы пояснить",
+            snapshot.key
+          );
+          markCardNeedsCorrection(snapshot.key);
         }
         if (!isSpeaker && newCorrection.correctedText && !prevCorrection.correctedText) {
-          console.log("[child_changed] → triggerCorrectionAlert (corrected)");
-          triggerCorrectionAlert("✎ 對方送出了更正說明 / Я не про это", snapshot.key);
+          showCorrectionAlert(
+            "✎",
+            "對方送出了更正說明，請查看\nОтправлено уточнение — нажмите, чтобы посмотреть",
+            snapshot.key
+          );
+          markCardNeedsCorrection(snapshot.key);
         }
-      } else {
-        console.log("[child_changed] skipped: currentUser=", !!currentUser, "isInitialMessageLoad=", isInitialMessageLoad);
       }
 
       updatedMsg.firebaseKey = snapshot.key;
       chatHistory[idx] = updatedMsg;
       renderChat();
-    } else {
-      console.log("[child_changed] idx=-1, key not found in chatHistory");
     }
   });
 
