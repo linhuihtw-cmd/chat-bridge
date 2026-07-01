@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.32</title>
+  <title>🌉 雙語聊天橋 v21.33</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -455,9 +455,9 @@
     .msg-box.needs-correction .ai-card .toggle-explain-btn,
     .msg-box.needs-correction .ai-card .btn-correction-fix,
     .msg-box.needs-correction .ai-card .btn-correction-confused {
-      background: #3a3a3a !important;
-      color: #d0d0d0 !important;
-      border-color: #2a2a2a !important;
+      background: #f0e8d4 !important;
+      color: #2a2010 !important;
+      border-color: #d4c8a8 !important;
     }
     .msg-box.needs-correction .card-status-icon::before {
       content: "⚠";
@@ -904,7 +904,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.32<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.32</span></h2>
+<h2>🌉 雙語聊天橋 v21.33<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.33</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -987,7 +987,7 @@
 
 <script>
 
-const APP_VERSION = "21.32";
+const APP_VERSION = "21.33";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1171,7 +1171,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.32 / Двуязычный мост общения v21.32";
+    document.title = "🌉 雙語聊天橋 v21.33 / Двуязычный мост общения v21.33";
   }
 });
 
@@ -1202,7 +1202,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.32";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.33";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
