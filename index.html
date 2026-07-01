@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.37</title>
+  <title>🌉 雙語聊天橋 v21.38</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1002,7 +1002,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.37<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.37</span></h2>
+<h2>🌉 雙語聊天橋 v21.38<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.38</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1125,7 +1125,7 @@
 
 <script>
 
-const APP_VERSION = "21.37";
+const APP_VERSION = "21.38";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1241,6 +1241,7 @@ auth.onAuthStateChanged((user) => {
     startDisplayNameListenerOnce();
     renderEmojiQuickRow();
     checkFirstTimeSetName();
+    setTimeout(() => requestNotificationPermission(), 2000);
   // 管理者清除按鈕現在在設定面板內動態顯示
     db.ref("pendingUsers").on("value", (snapshot) => {
       renderPendingList(snapshot.val());
@@ -1267,6 +1268,7 @@ auth.onAuthStateChanged((user) => {
     startDisplayNameListenerOnce();
     renderEmojiQuickRow();
     checkFirstTimeSetName();
+    setTimeout(() => requestNotificationPermission(), 2000);
       db.ref("approvedUsers/" + userKey).on("value", (approvedSnap) => {
         if (!approvedSnap.exists()) {
           alert("您已被管理員登出 / Вы были разлогинены администратором");
@@ -1285,6 +1287,7 @@ auth.onAuthStateChanged((user) => {
     startDisplayNameListenerOnce();
     renderEmojiQuickRow();
     checkFirstTimeSetName();
+    setTimeout(() => requestNotificationPermission(), 2000);
         }
       });
     }
@@ -1309,7 +1312,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.37 / Двуязычный мост общения v21.37";
+    document.title = "🌉 雙語聊天橋 v21.38 / Двуязычный мост общения v21.38";
   }
 });
 
@@ -1340,7 +1343,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.37";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.38";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
