@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.15</title>
+  <title>🌉 雙語聊天橋 v21.16</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -788,7 +788,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.15<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.15</span></h2>
+<h2>🌉 雙語聊天橋 v21.16<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.16</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -863,7 +863,7 @@
 
 <script>
 
-const APP_VERSION = "21.15";
+const APP_VERSION = "21.16";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1047,7 +1047,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.15 / Двуязычный мост общения v21.15";
+    document.title = "🌉 雙語聊天橋 v21.16 / Двуязычный мост общения v21.16";
   }
 });
 
@@ -1078,7 +1078,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.15";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.16";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1228,7 +1228,7 @@ function exportAsHtml() {
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
         return `<div class="export-msg"><div class="export-time">${time}</div><div class="export-bubble export-error">${escapeHtmlText(rawText)}</div></div>`;
       }
-      let tagRegex = /(【[^】]+】[^【\n]*)/g;
+      let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
       let blocks = rawText.match(tagRegex) || [rawText];
       let hasExplain = false;
       let lines = blocks.map(block => {
@@ -1732,7 +1732,7 @@ function renderChat() {
         }
       }
 
-      let tagRegex = /(【[^】]+】[^【\n]*)/g;
+      let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
       let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
 
       let tradContent = "";
