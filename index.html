@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.17</title>
+  <title>🌉 雙語聊天橋 v21.18</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -739,7 +739,12 @@
       .ai-card {
         padding: 8px 40px 8px 12px;
         font-size: 13px;
-        letter-spacing: 0;
+        letter-spacing: 0 !important;
+        word-spacing: 0 !important;
+      }
+      .ai-card .card-line {
+        letter-spacing: 0 !important;
+        word-spacing: 0 !important;
       }
       .card-collapse-arrow {
         top: 6px;
@@ -797,14 +802,14 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.17<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.17</span></h2>
+<h2>🌉 雙語聊天橋 v21.18<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.18</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
   <div class="auth-card">
     <p class="auth-title">請先登入才能使用聊天室</p>
     <p class="auth-subtitle">Войдите, чтобы продолжить</p>
-    <button id="googleLoginBtn" class="btn-google-login" onclick="loginWithGoogle()">使用 Google 帳號登入</button>
+    <button id="googleLoginBtn" class="btn-google-login" onclick="loginWithGoogle()">使用 Google 帳號登入 / Войти через Google</button>
   </div>
 </div>
 
@@ -872,7 +877,7 @@
 
 <script>
 
-const APP_VERSION = "21.17";
+const APP_VERSION = "21.18";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1056,7 +1061,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.17 / Двуязычный мост общения v21.17";
+    document.title = "🌉 雙語聊天橋 v21.18 / Двуязычный мост общения v21.18";
   }
 });
 
@@ -1087,7 +1092,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.17";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.18";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
