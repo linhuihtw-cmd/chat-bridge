@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.35</title>
+  <title>🌉 雙語聊天橋 v21.36</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -394,6 +394,111 @@
       margin-top: 4px;
     }
 
+    #profileSetupOverlay, #settingsOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    #profileSetupBox, #settingsBox {
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      max-width: 320px;
+      width: 88%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .profile-setup-title {
+      color: var(--gold);
+      font-size: 15px;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .profile-setup-title span {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .profile-setup-label {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    .profile-setup-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 10px 12px;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .profile-setup-input:focus { border-color: var(--gold-dim); }
+    .color-swatches {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.selected { border-color: var(--gold); transform: scale(1.1); }
+    #profileSetupConfirm, #settingsConfirm {
+      width: 100%;
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 20px;
+      font-weight: 500;
+    }
+    #profileSetupConfirm:hover, #settingsConfirm:hover { background: var(--gold); }
+    #settingsClose {
+      width: 100%;
+      background: transparent;
+      color: var(--text-tertiary);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .bubble-own {
+      color: #1a1810;
+      font-weight: 500;
+      border-top-left-radius: 4px;
+    }
+    .bubble-other {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 0.5px solid var(--border-subtle);
+      font-weight: 500;
+      border-top-left-radius: 4px;
+    }
     #correctionAlertOverlay {
       position: fixed;
       inset: 0;
@@ -897,7 +1002,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.35<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.35</span></h2>
+<h2>🌉 雙語聊天橋 v21.36<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.36</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -948,6 +1053,46 @@
   </div>
 </div>
 
+<div id="profileSetupOverlay" style="display:none;">
+  <div id="profileSetupBox">
+    <div class="profile-setup-title">🌉 歡迎！請先設定您的資料<br><span>Добро пожаловать! Настройте профиль</span></div>
+    <div class="profile-setup-label">暱稱 / Имя</div>
+    <input type="text" id="profileNameInput" class="profile-setup-input" placeholder="輸入您的暱稱 / Введите имя" maxlength="20" />
+    <div class="profile-setup-label">泡泡顏色 / Цвет пузыря</div>
+    <div class="color-swatches">
+      <div class="swatch" data-color="#ddd0b0" style="background:#ddd0b0;" title="米奶淺"></div>
+      <div class="swatch" data-color="#bba070" style="background:#bba070;" title="米奶深"></div>
+      <div class="swatch" data-color="#a88850" style="background:#a88850;" title="米棕淺"></div>
+      <div class="swatch" data-color="#8a6e38" style="background:#8a6e38;" title="米棕深"></div>
+      <div class="swatch" data-color="#8a8880" style="background:#8a8880;" title="鐵灰淺"></div>
+      <div class="swatch" data-color="#686660" style="background:#686660;" title="鐵灰深"></div>
+    </div>
+    <button id="profileSetupConfirm" onclick="saveProfileSetup()">確認 / Подтвердить</button>
+  </div>
+</div>
+
+<div id="settingsOverlay" style="display:none;">
+  <div id="settingsBox">
+    <div class="profile-setup-title">⚙️ 設定 / Настройки</div>
+    <div class="profile-setup-label">暱稱 / Имя</div>
+    <input type="text" id="settingsNameInput" class="profile-setup-input" placeholder="輸入您的暱稱 / Введите имя" maxlength="20" />
+    <div class="profile-setup-label">泡泡顏色 / Цвет пузыря</div>
+    <div class="color-swatches" id="settingsSwatches">
+      <div class="swatch" data-color="#ddd0b0" style="background:#ddd0b0;"></div>
+      <div class="swatch" data-color="#bba070" style="background:#bba070;"></div>
+      <div class="swatch" data-color="#a88850" style="background:#a88850;"></div>
+      <div class="swatch" data-color="#8a6e38" style="background:#8a6e38;"></div>
+      <div class="swatch" data-color="#8a8880" style="background:#8a8880;"></div>
+      <div class="swatch" data-color="#686660" style="background:#686660;"></div>
+    </div>
+    <button id="settingsConfirm" onclick="saveSettings()">儲存 / Сохранить</button>
+    <button id="settingsClose" onclick="closeSettings()">取消 / Отмена</button>
+    <div id="adminClearBtn" style="display:none; margin-top:16px;">
+      <button onclick="secureClearDatabase()" style="width:100%;background:#5c3428;color:#d4bfb0;border:none;border-radius:10px;padding:10px;font-size:13px;font-family:inherit;cursor:pointer;">⚠️ 清除歷史紀錄（管理者）</button>
+    </div>
+  </div>
+</div>
+
 <div id="consensusPanel" class="consensus-panel" style="display:none;"></div>
 
 <div id="chat"></div>
@@ -964,7 +1109,7 @@
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)" oninput="autoGrowTextarea(this)"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
-  <button id="clearDbBtn" class="btn-clear-db" onclick="secureClearDatabase()" title="管理者後台清空" style="display:none;">⚙️</button>
+  <button id="settingsBtn" class="btn-clear-db" onclick="openSettings()" title="設定 / Настройки">☰</button>
 </div>
 
 <div id="exportMenu" class="export-modal-overlay" style="display:none;">
@@ -980,7 +1125,7 @@
 
 <script>
 
-const APP_VERSION = "21.35";
+const APP_VERSION = "21.36";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1076,7 +1221,7 @@ auth.onAuthStateChanged((user) => {
   document.getElementById("presencePanelWrapper").style.display = "none";
   document.getElementById("presencePanel").innerHTML = "";
   document.getElementById("pendingList").innerHTML = "";
-  document.getElementById("clearDbBtn").style.display = "none";
+  // 管理者功能現在整合在設定面板內
 
   if (!user) {
     currentUser = null;
@@ -1096,7 +1241,7 @@ auth.onAuthStateChanged((user) => {
     startDisplayNameListenerOnce();
     renderEmojiQuickRow();
     checkFirstTimeSetName();
-    document.getElementById("clearDbBtn").style.display = "inline-block";
+  // 管理者清除按鈕現在在設定面板內動態顯示
     db.ref("pendingUsers").on("value", (snapshot) => {
       renderPendingList(snapshot.val());
     });
@@ -1164,7 +1309,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.35 / Двуязычный мост общения v21.35";
+    document.title = "🌉 雙語聊天橋 v21.36 / Двуязычный мост общения v21.36";
   }
 });
 
@@ -1195,7 +1340,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.35";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.36";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1827,11 +1972,12 @@ function renderChat() {
 
     if (m.role === "user") {
       const displayName = getDisplayName(m.senderEmail);
+      const bubbleColor = getBubbleColor(m.senderEmail);
       const isOwnMessage = currentUser && m.senderEmail === currentUser.email;
-      const nameHtml = isOwnMessage
-        ? `<span class="clickable-name" onclick="promptSetDisplayName()">${displayName} ✏️</span>`
-        : `<span>${displayName}</span>`;
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble chat-text">💬 ${nameHtml}： ${m.text}</div>${timeLabel}</div>`;
+      const nameHtml = `<strong>${displayName}</strong>`;
+      const bubbleStyle = bubbleColor ? `style="background:${bubbleColor}; border-color:${bubbleColor};"` : "";
+      const textColor = bubbleColor ? `style="color:#1a1810;"` : "";
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble chat-text" ${bubbleStyle}><span ${textColor}>${nameHtml}： ${m.text}</span></div>${timeLabel}</div>`;
     } else {
       let rawText = m.text;
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
@@ -2301,17 +2447,88 @@ function scrollToMessage(firebaseKey) {
   el.classList.add("msg-highlight");
 }
 
+let selectedBubbleColor = "";
+
+function initSwatchListeners(containerSelector) {
+  document.querySelectorAll(containerSelector + " .swatch").forEach(s => {
+    s.addEventListener("click", () => {
+      document.querySelectorAll(containerSelector + " .swatch").forEach(x => x.classList.remove("selected"));
+      s.classList.add("selected");
+      selectedBubbleColor = s.dataset.color;
+    });
+  });
+}
+
 function checkFirstTimeSetName() {
   if (!currentUser) return;
   const userKey = emailToKey(currentUser.email);
   db.ref("displayNames/" + userKey).once("value").then((snapshot) => {
-    if (!snapshot.exists()) {
-      setTimeout(() => {
-        const newName = prompt("歡迎！請設定您想顯示的名字（之後可隨時點擊自己的名字修改）\nДобро пожаловать! Введите имя для отображения (можно изменить позже)");
-        if (newName && newName.trim() !== "") {
-          db.ref("displayNames/" + userKey).set({ name: newName.trim() });
-        }
-      }, 300);
+    const data = snapshot.val();
+    if (!snapshot.exists() || !data?.bubbleColor) {
+      showProfileSetup(data?.name || "");
+    }
+  });
+}
+
+function showProfileSetup(existingName = "") {
+  const overlay = document.getElementById("profileSetupOverlay");
+  overlay.style.display = "flex";
+  const input = document.getElementById("profileNameInput");
+  if (input) input.value = existingName;
+  selectedBubbleColor = "";
+  initSwatchListeners("#profileSetupOverlay");
+}
+
+function saveProfileSetup() {
+  const name = document.getElementById("profileNameInput").value.trim();
+  if (!name) { alert("請輸入暱稱 / Введите имя"); return; }
+  if (!selectedBubbleColor) { alert("請選擇泡泡顏色 / Выберите цвет"); return; }
+  const userKey = emailToKey(currentUser.email);
+  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor }).then(() => {
+    document.getElementById("profileSetupOverlay").style.display = "none";
+  });
+}
+
+function openSettings() {
+  const userKey = emailToKey(currentUser.email);
+  const data = displayNamesCache[userKey] || {};
+  const overlay = document.getElementById("settingsOverlay");
+  overlay.style.display = "flex";
+  document.getElementById("settingsNameInput").value = data.name || "";
+  selectedBubbleColor = data.bubbleColor || "";
+  initSwatchListeners("#settingsOverlay");
+  if (selectedBubbleColor) {
+    document.querySelectorAll("#settingsOverlay .swatch").forEach(s => {
+      if (s.dataset.color === selectedBubbleColor) s.classList.add("selected");
+    });
+  }
+  const adminBtn = document.getElementById("adminClearBtn");
+  if (adminBtn) {
+    adminBtn.style.display = currentUser.email === ADMIN_EMAIL ? "block" : "none";
+  }
+}
+
+function saveSettings() {
+  const name = document.getElementById("settingsNameInput").value.trim();
+  if (!name) { alert("請輸入暱稱 / Введите имя"); return; }
+  if (!selectedBubbleColor) { alert("請選擇泡泡顏色 / Выберите цвет"); return; }
+  const userKey = emailToKey(currentUser.email);
+  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor }).then(() => {
+    document.getElementById("settingsOverlay").style.display = "none";
+  });
+}
+
+function closeSettings() {
+  document.getElementById("settingsOverlay").style.display = "none";
+}
+
+function checkFirstTimeSetName() {
+  if (!currentUser) return;
+  const userKey = emailToKey(currentUser.email);
+  db.ref("displayNames/" + userKey).once("value").then((snapshot) => {
+    const data = snapshot.val();
+    if (!snapshot.exists() || !data?.bubbleColor) {
+      showProfileSetup(data?.name || "");
     }
   });
 }
@@ -2347,6 +2564,12 @@ function getDisplayName(email) {
   const userKey = emailToKey(email);
   const custom = displayNamesCache[userKey]?.name;
   return custom || email;
+}
+
+function getBubbleColor(email) {
+  if (!email) return "";
+  const userKey = emailToKey(email);
+  return displayNamesCache[userKey]?.bubbleColor || "";
 }
 
 let displayNameListenerStarted = false;
