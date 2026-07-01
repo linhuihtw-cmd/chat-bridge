@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.20</title>
+  <title>🌉 雙語聊天橋 v21.21</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -427,29 +427,23 @@
       font-size: 14px;
       font-family: inherit;
       cursor: pointer;
-      margin-bottom: 8px;
       font-weight: 500;
     }
     #correctionAlertGo:hover { background: var(--gold); }
-    #correctionAlertClose {
-      width: 100%;
-      background: transparent;
-      color: var(--text-tertiary);
-      border: 0.5px solid var(--border-strong);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    #correctionAlertClose:hover { color: var(--text-secondary); }
 
     .msg-box.needs-correction .ai-card {
-      background: #3a2e1e;
-      border-color: var(--gold-dim);
+      background: #2a2318;
+      border-color: #6b5e3e;
     }
     .msg-box.needs-correction .ai-card .card-collapse-arrow {
-      background: #3a2e1e;
+      background: #2a2318;
+    }
+    .msg-box.correction-done .ai-card {
+      background: #1c2620;
+      border-color: #3d5c42;
+    }
+    .msg-box.correction-done .ai-card .card-collapse-arrow {
+      background: #1c2620;
     }
     @keyframes msgHighlightFlash {
       0%, 100% { background: transparent; }
@@ -866,7 +860,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.20<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.20</span></h2>
+<h2>🌉 雙語聊天橋 v21.21<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.21</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -913,8 +907,7 @@
   <div id="correctionAlertBox">
     <div id="correctionAlertIcon">❓</div>
     <div id="correctionAlertMsg"></div>
-    <button id="correctionAlertGo" onclick="correctionAlertGoTo()">前往查看 / Перейти</button>
-    <button id="correctionAlertClose" onclick="correctionAlertDismiss()">稍後再說 / Позже</button>
+    <button id="correctionAlertGo" onclick="correctionAlertGoTo()">前往查看 / Перейти →</button>
   </div>
 </div>
 
@@ -950,7 +943,7 @@
 
 <script>
 
-const APP_VERSION = "21.20";
+const APP_VERSION = "21.21";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1134,7 +1127,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.20 / Двуязычный мост общения v21.20";
+    document.title = "🌉 雙語聊天橋 v21.21 / Двуязычный мост общения v21.21";
   }
 });
 
@@ -1165,7 +1158,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.20";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.21";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1919,8 +1912,7 @@ function renderChat() {
 
   if (currentUser) {
     chatHistory.forEach((m, idx) => {
-      if (m.role !== "ai" || !m.correction || !m.correction.confused || m.firebaseKey === undefined) return;
-      if (m.correction.correctedText) return;
+      if (m.role !== "ai" || !m.correction || m.firebaseKey === undefined) return;
       let realSenderEmail = "";
       for (let i = idx - 1; i >= 0; i--) {
         if (chatHistory[i] && chatHistory[i].role === "user") {
@@ -1928,7 +1920,14 @@ function renderChat() {
           break;
         }
       }
-      if (currentUser.email === realSenderEmail) {
+      const isSpeaker = currentUser.email === realSenderEmail;
+      if (m.correction.correctedText) {
+        const el = document.getElementById("msg-" + m.firebaseKey);
+        if (el) {
+          el.classList.remove("needs-correction");
+          el.classList.add("correction-done");
+        }
+      } else if (m.correction.confused && isSpeaker) {
         markCardNeedsCorrection(m.firebaseKey);
       }
     });
@@ -2237,13 +2236,28 @@ function correctionAlertDismiss() {
 function markCardNeedsCorrection(firebaseKey) {
   if (!firebaseKey) return;
   const el = document.getElementById("msg-" + firebaseKey);
-  if (el) el.classList.add("needs-correction");
+  if (el) {
+    el.classList.remove("correction-done");
+    el.classList.add("needs-correction");
+  }
+}
+
+function markCardCorrectionDone(firebaseKey) {
+  if (!firebaseKey) return;
+  const el = document.getElementById("msg-" + firebaseKey);
+  if (el) {
+    el.classList.remove("needs-correction");
+    el.classList.add("correction-done");
+  }
 }
 
 function clearCardNeedsCorrection(firebaseKey) {
   if (!firebaseKey) return;
   const el = document.getElementById("msg-" + firebaseKey);
-  if (el) el.classList.remove("needs-correction");
+  if (el) {
+    el.classList.remove("needs-correction");
+    el.classList.remove("correction-done");
+  }
 }
 
 function scrollToMessage(firebaseKey) {
@@ -2370,7 +2384,7 @@ function setupMessageListener() {
             "對方送出了更正說明，請查看\nОтправлено уточнение — нажмите, чтобы посмотреть",
             snapshot.key
           );
-          markCardNeedsCorrection(snapshot.key);
+          markCardCorrectionDone(snapshot.key);
         }
       }
 
