@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.22</title>
+  <title>🌉 雙語聊天橋 v21.23</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -432,18 +432,18 @@
     #correctionAlertGo:hover { background: var(--gold); }
 
     .msg-box.needs-correction .ai-card {
-      background: #2e2416;
-      border-color: #7a6440;
+      background: #272318;
+      border-color: #5c5030;
     }
     .msg-box.needs-correction .ai-card .card-collapse-arrow {
-      background: #2e2416;
+      background: #272318;
     }
     .msg-box.correction-done .ai-card {
-      background: #232018;
-      border-color: #5a5038;
+      background: #202018;
+      border-color: #484438;
     }
     .msg-box.correction-done .ai-card .card-collapse-arrow {
-      background: #232018;
+      background: #202018;
     }
     @keyframes msgHighlightFlash {
       0%, 100% { background: transparent; }
@@ -860,7 +860,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.22<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.22</span></h2>
+<h2>🌉 雙語聊天橋 v21.23<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.23</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -943,7 +943,7 @@
 
 <script>
 
-const APP_VERSION = "21.22";
+const APP_VERSION = "21.23";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1127,7 +1127,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.22 / Двуязычный мост общения v21.22";
+    document.title = "🌉 雙語聊天橋 v21.23 / Двуязычный мост общения v21.23";
   }
 });
 
@@ -1158,7 +1158,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.22";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.23";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1913,22 +1913,14 @@ function renderChat() {
   if (currentUser) {
     chatHistory.forEach((m, idx) => {
       if (m.role !== "ai" || !m.correction || m.firebaseKey === undefined) return;
-      let realSenderEmail = "";
-      for (let i = idx - 1; i >= 0; i--) {
-        if (chatHistory[i] && chatHistory[i].role === "user") {
-          realSenderEmail = chatHistory[i].senderEmail || "";
-          break;
-        }
-      }
-      const isSpeaker = currentUser.email === realSenderEmail;
+      const el = document.getElementById("msg-" + m.firebaseKey);
+      if (!el) return;
       if (m.correction.correctedText) {
-        const el = document.getElementById("msg-" + m.firebaseKey);
-        if (el) {
-          el.classList.remove("needs-correction");
-          el.classList.add("correction-done");
-        }
-      } else if (m.correction.confused && isSpeaker) {
-        markCardNeedsCorrection(m.firebaseKey);
+        el.classList.remove("needs-correction");
+        el.classList.add("correction-done");
+      } else if (m.correction.confused) {
+        el.classList.remove("correction-done");
+        el.classList.add("needs-correction");
       }
     });
   }
@@ -2384,6 +2376,12 @@ function setupMessageListener() {
             "對方送出了更正說明，請查看\nОтправлено уточнение — нажмите, чтобы посмотреть",
             snapshot.key
           );
+          markCardCorrectionDone(snapshot.key);
+        }
+        if (newCorrection.confused && !prevCorrection.confused && !isSpeaker) {
+          markCardNeedsCorrection(snapshot.key);
+        }
+        if (newCorrection.correctedText && !prevCorrection.correctedText && isSpeaker) {
           markCardCorrectionDone(snapshot.key);
         }
       }
