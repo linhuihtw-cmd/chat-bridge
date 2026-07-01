@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.45</title>
+  <title>🌉 雙語聊天橋 v21.46</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -451,7 +451,7 @@
     }
 
     .reply-quote {
-      background: rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.25);
       border-left: 3px solid var(--gold-dim);
       border-radius: 4px;
       padding: 4px 8px;
@@ -460,9 +460,9 @@
       cursor: pointer;
       overflow: hidden;
     }
-    .reply-quote-name { color: var(--gold); font-weight: 500; margin-right: 4px; }
-    .reply-quote-text { color: var(--text-secondary); }
-    .reply-quote:hover { background: rgba(255,255,255,0.1); }
+    .reply-quote-name { color: var(--gold-bright); font-weight: 500; margin-right: 4px; }
+    .reply-quote-text { color: rgba(255,255,255,0.85); }
+    .reply-quote:hover { background: rgba(0,0,0,0.35); }
     #profileSetupOverlay, #settingsOverlay {
       position: fixed;
       inset: 0;
@@ -1071,7 +1071,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.45<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.45</span></h2>
+<h2>🌉 雙語聊天橋 v21.46<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.46</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1207,7 +1207,7 @@
 
 <script>
 
-const APP_VERSION = "21.45";
+const APP_VERSION = "21.46";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1397,7 +1397,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.45 / Двуязычный мост общения v21.45";
+    document.title = "🌉 雙語聊天橋 v21.46 / Двуязычный мост общения v21.46";
   }
 });
 
@@ -1428,7 +1428,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.45";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.46";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
