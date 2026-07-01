@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.25</title>
+  <title>🌉 雙語聊天橋 v21.26</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -383,6 +383,13 @@
       cursor: pointer;
       transition: transform 0.2s;
     }
+    .card-status-icon {
+      position: absolute;
+      top: 10px;
+      right: 38px;
+      display: none;
+      align-items: center;
+    }
     .card-body {
       margin-top: 4px;
     }
@@ -432,20 +439,42 @@
     #correctionAlertGo:hover { background: var(--gold); }
 
     .msg-box.needs-correction .ai-card {
-      background: #c09040;
-      border-color: #a07830;
+      background: #857860;
+      border-color: #6a6050;
     }
     .msg-box.needs-correction .ai-card .card-collapse-arrow {
-      background: #c09040;
-      border-color: #a07830;
+      background: #857860;
+      border-color: #6a6050;
+    }
+    .msg-box.needs-correction .card-status-icon::before {
+      content: "⚠";
+      color: #c04040;
+      font-size: 14px;
+      margin-right: 4px;
     }
     .msg-box.correction-done .ai-card {
-      background: #857860;
-      border-color: #6a6050;
+      background: #2e2e2e;
+      border-color: #484848;
     }
     .msg-box.correction-done .ai-card .card-collapse-arrow {
-      background: #857860;
-      border-color: #6a6050;
+      background: #2e2e2e;
+      border-color: #484848;
+    }
+    .msg-box.correction-done .card-status-icon::before {
+      content: "✓";
+      color: #4a8a4a;
+      font-size: 15px;
+      font-weight: bold;
+      margin-right: 4px;
+    }
+    .card-status-icon {
+      display: none;
+    }
+    .msg-box.needs-correction .card-status-icon,
+    .msg-box.correction-done .card-status-icon {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
     }
     @keyframes msgHighlightFlash {
       0%, 100% { background: transparent; }
@@ -862,7 +891,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.25<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.25</span></h2>
+<h2>🌉 雙語聊天橋 v21.26<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.26</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -945,7 +974,7 @@
 
 <script>
 
-const APP_VERSION = "21.25";
+const APP_VERSION = "21.26";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1129,7 +1158,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.25 / Двуязычный мост общения v21.25";
+    document.title = "🌉 雙語聊天橋 v21.26 / Двуязычный мост общения v21.26";
   }
 });
 
@@ -1160,7 +1189,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.25";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.26";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -1907,7 +1936,7 @@ function renderChat() {
         }
       }
 
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><button class="card-collapse-arrow" onclick="toggleCard(${index})">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCard(${index})">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
