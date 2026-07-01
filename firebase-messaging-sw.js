@@ -8,7 +8,7 @@ firebase.initializeApp({
   projectId: "chat-bridge-f89ed",
   storageBucket: "chat-bridge-f89ed.appspot.com",
   messagingSenderId: "622910981254",
-  appId: "1:622910981254:web:your-app-id"
+  appId: "1:622910981254:web:1d9d07862a765c31f6fd07"
 });
 
 const messaging = firebase.messaging();
