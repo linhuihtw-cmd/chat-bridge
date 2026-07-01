@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>🌉 雙語聊天橋 v21.38</title>
+  <title>🌉 雙語聊天橋 v21.39</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1002,7 +1002,7 @@
 
 <body>
 
-<h2>🌉 雙語聊天橋 v21.38<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.38</span></h2>
+<h2>🌉 雙語聊天橋 v21.39<br><span style="font-size: 16px; color: #64748b;">Двуязычный мост общения v21.39</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1109,7 +1109,7 @@
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)" oninput="autoGrowTextarea(this)"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
-  <button id="settingsBtn" class="btn-clear-db" onclick="openSettings()" title="設定 / Настройки">☰</button>
+  <button id="settingsBtn" class="btn-clear-db" onclick="openSettings()" title="設定 / Настройки">⚙️</button>
 </div>
 
 <div id="exportMenu" class="export-modal-overlay" style="display:none;">
@@ -1125,7 +1125,7 @@
 
 <script>
 
-const APP_VERSION = "21.38";
+const APP_VERSION = "21.39";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1312,7 +1312,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "🌉 雙語聊天橋 v21.38 / Двуязычный мост общения v21.38";
+    document.title = "🌉 雙語聊天橋 v21.39 / Двуязычный мост общения v21.39";
   }
 });
 
@@ -1343,7 +1343,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.38";
+    document.title = isOldTitle ? "💬 【新翻譯訊息 / Новое сообщение】" : "🌉 雙語聊天橋 v21.39";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
