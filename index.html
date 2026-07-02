@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.58</span></h2>
+<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.59</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1214,7 +1214,7 @@
 
 <script>
 
-const APP_VERSION = "21.58";
+const APP_VERSION = "21.59";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1404,7 +1404,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.58";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.59";
   }
 });
 
@@ -2459,7 +2459,7 @@ function showContextMenu(e, msgBox) {
   const isAdmin = currentUser?.email === ADMIN_EMAIL;
   const recallBtn = document.getElementById("contextMenuRecall");
   const silentBtn = document.getElementById("contextMenuSilentRecall");
-  if (recallBtn) recallBtn.style.display = isOwn && !isAdmin ? "block" : "none";
+  if (recallBtn) recallBtn.style.display = isOwn ? "block" : "none";
   if (silentBtn) silentBtn.style.display = isOwn && isAdmin ? "block" : "none";
 }
 
