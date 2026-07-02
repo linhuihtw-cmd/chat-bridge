@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.61</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.62</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1214,7 +1214,7 @@
 
 <script>
 
-const APP_VERSION = "21.61";
+const APP_VERSION = "21.62";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1404,7 +1404,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.61";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.62";
   }
 });
 
@@ -2227,7 +2227,7 @@ function renderChat() {
         }
       }
 
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCard(${index})">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
@@ -2564,6 +2564,19 @@ function speakRussianText(index) {
   utteranceRu.volume = 1.0;
   utteranceRu.rate = 0.9;
   speechSynthesis.speak(utteranceRu);
+}
+
+function toggleCardByKey(firebaseKey) {
+  const el = document.getElementById("msg-" + firebaseKey);
+  if (!el) return;
+  const aiCard = el.querySelector(".ai-card");
+  if (!aiCard) return;
+  const body = aiCard.querySelector(".card-body");
+  const arrow = aiCard.querySelector(".card-collapse-arrow");
+  if (!body) return;
+  const isHidden = body.style.display === "none";
+  body.style.display = isHidden ? "block" : "none";
+  if (arrow) arrow.style.transform = isHidden ? "rotate(180deg)" : "rotate(0deg)";
 }
 
 function toggleCard(index) {
