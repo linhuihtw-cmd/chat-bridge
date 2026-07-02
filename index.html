@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.60</span></h2>
+<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.61</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1214,7 +1214,7 @@
 
 <script>
 
-const APP_VERSION = "21.60";
+const APP_VERSION = "21.61";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1404,7 +1404,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.60";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.61";
   }
 });
 
@@ -2526,7 +2526,10 @@ document.addEventListener("click", (e) => {
   if (menu && !menu.contains(e.target)) hideContextMenu();
 });
 
+let contextMenuEventsBound = false;
 function bindContextMenuEvents() {
+  if (contextMenuEventsBound) return;
+  contextMenuEventsBound = true;
   let longPressTimer = null;
   document.getElementById("chat").addEventListener("contextmenu", (e) => {
     const msgBox = e.target.closest(".msg-box[data-text]");
