@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.59</span></h2>
+<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.60</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1214,7 +1214,7 @@
 
 <script>
 
-const APP_VERSION = "21.59";
+const APP_VERSION = "21.60";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1404,7 +1404,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.59";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.60";
   }
 });
 
@@ -2067,15 +2067,15 @@ function renderChat() {
 
     if (m.role === "user") {
       if (m.deleted) {
-        const deletedByAdmin = m.deletedBy === ADMIN_EMAIL;
+        const isSilent = m.silentRecall === true;
         const isAdmin = currentUser?.email === ADMIN_EMAIL;
         const adminLocalDeleted = m.localDeletedBy && m.localDeletedBy.includes(emailToKey(ADMIN_EMAIL));
 
-        if (deletedByAdmin) return `${dateSeparator}`;
+        if (isSilent) return `${dateSeparator}`;
 
         if (adminLocalDeleted && isAdmin) return `${dateSeparator}`;
 
-        if (isAdmin && !adminLocalDeleted) {
+        if (isAdmin && m.deletedBy !== ADMIN_EMAIL && !adminLocalDeleted) {
           const safeText2 = m.text.replace(/"/g, '&quot;');
           const safeName2 = getDisplayName(m.senderEmail).replace(/"/g, '&quot;');
           const bubbleColor2 = getBubbleColor(m.senderEmail);
@@ -2126,11 +2126,11 @@ function renderChat() {
         if (correspondingUserMsg.localDeletedBy.includes(adminKey)) return `${dateSeparator}`;
       }
 
-      if (correspondingUserMsg?.deleted && correspondingUserMsg?.deletedBy === ADMIN_EMAIL) {
+      if (correspondingUserMsg?.deleted && correspondingUserMsg?.silentRecall === true) {
         return `${dateSeparator}`;
       }
 
-      if (correspondingUserMsg?.deleted && correspondingUserMsg?.deletedBy === correspondingSenderEmail) {
+      if (correspondingUserMsg?.deleted && correspondingUserMsg?.deletedBy === correspondingSenderEmail && !correspondingUserMsg?.silentRecall) {
         return `${dateSeparator}`;
       }
 
@@ -2478,20 +2478,20 @@ function adminLocalDelete(firebaseKey) {
   });
 }
 
-function contextMenuSilentRecall() {
-  if (!contextMenuTarget) return hideContextMenu();
-  const key = contextMenuTarget.dataset.key;
-  if (!key) return hideContextMenu();
-  hideContextMenu();
-  db.ref("messages/" + key).update({ deleted: true, deletedAt: Date.now(), deletedBy: ADMIN_EMAIL });
-}
-
 function contextMenuRecall() {
   if (!contextMenuTarget) return hideContextMenu();
   const key = contextMenuTarget.dataset.key;
   if (!key) return hideContextMenu();
   hideContextMenu();
-  db.ref("messages/" + key).update({ deleted: true, deletedAt: Date.now(), deletedBy: currentUser.email });
+  db.ref("messages/" + key).update({ deleted: true, deletedAt: Date.now(), deletedBy: currentUser.email, silentRecall: false });
+}
+
+function contextMenuSilentRecall() {
+  if (!contextMenuTarget) return hideContextMenu();
+  const key = contextMenuTarget.dataset.key;
+  if (!key) return hideContextMenu();
+  hideContextMenu();
+  db.ref("messages/" + key).update({ deleted: true, deletedAt: Date.now(), deletedBy: ADMIN_EMAIL, silentRecall: true });
 }
 
 function contextMenuCopy() {
