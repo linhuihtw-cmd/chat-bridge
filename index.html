@@ -615,6 +615,274 @@
     }
     #correctionAlertGo:hover { background: var(--gold); }
 
+    /* ===== 遊戲邀請系統 ===== */
+    #gameMenuOverlay, #gameInviteWaitOverlay, #gameInviteReceiveOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 99998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    #gameMenuBox, #gameInviteWaitBox, #gameInviteReceiveBox {
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 16px;
+      padding: 24px 20px;
+      max-width: 360px;
+      width: 90%;
+      max-height: 82vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+    }
+    .game-modal-title {
+      color: var(--gold);
+      font-size: 15px;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+    .game-modal-subtitle {
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-align: center;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+    .game-thumb-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .game-thumb {
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s, background 0.15s;
+      position: relative;
+    }
+    .game-thumb:hover { transform: scale(1.03); }
+    .game-thumb.selected {
+      border-color: var(--gold);
+      background: rgba(201,168,118,0.12);
+    }
+    .game-thumb.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .game-thumb.disabled:hover { transform: none; }
+    .game-thumb-icon { font-size: 30px; margin-bottom: 6px; }
+    .game-thumb-name { color: var(--text-primary); font-size: 12px; font-weight: 500; line-height: 1.3; }
+    .game-thumb-tag { color: var(--text-tertiary); font-size: 10px; margin-top: 3px; }
+    .game-thumb-check {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      color: var(--gold);
+      font-size: 14px;
+      display: none;
+    }
+    .game-thumb.selected .game-thumb-check { display: block; }
+
+    .game-modal-btn {
+      width: 100%;
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    .game-modal-btn:hover { background: var(--gold); }
+    .game-modal-btn:disabled { background: var(--border-subtle); color: var(--text-tertiary); cursor: not-allowed; }
+    .game-modal-btn-secondary {
+      width: 100%;
+      background: transparent;
+      color: var(--text-tertiary);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .game-modal-btn-secondary:hover { color: var(--error-red); border-color: var(--error-red); }
+
+    .game-wait-status {
+      color: var(--text-primary);
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.7;
+      margin-bottom: 18px;
+      min-height: 40px;
+    }
+    .game-wait-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border-subtle);
+      border-top-color: var(--gold-dim);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      animation: gameSpin 0.9s linear infinite;
+    }
+    @keyframes gameSpin { to { transform: rotate(360deg); } }
+
+    .game-timer-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .game-timer-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 10px 12px;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .game-timer-input:focus { border-color: var(--gold-dim); }
+    .game-timer-confirm {
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .game-timer-confirm:hover { background: var(--gold); }
+
+    /* 懸浮倒數計時（不擋操作） */
+    #gameCountdownFloat {
+      position: fixed;
+      top: 68px;
+      right: 12px;
+      z-index: 500;
+      background: rgba(35,35,35,0.92);
+      border: 1px solid var(--gold-dim);
+      border-radius: 12px;
+      padding: 8px 10px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      backdrop-filter: blur(3px);
+    }
+    #gameCountdownFloat .gcf-icon { font-size: 16px; }
+    #gameCountdownFloat .gcf-text {
+      color: var(--gold-bright);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    #gameCountdownFloat .gcf-cancel {
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    #gameCountdownFloat .gcf-cancel:hover { color: var(--error-red); }
+
+    /* 遊戲畫面 */
+    #gameScreenOverlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-deep);
+      z-index: 9997;
+      display: none;
+      flex-direction: column;
+    }
+    .game-screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 0.5px solid var(--border-subtle);
+    }
+    .game-screen-title { color: var(--gold); font-size: 15px; font-weight: 500; }
+    .game-screen-exit {
+      background: none;
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-tertiary);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .game-screen-exit:hover { color: var(--error-red); border-color: var(--error-red); }
+    .game-screen-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      gap: 16px;
+    }
+    .ttt-board {
+      display: grid;
+      grid-template-columns: repeat(3, 88px);
+      grid-template-rows: repeat(3, 88px);
+      gap: 6px;
+    }
+    .ttt-cell {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      font-size: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--gold-bright);
+      user-select: none;
+    }
+    .ttt-cell:hover { border-color: var(--gold-dim); }
+    .ttt-status {
+      color: var(--text-primary);
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .ttt-restart-btn {
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .ttt-restart-btn:hover { background: var(--gold); }
+
     .msg-box.needs-correction .ai-card {
       background: var(--bg-elevated);
       border-color: var(--border-strong);
@@ -1074,7 +1342,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.63</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.70</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1130,6 +1398,61 @@
     <div id="correctionAlertMsg"></div>
     <button id="correctionAlertGo" onclick="correctionAlertGoTo()">前往查看 / Перейти →</button>
   </div>
+</div>
+
+<!-- 遊戲選單（邀請方：⚽x5觸發） -->
+<div id="gameMenuOverlay" style="display:none;">
+  <div id="gameMenuBox">
+    <div class="game-modal-title">🎮 選幾個想玩的遊戲</div>
+    <div class="game-modal-subtitle">Выберите игры, в которые хотите поиграть<br>最多可選 5 個，對方會從中挑一個</div>
+    <div class="game-thumb-grid" id="gameMenuGrid"></div>
+    <button class="game-modal-btn" id="gameMenuSendBtn" onclick="sendGameInvite()" disabled>發送邀請 / Отправить приглашение</button>
+    <button class="game-modal-btn-secondary" onclick="closeGameMenu()">取消 / Отмена</button>
+  </div>
+</div>
+
+<!-- 邀請方：等待畫面 -->
+<div id="gameInviteWaitOverlay" style="display:none;">
+  <div id="gameInviteWaitBox">
+    <div class="game-wait-spinner"></div>
+    <div class="game-modal-title" style="margin-bottom:14px;">🎮 遊戲邀請</div>
+    <div class="game-wait-status" id="gameInviteWaitStatus">等待對方查看中... / Ожидание ответа...</div>
+    <button class="game-modal-btn-secondary" onclick="cancelGameInvite()">取消邀請 / Отменить приглашение</button>
+  </div>
+</div>
+
+<!-- 接收方：強制通知框 -->
+<div id="gameInviteReceiveOverlay" style="display:none;">
+  <div id="gameInviteReceiveBox">
+    <div class="game-modal-title">🎮 收到遊戲邀請！</div>
+    <div class="game-modal-subtitle" id="gameInviteReceiveFrom">Приглашение в игру<br>請先選一個想玩的</div>
+    <div class="game-thumb-grid" id="gameInviteReceiveGrid"></div>
+    <div id="gameInviteReceiveTimerArea" style="display:none;">
+      <div class="game-timer-row">
+        <input type="number" id="gameInviteTimerInput" class="game-timer-input" placeholder="分鐘 / мин" min="1" max="180" />
+        <button class="game-timer-confirm" onclick="confirmGameTimer()">設定 / OK</button>
+      </div>
+    </div>
+    <button class="game-modal-btn" id="gameInviteAcceptBtn" onclick="acceptGameInvite()" disabled>接受，立刻開始 / Принять</button>
+    <button class="game-modal-btn-secondary" id="gameInviteTimerToggleBtn" onclick="toggleGameTimerArea()" disabled>⏱ 幾分鐘後開始 / Через X минут</button>
+    <button class="game-modal-btn-secondary" onclick="declineGameInvite()">取消 / Отклонить</button>
+  </div>
+</div>
+
+<!-- 懸浮倒數計時（不擋操作） -->
+<div id="gameCountdownFloat">
+  <span class="gcf-icon">⏱</span>
+  <span class="gcf-text" id="gameCountdownFloatText">--:--</span>
+  <button class="gcf-cancel" onclick="cancelGameCountdown()" title="取消 / Отменить">✕</button>
+</div>
+
+<!-- 遊戲畫面 -->
+<div id="gameScreenOverlay">
+  <div class="game-screen-header">
+    <span class="game-screen-title" id="gameScreenTitle">🎮 遊戲</span>
+    <button class="game-screen-exit" onclick="exitGameScreen()">✕ 離開 / Выйти</button>
+  </div>
+  <div class="game-screen-body" id="gameScreenBody"></div>
 </div>
 
 <div id="profileSetupOverlay" style="display:none;">
@@ -1214,7 +1537,7 @@
 
 <script>
 
-const APP_VERSION = "21.63";
+const APP_VERSION = "21.70";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1322,6 +1645,7 @@ auth.onAuthStateChanged((user) => {
   const userKey = emailToKey(user.email);
   setupPresence(userKey, user.email);
   setupConsensusListener();
+  setupGameInviteListener();
 
   if (user.email === ADMIN_EMAIL) {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
@@ -1404,7 +1728,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.63";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.70";
   }
 });
 
@@ -2358,6 +2682,13 @@ async function sendMsg() {
   const input = inputObj.value.trim();
   if (!input) return;
 
+  if (input === GAME_TRIGGER_PHRASE) {
+    inputObj.value = "";
+    inputObj.style.height = "auto";
+    openGameMenu();
+    return;
+  }
+
   const now = Date.now();
   if (input === lastSentText && (now - lastSentTime) < COOLDOWN_MS) {
     alert("請稍候，同一句話剛剛已經送出過了 / Подождите, это сообщение уже было отправлено");
@@ -2408,6 +2739,361 @@ async function sendMsg() {
   isSending = false;
   sendBtn.disabled = false;
   sendBtn.innerHTML = "<span class=\"send-arrow\">➤</span>";
+}
+
+/* ============================================================
+   遊戲邀請系統 (v1 骨架：邀請流程 + 井字遊戲)
+   ============================================================ */
+const GAME_TRIGGER_PHRASE = "⚽⚽⚽⚽⚽";
+const GAME_CATALOG = [
+  { id: "tictactoe", icon: "⭕", name: "井字遊戲", available: true },
+  { id: "bulls",     icon: "🔢", name: "公牛母牛",  available: false },
+  { id: "rps",       icon: "✊", name: "剪刀石頭布", available: false },
+  { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", available: false },
+  { id: "gomoku",    icon: "⚫", name: "五子棋",    available: false }
+];
+
+let selectedGameMenuIds = [];
+let gameInviteRecipientSelectedGame = null;
+let currentInviteGameOptions = [];
+let gameScreenOpen = false;
+let gameScreenActiveFor = null;
+let tttListenerRef = null;
+let gameCountdownInterval = null;
+
+function getGameById(id) { return GAME_CATALOG.find(g => g.id === id); }
+
+function showGameToast(text) {
+  let t = document.getElementById("gameToast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "gameToast";
+    t.style.cssText = "position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(35,35,35,0.95);color:#e8e6e0;border:1px solid #a8946f;border-radius:10px;padding:10px 18px;font-size:13px;z-index:999999;box-shadow:0 4px 16px rgba(0,0,0,0.4);text-align:center;max-width:80%;";
+    document.body.appendChild(t);
+  }
+  t.textContent = text;
+  t.style.display = "block";
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => { t.style.display = "none"; }, 3000);
+}
+
+/* ---------- 邀請方：選單 ---------- */
+function openGameMenu() {
+  selectedGameMenuIds = [];
+  renderGameMenuGrid();
+  document.getElementById("gameMenuOverlay").style.display = "flex";
+}
+function closeGameMenu() {
+  document.getElementById("gameMenuOverlay").style.display = "none";
+}
+function renderGameMenuGrid() {
+  const grid = document.getElementById("gameMenuGrid");
+  grid.innerHTML = GAME_CATALOG.map(g => `
+    <div class="game-thumb ${selectedGameMenuIds.includes(g.id) ? 'selected' : ''} ${!g.available ? 'disabled' : ''}" onclick="toggleGameMenuSelect('${g.id}')">
+      <span class="game-thumb-check">✓</span>
+      <div class="game-thumb-icon">${g.icon}</div>
+      <div class="game-thumb-name">${g.name}</div>
+      ${!g.available ? '<div class="game-thumb-tag">即將推出</div>' : ''}
+    </div>`).join('');
+  document.getElementById("gameMenuSendBtn").disabled = selectedGameMenuIds.length === 0;
+}
+function toggleGameMenuSelect(id) {
+  const game = getGameById(id);
+  if (!game || !game.available) return;
+  const idx = selectedGameMenuIds.indexOf(id);
+  if (idx >= 0) {
+    selectedGameMenuIds.splice(idx, 1);
+  } else {
+    if (selectedGameMenuIds.length >= 5) { showGameToast("最多選5個 / Максимум 5"); return; }
+    selectedGameMenuIds.push(id);
+  }
+  renderGameMenuGrid();
+}
+function sendGameInvite() {
+  if (!currentUser || selectedGameMenuIds.length === 0) return;
+  const data = {
+    fromKey: emailToKey(currentUser.email),
+    fromEmail: currentUser.email,
+    gameOptions: selectedGameMenuIds.slice(),
+    status: "pending_recipient",
+    selectedGame: null,
+    timerMinutes: null,
+    startAt: null,
+    createdAt: Date.now()
+  };
+  db.ref("gameInvite").set(data).then(() => { closeGameMenu(); });
+}
+
+/* ---------- 邀請方：等待畫面 / 取消 ---------- */
+function cancelGameInvite() {
+  if (!confirm("確定要取消這個遊戲邀請嗎？ / Отменить приглашение?")) return;
+  endGameInvite("cancelled", currentUser.email);
+}
+function endGameInvite(status, actorEmail) {
+  db.ref("gameInvite").update({ status: status, endedBy: actorEmail, endedAt: Date.now() }).then(() => {
+    setTimeout(() => { db.ref("gameInvite").remove(); }, 1500);
+  });
+}
+
+/* ---------- 接收方：強制通知框 ---------- */
+function renderReceiveGrid(gameOptions) {
+  const grid = document.getElementById("gameInviteReceiveGrid");
+  grid.innerHTML = gameOptions.map(id => {
+    const g = getGameById(id);
+    if (!g) return '';
+    const sel = gameInviteRecipientSelectedGame === id;
+    return `<div class="game-thumb ${sel ? 'selected' : ''}" onclick="selectReceiveGameThumb('${id}')">
+      <span class="game-thumb-check">✓</span>
+      <div class="game-thumb-icon">${g.icon}</div>
+      <div class="game-thumb-name">${g.name}</div>
+    </div>`;
+  }).join('');
+}
+function selectReceiveGameThumb(id) {
+  gameInviteRecipientSelectedGame = id;
+  renderReceiveGrid(currentInviteGameOptions);
+  document.getElementById("gameInviteAcceptBtn").disabled = false;
+  document.getElementById("gameInviteTimerToggleBtn").disabled = false;
+}
+function toggleGameTimerArea() {
+  if (!gameInviteRecipientSelectedGame) { showGameToast("請先選一個遊戲 / Сначала выберите игру"); return; }
+  const area = document.getElementById("gameInviteReceiveTimerArea");
+  area.style.display = (area.style.display === "none" || !area.style.display) ? "block" : "none";
+}
+function confirmGameTimer() {
+  if (!gameInviteRecipientSelectedGame) { showGameToast("請先選一個遊戲 / Сначала выберите игру"); return; }
+  const val = parseInt(document.getElementById("gameInviteTimerInput").value, 10);
+  if (!val || val < 1 || val > 180) { alert("請輸入 1-180 的分鐘數 / Введите от 1 до 180 минут"); return; }
+  const startAt = Date.now() + val * 60000;
+  db.ref("gameInvite").update({
+    status: "waiting_timer",
+    selectedGame: gameInviteRecipientSelectedGame,
+    timerMinutes: val,
+    startAt: startAt,
+    toEmail: currentUser.email
+  });
+}
+function acceptGameInvite() {
+  if (!gameInviteRecipientSelectedGame) { showGameToast("請先選一個遊戲 / Сначала выберите игру"); return; }
+  db.ref("gameInvite").update({
+    status: "started",
+    selectedGame: gameInviteRecipientSelectedGame,
+    toEmail: currentUser.email
+  });
+}
+function declineGameInvite() {
+  endGameInvite("declined", currentUser.email);
+}
+
+/* ---------- 懸浮倒數計時 ---------- */
+function startGameCountdownFloat(startAt, gameId) {
+  stopGameCountdownFloat();
+  const el = document.getElementById("gameCountdownFloat");
+  el.style.display = "flex";
+  const g = getGameById(gameId);
+  const label = g ? g.name : "遊戲";
+  function tick() {
+    const remain = startAt - Date.now();
+    const textEl = document.getElementById("gameCountdownFloatText");
+    if (!textEl) return;
+    if (remain <= 0) {
+      textEl.textContent = `${label} 00:00`;
+      clearInterval(gameCountdownInterval);
+      gameCountdownInterval = null;
+      db.ref("gameInvite").once("value").then(snap => {
+        const data = snap.val();
+        if (data && data.status === "waiting_timer") {
+          db.ref("gameInvite").update({ status: "started" });
+        }
+      });
+      return;
+    }
+    const totalSec = Math.ceil(remain / 1000);
+    const m = Math.floor(totalSec / 60), s = totalSec % 60;
+    textEl.textContent = `${label} ${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  tick();
+  gameCountdownInterval = setInterval(tick, 500);
+}
+function stopGameCountdownFloat() {
+  if (gameCountdownInterval) { clearInterval(gameCountdownInterval); gameCountdownInterval = null; }
+  const el = document.getElementById("gameCountdownFloat");
+  if (el) el.style.display = "none";
+}
+function cancelGameCountdown() {
+  if (!confirm("確定要取消這場遊戲嗎？兩人都會回到聊天室 / Отменить игру для обоих?")) return;
+  endGameInvite("cancelled", currentUser.email);
+}
+
+/* ---------- 總監聽器：依 Firebase 狀態渲染整套UI ---------- */
+function setupGameInviteListener() {
+  db.ref("gameInvite").on("value", (snapshot) => {
+    renderGameInviteState(snapshot.val());
+  });
+}
+function renderGameInviteState(data) {
+  if (!currentUser) return;
+  const waitOverlay = document.getElementById("gameInviteWaitOverlay");
+  const receiveOverlay = document.getElementById("gameInviteReceiveOverlay");
+  const myKey = emailToKey(currentUser.email);
+
+  if (!data) {
+    waitOverlay.style.display = "none";
+    receiveOverlay.style.display = "none";
+    stopGameCountdownFloat();
+    return;
+  }
+
+  const isSender = data.fromKey === myKey;
+
+  if (data.status === "pending_recipient") {
+    stopGameCountdownFloat();
+    if (isSender) {
+      receiveOverlay.style.display = "none";
+      waitOverlay.style.display = "flex";
+      document.getElementById("gameInviteWaitStatus").textContent = "等待對方查看中... / Ожидание ответа...";
+    } else {
+      waitOverlay.style.display = "none";
+      currentInviteGameOptions = data.gameOptions || [];
+      gameInviteRecipientSelectedGame = null;
+      renderReceiveGrid(currentInviteGameOptions);
+      document.getElementById("gameInviteAcceptBtn").disabled = true;
+      document.getElementById("gameInviteTimerToggleBtn").disabled = true;
+      document.getElementById("gameInviteReceiveTimerArea").style.display = "none";
+      receiveOverlay.style.display = "flex";
+    }
+  } else if (data.status === "waiting_timer") {
+    waitOverlay.style.display = "none";
+    receiveOverlay.style.display = "none";
+    startGameCountdownFloat(data.startAt, data.selectedGame);
+  } else if (data.status === "started") {
+    waitOverlay.style.display = "none";
+    receiveOverlay.style.display = "none";
+    stopGameCountdownFloat();
+    if (gameScreenActiveFor !== data.createdAt) {
+      gameScreenActiveFor = data.createdAt;
+      if (isSender) resetGameState(data.selectedGame, data);
+      enterGameScreen(data.selectedGame, data);
+    }
+  } else if (data.status === "cancelled" || data.status === "declined") {
+    waitOverlay.style.display = "none";
+    receiveOverlay.style.display = "none";
+    stopGameCountdownFloat();
+    if (gameScreenOpen) exitGameScreen(true);
+    if (data.endedBy && data.endedBy !== currentUser.email) {
+      showGameToast(data.status === "declined" ? "對方婉拒了遊戲邀請 / Приглашение отклонено" : "對方取消了遊戲邀請 / Приглашение отменено");
+    }
+  }
+}
+
+/* ---------- 遊戲畫面容器 ---------- */
+function resetGameState(gameId, inviteData) {
+  if (gameId === "tictactoe") {
+    db.ref("games/tictactoe").set({
+      board: Array(9).fill(""),
+      turn: "X",
+      playerX: inviteData.fromEmail,
+      playerO: inviteData.toEmail || null,
+      winner: null,
+      updatedAt: Date.now()
+    });
+  }
+}
+function enterGameScreen(gameId, inviteData) {
+  gameScreenOpen = true;
+  document.getElementById("gameScreenOverlay").style.display = "flex";
+  const g = getGameById(gameId);
+  document.getElementById("gameScreenTitle").textContent = `🎮 ${g ? g.name : '遊戲'}`;
+  if (gameId === "tictactoe") {
+    initTicTacToeScreen();
+  } else {
+    document.getElementById("gameScreenBody").innerHTML =
+      `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
+  }
+}
+function exitGameScreen(silent) {
+  gameScreenOpen = false;
+  gameScreenActiveFor = null;
+  document.getElementById("gameScreenOverlay").style.display = "none";
+  if (tttListenerRef) { tttListenerRef.off(); tttListenerRef = null; }
+  if (!silent) {
+    db.ref("games/tictactoe").remove();
+    db.ref("gameInvite").remove();
+  }
+}
+
+/* ---------- 井字遊戲 (第一款遊戲本體) ---------- */
+function initTicTacToeScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `
+    <div class="ttt-status" id="tttStatus">載入中... / Загрузка...</div>
+    <div class="ttt-board" id="tttBoard"></div>
+  `;
+  if (tttListenerRef) tttListenerRef.off();
+  tttListenerRef = db.ref("games/tictactoe");
+  tttListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    renderTicTacToe(state);
+  });
+}
+function renderTicTacToe(state) {
+  const boardEl = document.getElementById("tttBoard");
+  const statusEl = document.getElementById("tttStatus");
+  if (!boardEl || !statusEl) return;
+  const myEmail = currentUser.email;
+  const mySymbol = state.playerX === myEmail ? "X" : (state.playerO === myEmail ? "O" : null);
+  boardEl.innerHTML = (state.board || []).map((v, i) => `<div class="ttt-cell" onclick="tttMove(${i})">${v || ''}</div>`).join('');
+  if (state.winner) {
+    if (state.winner === "draw") {
+      statusEl.innerHTML = `平手！🤝 / Ничья!<br><button class="ttt-restart-btn" onclick="restartTicTacToe()">再玩一局 / Ещё раз</button>`;
+    } else {
+      const winnerIsMe = state.winner === mySymbol;
+      statusEl.innerHTML = (winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл")
+        + `<br><button class="ttt-restart-btn" onclick="restartTicTacToe()">再玩一局 / Ещё раз</button>`;
+    }
+  } else {
+    const turnIsMe = state.turn === mySymbol;
+    statusEl.textContent = turnIsMe ? `輪到你了 (${mySymbol}) / Ваш ход` : `等待對方 (${state.turn}) / Ход соперника`;
+  }
+}
+function tttMove(i) {
+  db.ref("games/tictactoe").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.winner) return;
+    const mySymbol = state.playerX === currentUser.email ? "X" : (state.playerO === currentUser.email ? "O" : null);
+    if (!mySymbol || state.turn !== mySymbol) return;
+    if (state.board[i]) return;
+    const newBoard = state.board.slice();
+    newBoard[i] = mySymbol;
+    const winner = checkTttWinner(newBoard);
+    db.ref("games/tictactoe").update({
+      board: newBoard,
+      turn: mySymbol === "X" ? "O" : "X",
+      winner: winner
+    });
+  });
+}
+function restartTicTacToe() {
+  db.ref("games/tictactoe").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    db.ref("games/tictactoe").update({ board: Array(9).fill(""), turn: "X", winner: null, updatedAt: Date.now() });
+  });
+}
+function checkTttWinner(board) {
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for (const [a,b,c] of lines) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
+  }
+  if (board.every(v => v)) return "draw";
+  return null;
 }
 
 function speakThisText(index) {
