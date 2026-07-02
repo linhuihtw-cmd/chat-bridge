@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.62</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.63</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1214,7 +1214,7 @@
 
 <script>
 
-const APP_VERSION = "21.62";
+const APP_VERSION = "21.63";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1404,7 +1404,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.62";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.63";
   }
 });
 
@@ -2200,7 +2200,7 @@ function renderChat() {
       let firstLineDisplay = firstLineHtml.replace(/【[^】]+】/, "");
       let finalHtmlText = nonEmptyLines.slice(1).join('');
       let hasExplanation = nonEmptyLines.join('').includes("collapsible-explanation");
-      let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanation(${index})">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
+      let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByKey('${m.firebaseKey || ''}')">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
 
       let correctionBtns = "";
       let correctedContentHtml = "";
@@ -2564,6 +2564,19 @@ function speakRussianText(index) {
   utteranceRu.volume = 1.0;
   utteranceRu.rate = 0.9;
   speechSynthesis.speak(utteranceRu);
+}
+
+function toggleExplanationByKey(firebaseKey) {
+  const el = document.getElementById("msg-" + firebaseKey);
+  if (!el) return;
+  const aiCard = el.querySelector(".ai-card");
+  if (!aiCard) return;
+  const explanationDiv = aiCard.querySelector(".collapsible-explanation");
+  const btn = aiCard.querySelector(".toggle-explain-btn");
+  if (!explanationDiv || !btn) return;
+  const isHidden = explanationDiv.style.display === "none";
+  explanationDiv.style.display = isHidden ? "block" : "none";
+  btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
 }
 
 function toggleCardByKey(firebaseKey) {
