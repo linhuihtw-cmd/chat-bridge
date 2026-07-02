@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.55</span></h2>
+<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.56</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1213,7 +1213,7 @@
 
 <script>
 
-const APP_VERSION = "21.55";
+const APP_VERSION = "21.56";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1403,7 +1403,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.55";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.56";
   }
 });
 
@@ -2124,6 +2124,10 @@ function renderChat() {
       if (currentUser?.email === ADMIN_EMAIL && correspondingUserMsg?.localDeletedBy) {
         const adminKey = emailToKey(ADMIN_EMAIL);
         if (correspondingUserMsg.localDeletedBy.includes(adminKey)) return `${dateSeparator}`;
+      }
+
+      if (correspondingUserMsg?.deleted && correspondingUserMsg?.deletedBy === correspondingSenderEmail) {
+        return `${dateSeparator}`;
       }
 
       let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
