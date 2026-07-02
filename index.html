@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.52</span></h2>
+<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.55</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1120,6 +1120,7 @@
 <div id="contextMenu" style="display:none;">
   <button onclick="contextMenuCopy()">📋 複製 / Копировать</button>
   <button onclick="contextMenuReply()">↩️ 回復 / Ответить</button>
+  <button id="contextMenuRecall" onclick="contextMenuRecall()" style="display:none;">↩ 收回 / Отозвать</button>
 </div>
 
 <div id="correctionAlertOverlay" style="display:none;">
@@ -1212,7 +1213,7 @@
 
 <script>
 
-const APP_VERSION = "21.52";
+const APP_VERSION = "21.55";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1402,7 +1403,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.52";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.55";
   }
 });
 
@@ -2064,6 +2065,27 @@ function renderChat() {
     const timeLabel = m.timestamp ? `<span class="msg-time">${formatDualTime(m.timestamp, m.tz)}</span>` : "";
 
     if (m.role === "user") {
+      if (m.deleted) {
+        const deletedByMe = m.deletedBy === currentUser?.email;
+        const isAdmin = currentUser?.email === ADMIN_EMAIL;
+        const adminLocalDeleted = m.localDeletedBy && m.localDeletedBy.includes(emailToKey(ADMIN_EMAIL));
+
+        if (adminLocalDeleted && isAdmin) return `${dateSeparator}`;
+        if (!isAdmin && m.deletedBy !== currentUser?.email) {
+          return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div style="color:var(--text-tertiary);font-size:12px;font-style:italic;padding:4px 8px;">↩ 此訊息已收回 / Сообщение отозвано</div>${timeLabel}</div>`;
+        }
+        if (deletedByMe) {
+          return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div style="color:var(--text-tertiary);font-size:12px;font-style:italic;padding:4px 8px;">↩ 此訊息已收回 / Сообщение отозвано</div>${timeLabel}</div>`;
+        }
+        if (isAdmin && !adminLocalDeleted) {
+          const safeText2 = m.text.replace(/"/g, '&quot;');
+          const safeName2 = getDisplayName(m.senderEmail).replace(/"/g, '&quot;');
+          const bubbleColor2 = getBubbleColor(m.senderEmail);
+          const bubbleStyle2 = bubbleColor2 ? `style="background:${bubbleColor2}; border-color:${bubbleColor2};"` : "";
+          const textColor2 = bubbleColor2 ? `style="color:#1a1810;"` : "";
+          return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}" data-text="${safeText2}" data-name="${safeName2}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-text" ${bubbleStyle2}><span ${textColor2}><strong>${getDisplayName(m.senderEmail)}</strong>： ${m.text}</span></div><div style="color:var(--text-tertiary);font-size:11px;padding:2px 8px 4px;">↩ 對方已收回此訊息 <button onclick="adminLocalDelete('${m.firebaseKey}')" style="background:transparent;border:none;color:var(--text-tertiary);font-size:11px;cursor:pointer;text-decoration:underline;padding:0 4px;">在我的畫面刪除</button></div>${timeLabel}</div>`;
+        }
+      }
       const displayName = getDisplayName(m.senderEmail);
       const bubbleColor = getBubbleColor(m.senderEmail);
       const isOwnMessage = currentUser && m.senderEmail === currentUser.email;
@@ -2089,12 +2111,19 @@ function renderChat() {
 
       let correspondingUserInput = "";
       let correspondingSenderEmail = "";
+      let correspondingUserMsg = null;
       for (let i = index - 1; i >= 0; i--) {
         if (chatHistory[i] && chatHistory[i].role === "user") {
           correspondingUserInput = chatHistory[i].text.trim();
           correspondingSenderEmail = chatHistory[i].senderEmail || "";
+          correspondingUserMsg = chatHistory[i];
           break;
         }
+      }
+
+      if (currentUser?.email === ADMIN_EMAIL && correspondingUserMsg?.localDeletedBy) {
+        const adminKey = emailToKey(ADMIN_EMAIL);
+        if (correspondingUserMsg.localDeletedBy.includes(adminKey)) return `${dateSeparator}`;
       }
 
       let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
@@ -2418,11 +2447,32 @@ function showContextMenu(e, msgBox) {
   const y = Math.min((e.clientY || e.touches?.[0]?.clientY || 0), window.innerHeight - 90);
   menu.style.left = x + "px";
   menu.style.top = y + "px";
+  const isOwn = currentUser && msgBox.dataset.sender === currentUser.email;
+  const recallBtn = document.getElementById("contextMenuRecall");
+  if (recallBtn) recallBtn.style.display = isOwn ? "block" : "none";
 }
 
 function hideContextMenu() {
   document.getElementById("contextMenu").style.display = "none";
   contextMenuTarget = null;
+}
+
+function adminLocalDelete(firebaseKey) {
+  if (!firebaseKey || !currentUser || currentUser.email !== ADMIN_EMAIL) return;
+  const adminKey = emailToKey(ADMIN_EMAIL);
+  db.ref("messages/" + firebaseKey + "/localDeletedBy").transaction(current => {
+    const arr = current || [];
+    if (!arr.includes(adminKey)) arr.push(adminKey);
+    return arr;
+  });
+}
+
+function contextMenuRecall() {
+  if (!contextMenuTarget) return hideContextMenu();
+  const key = contextMenuTarget.dataset.key;
+  if (!key) return hideContextMenu();
+  hideContextMenu();
+  db.ref("messages/" + key).update({ deleted: true, deletedAt: Date.now(), deletedBy: currentUser.email });
 }
 
 function contextMenuCopy() {
