@@ -1074,7 +1074,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.56</span></h2>
+<h2>We are L⇄V ∞<br><span style="font-size:11px;color:#64748b;font-weight:400;">聊天橋 / Мост v21.57</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1213,7 +1213,7 @@
 
 <script>
 
-const APP_VERSION = "21.56";
+const APP_VERSION = "21.57";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1403,7 +1403,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.56";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.57";
   }
 });
 
@@ -2066,15 +2066,13 @@ function renderChat() {
 
     if (m.role === "user") {
       if (m.deleted) {
-        const deletedByMe = m.deletedBy === currentUser?.email;
+        const deletedByAdmin = m.deletedBy === ADMIN_EMAIL;
         const isAdmin = currentUser?.email === ADMIN_EMAIL;
         const adminLocalDeleted = m.localDeletedBy && m.localDeletedBy.includes(emailToKey(ADMIN_EMAIL));
 
+        if (deletedByAdmin) return `${dateSeparator}`;
         if (adminLocalDeleted && isAdmin) return `${dateSeparator}`;
-        if (!isAdmin && m.deletedBy !== currentUser?.email) {
-          return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div style="color:var(--text-tertiary);font-size:12px;font-style:italic;padding:4px 8px;">↩ 此訊息已收回 / Сообщение отозвано</div>${timeLabel}</div>`;
-        }
-        if (deletedByMe) {
+        if (!isAdmin) {
           return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div style="color:var(--text-tertiary);font-size:12px;font-style:italic;padding:4px 8px;">↩ 此訊息已收回 / Сообщение отозвано</div>${timeLabel}</div>`;
         }
         if (isAdmin && !adminLocalDeleted) {
@@ -2124,6 +2122,10 @@ function renderChat() {
       if (currentUser?.email === ADMIN_EMAIL && correspondingUserMsg?.localDeletedBy) {
         const adminKey = emailToKey(ADMIN_EMAIL);
         if (correspondingUserMsg.localDeletedBy.includes(adminKey)) return `${dateSeparator}`;
+      }
+
+      if (correspondingUserMsg?.deleted && correspondingUserMsg?.deletedBy === ADMIN_EMAIL) {
+        return `${dateSeparator}`;
       }
 
       if (correspondingUserMsg?.deleted && correspondingUserMsg?.deletedBy === correspondingSenderEmail) {
