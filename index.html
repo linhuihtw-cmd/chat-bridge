@@ -885,7 +885,7 @@
     }
     .game-turn-light.on-turn { background: #6a9a52; box-shadow: 0 0 6px #6a9a52; }
     .game-turn-light.waiting { background: var(--gold-dim); }
-    .game-turn-light.offline { background: var(--error-red); box-shadow: 0 0 6px var(--error-red); animation: gameLightBlink 1s infinite; }
+    .game-turn-light.offline { background: var(--text-tertiary); }
     @keyframes gameLightBlink { 50% { opacity: 0.25; } }
     .game-screen-title { color: var(--gold); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .game-screen-header-btns { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
@@ -1428,7 +1428,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.80</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.81</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1629,7 +1629,7 @@
 
 <script>
 
-const APP_VERSION = "21.80";
+const APP_VERSION = "21.81";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1821,7 +1821,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.80";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.81";
   }
 });
 
@@ -3151,6 +3151,7 @@ function resetGameState(gameId, inviteData) {
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
+let currentGameTitleText = "";
 function enterGameScreen(gameId, inviteData) {
   gameScreenOpen = true;
   const overlay = document.getElementById("gameScreenOverlay");
@@ -3169,7 +3170,8 @@ function enterGameScreen(gameId, inviteData) {
   }
   initGamePanelDrag();
   const g = getGameById(gameId);
-  document.getElementById("gameScreenTitle").textContent = `🎮 ${g ? g.name + (g.nameRu ? ' / ' + g.nameRu : '') : '遊戲'}`;
+  currentGameTitleText = `🎮 ${g ? g.name + (g.nameRu ? ' / ' + g.nameRu : '') : '遊戲'}`;
+  document.getElementById("gameScreenTitle").textContent = currentGameTitleText;
   if (gameId === "tictactoe") {
     initTicTacToeScreen();
   } else {
@@ -3324,6 +3326,10 @@ function renderTicTacToe(state) {
     } else {
       lightEl.title = "";
     }
+  }
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (titleEl) {
+    titleEl.textContent = showOffline ? "對方已退出 / Собеседник вышел" : currentGameTitleText;
   }
   if (showOffline && !tttOfflineToastShown) {
     tttOfflineToastShown = true;
