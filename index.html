@@ -1425,7 +1425,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.77</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.78</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1626,7 +1626,7 @@
 
 <script>
 
-const APP_VERSION = "21.77";
+const APP_VERSION = "21.78";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1818,7 +1818,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.77";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.78";
   }
 });
 
@@ -2317,6 +2317,19 @@ const TIMEZONE_CITY_NAMES = {
 
 let wasDisconnected = false;
 let disconnectPendingTimer = null;
+function showDisconnectBannerNow() {
+  const banner = document.getElementById("connectionBanner");
+  const icon = document.getElementById("connectionBannerIcon");
+  const msg = document.getElementById("connectionBannerMsg");
+  const btn = document.getElementById("connectionBannerBtn");
+  if (!banner) return;
+  wasDisconnected = true;
+  banner.className = "";
+  icon.textContent = "⚠️";
+  msg.innerHTML = "閒置太久，連線已中斷<br>Слишком долгое бездействие, соединение потеряно";
+  btn.style.display = "block";
+  banner.style.display = "flex";
+}
 function setupConnectionBanner() {
   const connectedRef = db.ref(".info/connected");
   connectedRef.on("value", (snap) => {
@@ -2342,14 +2355,19 @@ function setupConnectionBanner() {
     } else {
       // 先等1.2秒緩衝，避免手機從休眠喚醒時網路瞬斷瞬連造成畫面閃爍
       clearTimeout(disconnectPendingTimer);
-      disconnectPendingTimer = setTimeout(() => {
-        wasDisconnected = true;
-        banner.className = "";
-        icon.textContent = "⚠️";
-        msg.innerHTML = "閒置太久，連線已中斷<br>Слишком долгое бездействие, соединение потеряно";
-        btn.style.display = "block";
-        banner.style.display = "flex";
-      }, 1200);
+      disconnectPendingTimer = setTimeout(showDisconnectBannerNow, 1200);
+    }
+  });
+  // 保險機制：分頁從背景/裝置從睡眠中被切回來時，主動重新檢查一次連線狀態
+  // 因為裝置真正睡眠時，上面的監聽器可能整段被凍結、來不及跳出提醒
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && currentUser) {
+      db.ref(".info/connected").once("value").then((snap) => {
+        if (snap.val() !== true) {
+          clearTimeout(disconnectPendingTimer);
+          showDisconnectBannerNow();
+        }
+      });
     }
   });
 }
