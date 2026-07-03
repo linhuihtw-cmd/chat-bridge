@@ -1425,7 +1425,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.76</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.77</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1626,7 +1626,7 @@
 
 <script>
 
-const APP_VERSION = "21.76";
+const APP_VERSION = "21.77";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1818,7 +1818,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.76";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.77";
   }
 });
 
@@ -2316,6 +2316,7 @@ const TIMEZONE_CITY_NAMES = {
 };
 
 let wasDisconnected = false;
+let disconnectPendingTimer = null;
 function setupConnectionBanner() {
   const connectedRef = db.ref(".info/connected");
   connectedRef.on("value", (snap) => {
@@ -2325,24 +2326,30 @@ function setupConnectionBanner() {
     const btn = document.getElementById("connectionBannerBtn");
     if (!banner) return;
     if (snap.val() === true) {
+      clearTimeout(disconnectPendingTimer);
+      disconnectPendingTimer = null;
       if (wasDisconnected) {
         banner.className = "reconnected";
         icon.textContent = "✅";
         msg.textContent = "已恢復連線 / Соединение восстановлено";
         btn.style.display = "none";
         banner.style.display = "flex";
-        setTimeout(() => { banner.style.display = "none"; }, 1500);
+        setTimeout(() => { banner.style.display = "none"; }, 3000);
         wasDisconnected = false;
       } else {
         banner.style.display = "none";
       }
     } else {
-      wasDisconnected = true;
-      banner.className = "";
-      icon.textContent = "⚠️";
-      msg.innerHTML = "閒置太久，連線已中斷<br>Слишком долгое бездействие, соединение потеряно";
-      btn.style.display = "block";
-      banner.style.display = "flex";
+      // 先等1.2秒緩衝，避免手機從休眠喚醒時網路瞬斷瞬連造成畫面閃爍
+      clearTimeout(disconnectPendingTimer);
+      disconnectPendingTimer = setTimeout(() => {
+        wasDisconnected = true;
+        banner.className = "";
+        icon.textContent = "⚠️";
+        msg.innerHTML = "閒置太久，連線已中斷<br>Слишком долгое бездействие, соединение потеряно";
+        btn.style.display = "block";
+        banner.style.display = "flex";
+      }, 1200);
     }
   });
 }
@@ -2868,11 +2875,11 @@ async function sendMsg() {
    ============================================================ */
 const GAME_TRIGGER_PHRASE = "⚽⚽⚽⚽⚽";
 const GAME_CATALOG = [
-  { id: "tictactoe", icon: "⭕", name: "井字遊戲", available: true },
-  { id: "bulls",     icon: "🔢", name: "公牛母牛",  available: false },
-  { id: "rps",       icon: "✊", name: "剪刀石頭布", available: false },
-  { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", available: false },
-  { id: "gomoku",    icon: "⚫", name: "五子棋",    available: false }
+  { id: "tictactoe", icon: "⭕", name: "井字遊戲", nameRu: "Крестики-нолики", available: true },
+  { id: "bulls",     icon: "🔢", name: "公牛母牛",  nameRu: "Быки и коровы", available: false },
+  { id: "rps",       icon: "✊", name: "剪刀石頭布", nameRu: "Камень-ножницы-бумага", available: false },
+  { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", nameRu: "Угадай, кто я", available: false },
+  { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: false }
 ];
 
 let selectedGameMenuIds = [];
@@ -2914,7 +2921,7 @@ function renderGameMenuGrid() {
     <div class="game-thumb ${selectedGameMenuIds.includes(g.id) ? 'selected' : ''} ${!g.available ? 'disabled' : ''}" onclick="toggleGameMenuSelect('${g.id}')">
       <span class="game-thumb-check">✓</span>
       <div class="game-thumb-icon">${g.icon}</div>
-      <div class="game-thumb-name">${g.name}</div>
+      <div class="game-thumb-name">${g.name}<br><span style="font-size:10px;color:var(--text-tertiary);font-weight:400;">${g.nameRu || ''}</span></div>
       ${!g.available ? '<div class="game-thumb-tag">即將推出</div>' : ''}
     </div>`).join('');
   document.getElementById("gameMenuSendBtn").disabled = selectedGameMenuIds.length === 0;
@@ -2967,7 +2974,7 @@ function renderReceiveGrid(gameOptions) {
     return `<div class="game-thumb ${sel ? 'selected' : ''}" onclick="selectReceiveGameThumb('${id}')">
       <span class="game-thumb-check">✓</span>
       <div class="game-thumb-icon">${g.icon}</div>
-      <div class="game-thumb-name">${g.name}</div>
+      <div class="game-thumb-name">${g.name}<br><span style="font-size:10px;color:var(--text-tertiary);font-weight:400;">${g.nameRu || ''}</span></div>
     </div>`;
   }).join('');
 }
@@ -3013,7 +3020,7 @@ function startGameCountdownFloat(startAt, gameId) {
   const el = document.getElementById("gameCountdownFloat");
   el.style.display = "flex";
   const g = getGameById(gameId);
-  const label = g ? g.name : "遊戲";
+  const label = g ? (g.name + (g.nameRu ? " / " + g.nameRu : "")) : "遊戲";
   function tick() {
     const remain = startAt - Date.now();
     const textEl = document.getElementById("gameCountdownFloatText");
@@ -3130,7 +3137,7 @@ function enterGameScreen(gameId, inviteData) {
   if (minBtn) minBtn.textContent = "▾";
   overlay.style.display = "flex";
   const g = getGameById(gameId);
-  document.getElementById("gameScreenTitle").textContent = `🎮 ${g ? g.name : '遊戲'}`;
+  document.getElementById("gameScreenTitle").textContent = `🎮 ${g ? g.name + (g.nameRu ? ' / ' + g.nameRu : '') : '遊戲'}`;
   if (gameId === "tictactoe") {
     initTicTacToeScreen();
   } else {
