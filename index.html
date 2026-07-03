@@ -870,6 +870,9 @@
       border-bottom: 0.5px solid var(--border-subtle);
       gap: 8px;
       flex-shrink: 0;
+      cursor: move;
+      touch-action: none;
+      user-select: none;
     }
     .game-screen-header-left { display: flex; align-items: center; gap: 7px; min-width: 0; }
     .game-turn-light {
@@ -1425,7 +1428,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.78</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.79</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1626,7 +1629,7 @@
 
 <script>
 
-const APP_VERSION = "21.78";
+const APP_VERSION = "21.79";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1818,7 +1821,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.78";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.79";
   }
 });
 
@@ -3147,6 +3150,7 @@ function resetGameState(gameId, inviteData) {
     });
   }
 }
+let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
 function enterGameScreen(gameId, inviteData) {
   gameScreenOpen = true;
   const overlay = document.getElementById("gameScreenOverlay");
@@ -3154,6 +3158,16 @@ function enterGameScreen(gameId, inviteData) {
   const minBtn = document.getElementById("gameScreenMinBtn");
   if (minBtn) minBtn.textContent = "▾";
   overlay.style.display = "flex";
+  if (gamePanelPos) {
+    overlay.style.left = gamePanelPos.left + "px";
+    overlay.style.top = gamePanelPos.top + "px";
+    overlay.style.right = "auto";
+  } else {
+    overlay.style.left = "";
+    overlay.style.top = "";
+    overlay.style.right = "";
+  }
+  initGamePanelDrag();
   const g = getGameById(gameId);
   document.getElementById("gameScreenTitle").textContent = `🎮 ${g ? g.name + (g.nameRu ? ' / ' + g.nameRu : '') : '遊戲'}`;
   if (gameId === "tictactoe") {
@@ -3162,6 +3176,52 @@ function enterGameScreen(gameId, inviteData) {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
   }
+}
+function initGamePanelDrag() {
+  const overlay = document.getElementById("gameScreenOverlay");
+  const header = overlay.querySelector(".game-screen-header");
+  if (!header || header._dragBound) return;
+  header._dragBound = true;
+  let dragging = null;
+
+  function getPoint(e) {
+    if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+  function onDown(e) {
+    if (e.target.closest("button")) return; // 按鈕不觸發拖曳
+    const pt = getPoint(e);
+    const rect = overlay.getBoundingClientRect();
+    dragging = { startX: pt.x, startY: pt.y, startLeft: rect.left, startTop: rect.top };
+    overlay.style.right = "auto";
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onUp);
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const pt = getPoint(e);
+    let newLeft = dragging.startLeft + (pt.x - dragging.startX);
+    let newTop = dragging.startTop + (pt.y - dragging.startY);
+    const maxLeft = window.innerWidth - overlay.offsetWidth - 4;
+    const maxTop = window.innerHeight - 44;
+    newLeft = Math.max(4, Math.min(newLeft, maxLeft));
+    newTop = Math.max(4, Math.min(newTop, maxTop));
+    overlay.style.left = newLeft + "px";
+    overlay.style.top = newTop + "px";
+    gamePanelPos = { left: newLeft, top: newTop };
+  }
+  function onUp() {
+    dragging = null;
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("touchend", onUp);
+  }
+  header.addEventListener("mousedown", onDown);
+  header.addEventListener("touchstart", onDown, { passive: true });
 }
 function toggleGameScreenMinimize() {
   const overlay = document.getElementById("gameScreenOverlay");
