@@ -1428,7 +1428,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.82</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.83</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1629,7 +1629,7 @@
 
 <script>
 
-const APP_VERSION = "21.82";
+const APP_VERSION = "21.83";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1821,7 +1821,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.82";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.83";
   }
 });
 
@@ -3314,7 +3314,7 @@ function renderTicTacToe(state) {
     lightEl.classList.remove("on-turn", "waiting", "offline");
     if (showOffline) {
       lightEl.classList.add("offline");
-      lightEl.title = "對方似乎已離開遊戲 / Собеседник, похоже, вышел";
+      lightEl.title = "對方已離開遊戲 / Собеседник вышел из игры";
     } else if (!state.winner) {
       if (state.turn === mySymbol) {
         lightEl.classList.add("on-turn");
@@ -3333,12 +3333,12 @@ function renderTicTacToe(state) {
   }
   if (showOffline && !tttOfflineToastShown) {
     tttOfflineToastShown = true;
-    showGameToast("對方似乎已離開遊戲，你可以繼續等待或按✕離開 / Собеседник, похоже, вышел");
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
   }
 
   boardEl.innerHTML = (state.board || []).map((v, i) => `<div class="ttt-cell" onclick="tttMove(${i})">${v || ''}</div>`).join('');
   if (showOffline) {
-    statusEl.innerHTML = `對方似乎已離開遊戲<br>Собеседник, похоже, вышел<br><span style="font-size:11px;color:var(--text-tertiary);">你可以繼續看局勢，或按右上角 ✕ 離開</span>`;
+    statusEl.innerHTML = `對方已離開遊戲<br>Собеседник вышел из игры`;
   } else if (state.winner) {
     if (state.winner === "draw") {
       statusEl.innerHTML = `平手！🤝 / Ничья!<br><button class="ttt-restart-btn" onclick="restartTicTacToe()">再玩一局 / Ещё раз</button>`;
@@ -3349,7 +3349,7 @@ function renderTicTacToe(state) {
     }
   } else {
     const turnIsMe = state.turn === mySymbol;
-    statusEl.textContent = turnIsMe ? `輪到你了 (${mySymbol}) / Ваш ход` : `等待對方 (${state.turn}) / Ход соперника`;
+    statusEl.textContent = turnIsMe ? `Ваш ход (${mySymbol}) / 輪到你` : `Ход соперника / 等對方`;
   }
 }
 function tttMove(i) {
