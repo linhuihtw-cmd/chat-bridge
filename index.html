@@ -961,6 +961,115 @@
     }
     .ttt-restart-btn:hover { background: var(--gold); }
 
+    /* 公牛母牛 */
+    .bulls-input-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+    .bulls-digit-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 20px;
+      letter-spacing: 4px;
+      padding: 10px;
+      text-align: center;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .bulls-digit-input:focus { border-color: var(--gold-dim); }
+    .bulls-submit-btn {
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .bulls-submit-btn:hover { background: var(--gold); }
+    .bulls-submit-btn:disabled { background: var(--border-subtle); color: var(--text-tertiary); cursor: not-allowed; }
+    .bulls-history {
+      width: 100%;
+      max-height: 160px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .bulls-history-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-panel);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .bulls-history-row .bulls-ab { color: var(--gold-bright); font-weight: 500; }
+    .bulls-hint { color: var(--text-tertiary); font-size: 11px; text-align: center; }
+
+    /* 猜猜我是誰 */
+    .gw-my-secret {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-panel);
+      border: 1px solid var(--gold-dim);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .gw-my-secret .gw-secret-emoji { font-size: 26px; }
+    .gw-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+    .gw-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      font-size: 24px;
+      padding: 8px 0;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.15s, border-color 0.15s;
+    }
+    .gw-card:hover { border-color: var(--gold-dim); }
+    .gw-card.eliminated { opacity: 0.25; }
+    .gw-guess-row { display: flex; gap: 8px; width: 100%; align-items: center; }
+    .gw-guess-select {
+      flex: 1;
+      background: var(--bg-input);
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-primary);
+      border-radius: 8px;
+      padding: 9px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .gw-history {
+      width: 100%;
+      max-height: 100px;
+      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .gw-history-item { font-size: 20px; opacity: 0.8; }
+    .gw-history-item.wrong { opacity: 0.4; }
+
     .msg-box.needs-correction .ai-card {
       background: var(--bg-elevated);
       border-color: var(--border-strong);
@@ -1428,7 +1537,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.83</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.84</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1629,7 +1738,7 @@
 
 <script>
 
-const APP_VERSION = "21.83";
+const APP_VERSION = "21.84";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1821,7 +1930,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.83";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.84";
   }
 });
 
@@ -2897,9 +3006,9 @@ async function sendMsg() {
 const GAME_TRIGGER_PHRASE = "⚽⚽⚽⚽⚽";
 const GAME_CATALOG = [
   { id: "tictactoe", icon: "⭕", name: "井字遊戲", nameRu: "Крестики-нолики", available: true },
-  { id: "bulls",     icon: "🔢", name: "公牛母牛",  nameRu: "Быки и коровы", available: false },
+  { id: "bulls",     icon: "🔢", name: "公牛母牛",  nameRu: "Быки и коровы", available: true },
   { id: "rps",       icon: "✊", name: "剪刀石頭布", nameRu: "Камень-ножницы-бумага", available: false },
-  { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", nameRu: "Угадай, кто я", available: false },
+  { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", nameRu: "Угадай, кто я", available: true },
   { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: false }
 ];
 
@@ -2908,7 +3017,7 @@ let gameInviteRecipientSelectedGame = null;
 let currentInviteGameOptions = [];
 let gameScreenOpen = false;
 let gameScreenActiveFor = null;
-let tttListenerRef = null;
+let activeGameListenerRef = null;
 let gameCountdownInterval = null;
 
 function getGameById(id) { return GAME_CATALOG.find(g => g.id === id); }
@@ -3148,12 +3257,43 @@ function resetGameState(gameId, inviteData) {
       winner: null,
       updatedAt: Date.now()
     });
+  } else if (gameId === "bulls") {
+    db.ref("games/bulls").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      numberA: null,
+      numberB: null,
+      guessesA: [],
+      guessesB: [],
+      turn: "A",
+      phase: "setup",
+      winner: null,
+      updatedAt: Date.now()
+    });
+  } else if (gameId === "guesswho") {
+    const secretA = Math.floor(Math.random() * GUESSWHO_CHARACTERS.length);
+    const secretB = Math.floor(Math.random() * GUESSWHO_CHARACTERS.length);
+    db.ref("games/guesswho").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      secretA: secretA,
+      secretB: secretB,
+      eliminatedA: [],
+      eliminatedB: [],
+      guessesA: [],
+      guessesB: [],
+      winner: null,
+      phase: "playing",
+      updatedAt: Date.now()
+    });
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
 let currentGameTitleText = "";
+let activeGameId = null;
 function enterGameScreen(gameId, inviteData) {
   gameScreenOpen = true;
+  activeGameId = gameId;
   const overlay = document.getElementById("gameScreenOverlay");
   overlay.classList.remove("gs-collapsed");
   const minBtn = document.getElementById("gameScreenMinBtn");
@@ -3172,8 +3312,15 @@ function enterGameScreen(gameId, inviteData) {
   const g = getGameById(gameId);
   currentGameTitleText = `🎮 ${g ? g.name + (g.nameRu ? ' / ' + g.nameRu : '') : '遊戲'}`;
   document.getElementById("gameScreenTitle").textContent = currentGameTitleText;
+  gameStateSeenOnce = false;
+  gameOpponentSeenOnline = false;
+  gameOfflineToastShown = false;
   if (gameId === "tictactoe") {
     initTicTacToeScreen();
+  } else if (gameId === "bulls") {
+    initBullsScreen();
+  } else if (gameId === "guesswho") {
+    initGuessWhoScreen();
   } else {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
@@ -3234,20 +3381,22 @@ function exitGameScreen(silent) {
   gameScreenOpen = false;
   gameScreenActiveFor = null;
   document.getElementById("gameScreenOverlay").style.display = "none";
-  if (tttListenerRef) { tttListenerRef.off(); tttListenerRef = null; }
-  if (silent) return; // 資料本身已經消失或由別處觸發（例如管理者清空），不用再寫入
+  if (activeGameListenerRef) { activeGameListenerRef.off(); activeGameListenerRef = null; }
+  const gid = activeGameId;
+  activeGameId = null;
+  if (silent || !gid) return; // 資料本身已經消失或由別處觸發（例如管理者清空），不用再寫入
   if (!currentUser) return;
   const myKey = emailToKey(currentUser.email);
-  const myPresenceRef = db.ref("games/tictactoe/presence/" + myKey);
+  const myPresenceRef = db.ref("games/" + gid + "/presence/" + myKey);
   myPresenceRef.onDisconnect().cancel();
   myPresenceRef.remove().then(() => {
     // 只移除自己的在場狀態，讓對方可以留在畫面上回顧局勢
     // 等雙方都離開了，才真正把這局資料清空，讓下一次⚽x5是全新開始
-    db.ref("games/tictactoe/presence").once("value").then((snap) => {
+    db.ref("games/" + gid + "/presence").once("value").then((snap) => {
       const remaining = snap.val();
       const stillHasSomeone = remaining && Object.values(remaining).some(v => v === true);
       if (!stillHasSomeone) {
-        db.ref("games/tictactoe").remove();
+        db.ref("games/" + gid).remove();
         db.ref("gameInvite").remove();
       }
     });
@@ -3255,14 +3404,14 @@ function exitGameScreen(silent) {
 }
 
 /* ---------- 井字遊戲 (第一款遊戲本體) ---------- */
-let tttGameSeenOnce = false;
-let tttOpponentSeenOnline = false;
-let tttOfflineToastShown = false;
+let gameStateSeenOnce = false;
+let gameOpponentSeenOnline = false;
+let gameOfflineToastShown = false;
 
-function registerGamePresence() {
+function registerGamePresence(gameId) {
   if (!currentUser) return;
   const myKey = emailToKey(currentUser.email);
-  const presenceRef = db.ref("games/tictactoe/presence/" + myKey);
+  const presenceRef = db.ref("games/" + gameId + "/presence/" + myKey);
   presenceRef.set(true);
   presenceRef.onDisconnect().remove();
 }
@@ -3273,25 +3422,22 @@ function initTicTacToeScreen() {
     <div class="ttt-status" id="tttStatus">載入中... / Загрузка...</div>
     <div class="ttt-board" id="tttBoard"></div>
   `;
-  if (tttListenerRef) tttListenerRef.off();
-  tttGameSeenOnce = false;
-  tttOpponentSeenOnline = false;
-  tttOfflineToastShown = false;
-  tttListenerRef = db.ref("games/tictactoe");
-  tttListenerRef.on("value", (snap) => {
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/tictactoe");
+  activeGameListenerRef.on("value", (snap) => {
     const state = snap.val();
     if (!state) {
-      if (tttGameSeenOnce && gameScreenOpen) {
+      if (gameStateSeenOnce && gameScreenOpen) {
         showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
         exitGameScreen(true);
       }
       // 尚未建立棋盤資料（剛進畫面的正常過渡狀態），耐心等下一次更新，不視為對方離開
       return;
     }
-    tttGameSeenOnce = true;
+    gameStateSeenOnce = true;
     renderTicTacToe(state);
   });
-  registerGamePresence();
+  registerGamePresence("tictactoe");
 }
 function renderTicTacToe(state) {
   const boardEl = document.getElementById("tttBoard");
@@ -3305,10 +3451,10 @@ function renderTicTacToe(state) {
   const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
 
   if (opponentOnlineNow) {
-    tttOpponentSeenOnline = true;
-    tttOfflineToastShown = false;
+    gameOpponentSeenOnline = true;
+    gameOfflineToastShown = false;
   }
-  const showOffline = tttOpponentSeenOnline && !opponentOnlineNow;
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
 
   if (lightEl) {
     lightEl.classList.remove("on-turn", "waiting", "offline");
@@ -3331,8 +3477,8 @@ function renderTicTacToe(state) {
   if (titleEl) {
     titleEl.textContent = showOffline ? "👋 對方已離開" : currentGameTitleText;
   }
-  if (showOffline && !tttOfflineToastShown) {
-    tttOfflineToastShown = true;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
     showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
   }
 
@@ -3383,6 +3529,288 @@ function checkTttWinner(board) {
   }
   if (board.every(v => v)) return "draw";
   return null;
+}
+
+/* ---------- 公牛母牛 (第二款遊戲) ---------- */
+function computeBullsCows(secret, guess) {
+  let a = 0, b = 0;
+  for (let i = 0; i < 4; i++) {
+    if (guess[i] === secret[i]) a++;
+    else if (secret.includes(guess[i])) b++;
+  }
+  return { a, b };
+}
+function isValidBullsNumber(str) {
+  return /^\d{4}$/.test(str) && new Set(str.split("")).size === 4;
+}
+function initBullsScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `<div class="ttt-status" id="bullsStatus">載入中... / Загрузка...</div>`;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/bulls");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderBulls(state);
+  });
+  registerGamePresence("bulls");
+}
+function renderBulls(state) {
+  const body = document.getElementById("gameScreenBody");
+  const lightEl = document.getElementById("gameTurnLight");
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (!body) return;
+  const myEmail = currentUser.email;
+  const mySide = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+  const opponentEmail = mySide === "A" ? state.playerB : state.playerA;
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+  if (opponentOnlineNow) { gameOpponentSeenOnline = true; gameOfflineToastShown = false; }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (titleEl) titleEl.textContent = showOffline ? "👋 對方已離開" : currentGameTitleText;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+
+  const myNumber = mySide === "A" ? state.numberA : state.numberB;
+  const myGuesses = (mySide === "A" ? state.guessesA : state.guessesB) || [];
+  const turnIsMe = state.turn === mySide;
+
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) lightEl.classList.add("offline");
+    else if (!state.winner && state.phase === "playing") lightEl.classList.add(turnIsMe ? "on-turn" : "waiting");
+  }
+
+  if (showOffline) {
+    body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  if (state.phase === "setup") {
+    if (myNumber) {
+      body.innerHTML = `<div class="ttt-status">已送出，等待對方設定<br>Отправлено, ожидание соперника</div>`;
+    } else {
+      body.innerHTML = `
+        <div class="ttt-status">設定你的4位不重複數字<br>Придумайте число из 4 разных цифр</div>
+        <div class="bulls-input-row">
+          <input type="text" inputmode="numeric" maxlength="4" id="bullsSetupInput" class="bulls-digit-input" placeholder="0-9" />
+          <button class="bulls-submit-btn" onclick="bullsSetNumber()">確定 / OK</button>
+        </div>
+        <div class="bulls-hint">例如 1234，四個數字不能重複 / Например 1234, без повторов</div>
+      `;
+    }
+    // 雙方都設定好了，任一方切換進入猜謎階段
+    if (state.numberA && state.numberB) {
+      db.ref("games/bulls").update({ phase: "playing" });
+    }
+    return;
+  }
+
+  if (state.phase === "finished") {
+    const winnerIsMe = state.winner === mySide;
+    const oppNumber = mySide === "A" ? state.numberB : state.numberA;
+    body.innerHTML = `
+      <div class="ttt-status">${winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл"}<br>對方的數字是 ${oppNumber} / Число соперника: ${oppNumber}</div>
+      <button class="ttt-restart-btn" onclick="restartBulls()">再玩一局 / Ещё раз</button>
+    `;
+    return;
+  }
+
+  // phase === "playing"
+  const historyHtml = myGuesses.length
+    ? myGuesses.map(g => `<div class="bulls-history-row"><span>${g.guess}</span><span class="bulls-ab">${g.a}A ${g.b}B</span></div>`).join('')
+    : `<div class="bulls-hint">還沒猜過 / Пока нет попыток</div>`;
+  body.innerHTML = `
+    <div class="ttt-status">${turnIsMe ? "Ваш ход / 輪到你猜" : "Ход соперника / 等對方猜"}</div>
+    <div class="bulls-input-row">
+      <input type="text" inputmode="numeric" maxlength="4" id="bullsGuessInput" class="bulls-digit-input" placeholder="0-9" ${turnIsMe ? '' : 'disabled'} />
+      <button class="bulls-submit-btn" onclick="bullsGuess()" ${turnIsMe ? '' : 'disabled'}>猜 / OK</button>
+    </div>
+    <div class="bulls-history">${historyHtml}</div>
+  `;
+}
+function bullsSetNumber() {
+  const input = document.getElementById("bullsSetupInput");
+  if (!input) return;
+  const val = input.value.trim();
+  if (!isValidBullsNumber(val)) { alert("請輸入4個不重複的數字 / Введите 4 разные цифры"); return; }
+  db.ref("games/bulls").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide) return;
+    db.ref("games/bulls").update({ [mySide === "A" ? "numberA" : "numberB"]: val });
+  });
+}
+function bullsGuess() {
+  const input = document.getElementById("bullsGuessInput");
+  if (!input) return;
+  const val = input.value.trim();
+  if (!isValidBullsNumber(val)) { alert("請輸入4個不重複的數字 / Введите 4 разные цифры"); return; }
+  db.ref("games/bulls").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.winner || state.phase !== "playing") return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide || state.turn !== mySide) return;
+    const opponentNumber = mySide === "A" ? state.numberB : state.numberA;
+    const { a, b } = computeBullsCows(opponentNumber, val);
+    const guessesField = mySide === "A" ? "guessesA" : "guessesB";
+    const updated = [...(state[guessesField] || []), { guess: val, a, b }];
+    const won = a === 4;
+    db.ref("games/bulls").update({
+      [guessesField]: updated,
+      turn: mySide === "A" ? "B" : "A",
+      winner: won ? mySide : null,
+      phase: won ? "finished" : "playing"
+    });
+  });
+}
+function restartBulls() {
+  db.ref("games/bulls").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    db.ref("games/bulls").update({
+      numberA: null, numberB: null,
+      guessesA: [], guessesB: [],
+      turn: "A", phase: "setup", winner: null,
+      updatedAt: Date.now()
+    });
+  });
+}
+
+/* ---------- 猜猜我是誰 (第三款遊戲) ---------- */
+const GUESSWHO_CHARACTERS = ["😀","😎","🤓","🧐","😷","🥸","🤠","👲","👳","🧕","👴","👵"];
+function initGuessWhoScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `<div class="ttt-status" id="gwStatus">載入中... / Загрузка...</div>`;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/guesswho");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderGuessWho(state);
+  });
+  registerGamePresence("guesswho");
+}
+function renderGuessWho(state) {
+  const body = document.getElementById("gameScreenBody");
+  const lightEl = document.getElementById("gameTurnLight");
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (!body) return;
+  const myEmail = currentUser.email;
+  const mySide = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+  const opponentEmail = mySide === "A" ? state.playerB : state.playerA;
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+  if (opponentOnlineNow) { gameOpponentSeenOnline = true; gameOfflineToastShown = false; }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (titleEl) titleEl.textContent = showOffline ? "👋 對方已離開" : currentGameTitleText;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) lightEl.classList.add("offline");
+  }
+  if (showOffline) {
+    body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  const mySecretIdx = mySide === "A" ? state.secretA : state.secretB;
+  const myEliminated = (mySide === "A" ? state.eliminatedA : state.eliminatedB) || [];
+  const myGuesses = (mySide === "A" ? state.guessesA : state.guessesB) || [];
+
+  if (state.phase === "finished") {
+    const winnerIsMe = state.winner === mySide;
+    body.innerHTML = `
+      <div class="ttt-status">${winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл"}</div>
+      <button class="ttt-restart-btn" onclick="restartGuessWho()">再玩一局 / Ещё раз</button>
+    `;
+    return;
+  }
+
+  const gridHtml = GUESSWHO_CHARACTERS.map((emoji, idx) =>
+    `<div class="gw-card ${myEliminated.includes(idx) ? 'eliminated' : ''}" onclick="toggleGuessWhoEliminate(${idx})">${emoji}</div>`
+  ).join('');
+  const options = GUESSWHO_CHARACTERS.map((emoji, idx) => `<option value="${idx}">${emoji}</option>`).join('');
+  const historyHtml = myGuesses.length
+    ? myGuesses.map(g => `<span class="gw-history-item ${g.correct ? '' : 'wrong'}">${GUESSWHO_CHARACTERS[g.guess]}${g.correct ? '✅' : '❌'}</span>`).join('')
+    : '';
+
+  body.innerHTML = `
+    <div class="gw-my-secret"><span class="gw-secret-emoji">${GUESSWHO_CHARACTERS[mySecretIdx]}</span><span>這是你的角色，對方要猜這個<br>Это ваш персонаж, его должен угадать соперник</span></div>
+    <div class="ttt-status">用聊天問對方問題，點卡片可以自己排除 / Задавайте вопросы в чате, нажмите на карточку, чтобы исключить</div>
+    <div class="gw-grid">${gridHtml}</div>
+    <div class="gw-guess-row">
+      <select id="gwGuessSelect" class="gw-guess-select">${options}</select>
+      <button class="bulls-submit-btn" onclick="submitGuessWhoGuess()">猜這個 / Угадать</button>
+    </div>
+    ${historyHtml ? `<div class="gw-history">${historyHtml}</div>` : ''}
+  `;
+}
+function toggleGuessWhoEliminate(idx) {
+  db.ref("games/guesswho").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide) return;
+    const field = mySide === "A" ? "eliminatedA" : "eliminatedB";
+    const current = state[field] || [];
+    const updated = current.includes(idx) ? current.filter(v => v !== idx) : [...current, idx];
+    db.ref("games/guesswho").update({ [field]: updated });
+  });
+}
+function submitGuessWhoGuess() {
+  const select = document.getElementById("gwGuessSelect");
+  if (!select) return;
+  const guessIdx = parseInt(select.value, 10);
+  db.ref("games/guesswho").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.winner) return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide) return;
+    const opponentSecret = mySide === "A" ? state.secretB : state.secretA;
+    const correct = guessIdx === opponentSecret;
+    const guessesField = mySide === "A" ? "guessesA" : "guessesB";
+    const updated = [...(state[guessesField] || []), { guess: guessIdx, correct }];
+    db.ref("games/guesswho").update({
+      [guessesField]: updated,
+      winner: correct ? mySide : null,
+      phase: correct ? "finished" : "playing"
+    });
+    if (!correct) showGameToast("猜錯了，繼續加油！/ Неправильно, попробуйте ещё!");
+  });
+}
+function restartGuessWho() {
+  const secretA = Math.floor(Math.random() * GUESSWHO_CHARACTERS.length);
+  const secretB = Math.floor(Math.random() * GUESSWHO_CHARACTERS.length);
+  db.ref("games/guesswho").update({
+    secretA, secretB,
+    eliminatedA: [], eliminatedB: [],
+    guessesA: [], guessesB: [],
+    winner: null, phase: "playing",
+    updatedAt: Date.now()
+  });
 }
 
 function speakThisText(index) {
