@@ -808,54 +808,91 @@
     }
     #gameCountdownFloat .gcf-cancel:hover { color: var(--error-red); }
 
-    /* 遊戲畫面 */
+    /* 遊戲畫面：浮動小卡片，不擋住聊天室 */
     #gameScreenOverlay {
       position: fixed;
-      inset: 0;
-      background: var(--bg-deep);
-      z-index: 9997;
+      top: 64px;
+      right: 10px;
+      width: min(280px, 88vw);
+      max-height: 72vh;
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+      z-index: 450;
       display: none;
       flex-direction: column;
+      overflow: hidden;
     }
     .game-screen-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px;
+      padding: 10px 12px;
       border-bottom: 0.5px solid var(--border-subtle);
+      gap: 8px;
+      flex-shrink: 0;
     }
-    .game-screen-title { color: var(--gold); font-size: 15px; font-weight: 500; }
+    .game-screen-header-left { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .game-turn-light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-strong);
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .game-turn-light.on-turn { background: #6a9a52; box-shadow: 0 0 6px #6a9a52; }
+    .game-turn-light.waiting { background: var(--gold-dim); }
+    .game-turn-light.offline { background: var(--error-red); box-shadow: 0 0 6px var(--error-red); animation: gameLightBlink 1s infinite; }
+    @keyframes gameLightBlink { 50% { opacity: 0.25; } }
+    .game-screen-title { color: var(--gold); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .game-screen-header-btns { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .game-screen-min-btn {
+      background: none;
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-tertiary);
+      border-radius: 7px;
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 1;
+    }
+    .game-screen-min-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
     .game-screen-exit {
       background: none;
       border: 0.5px solid var(--border-strong);
       color: var(--text-tertiary);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 12px;
+      border-radius: 7px;
+      padding: 4px 9px;
+      font-size: 11px;
       cursor: pointer;
       font-family: inherit;
     }
     .game-screen-exit:hover { color: var(--error-red); border-color: var(--error-red); }
     .game-screen-body {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      gap: 16px;
+      padding: 16px;
+      gap: 14px;
+      overflow-y: auto;
     }
+    #gameScreenOverlay.gs-collapsed .game-screen-body { display: none; }
     .ttt-board {
       display: grid;
-      grid-template-columns: repeat(3, 88px);
-      grid-template-rows: repeat(3, 88px);
+      grid-template-columns: repeat(3, 74px);
+      grid-template-rows: repeat(3, 74px);
       gap: 6px;
     }
     .ttt-cell {
       background: var(--bg-panel);
       border: 1px solid var(--border-strong);
       border-radius: 10px;
-      font-size: 40px;
+      font-size: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -866,7 +903,7 @@
     .ttt-cell:hover { border-color: var(--gold-dim); }
     .ttt-status {
       color: var(--text-primary);
-      font-size: 14px;
+      font-size: 13px;
       text-align: center;
       line-height: 1.6;
     }
@@ -875,8 +912,8 @@
       color: var(--bg-deep);
       border: none;
       border-radius: 10px;
-      padding: 10px 20px;
-      font-size: 13px;
+      padding: 9px 18px;
+      font-size: 12px;
       font-family: inherit;
       cursor: pointer;
       font-weight: 500;
@@ -1342,7 +1379,7 @@
 
 <body>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.71</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.72</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1449,8 +1486,14 @@
 <!-- 遊戲畫面 -->
 <div id="gameScreenOverlay">
   <div class="game-screen-header">
-    <span class="game-screen-title" id="gameScreenTitle">🎮 遊戲</span>
-    <button class="game-screen-exit" onclick="exitGameScreen()">✕ 離開 / Выйти</button>
+    <div class="game-screen-header-left">
+      <span class="game-turn-light" id="gameTurnLight" title=""></span>
+      <span class="game-screen-title" id="gameScreenTitle">🎮 遊戲</span>
+    </div>
+    <div class="game-screen-header-btns">
+      <button class="game-screen-min-btn" id="gameScreenMinBtn" onclick="toggleGameScreenMinimize()">▾</button>
+      <button class="game-screen-exit" onclick="exitGameScreen()">✕</button>
+    </div>
   </div>
   <div class="game-screen-body" id="gameScreenBody"></div>
 </div>
@@ -1537,7 +1580,7 @@
 
 <script>
 
-const APP_VERSION = "21.71";
+const APP_VERSION = "21.72";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1728,7 +1771,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.71";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.72";
   }
 });
 
@@ -2989,7 +3032,8 @@ function renderGameInviteState(data) {
 /* ---------- 遊戲畫面容器 ---------- */
 function resetGameState(gameId, inviteData) {
   if (gameId === "tictactoe") {
-    db.ref("games/tictactoe").set({
+    // 用 update 而不是 set，避免蓋掉對方可能已經先寫入的 presence 資料
+    db.ref("games/tictactoe").update({
       board: Array(9).fill(""),
       turn: "X",
       playerX: inviteData.fromEmail,
@@ -3001,7 +3045,11 @@ function resetGameState(gameId, inviteData) {
 }
 function enterGameScreen(gameId, inviteData) {
   gameScreenOpen = true;
-  document.getElementById("gameScreenOverlay").style.display = "flex";
+  const overlay = document.getElementById("gameScreenOverlay");
+  overlay.classList.remove("gs-collapsed");
+  const minBtn = document.getElementById("gameScreenMinBtn");
+  if (minBtn) minBtn.textContent = "▾";
+  overlay.style.display = "flex";
   const g = getGameById(gameId);
   document.getElementById("gameScreenTitle").textContent = `🎮 ${g ? g.name : '遊戲'}`;
   if (gameId === "tictactoe") {
@@ -3011,11 +3059,21 @@ function enterGameScreen(gameId, inviteData) {
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
   }
 }
+function toggleGameScreenMinimize() {
+  const overlay = document.getElementById("gameScreenOverlay");
+  const collapsed = overlay.classList.toggle("gs-collapsed");
+  document.getElementById("gameScreenMinBtn").textContent = collapsed ? "▲" : "▾";
+}
 function exitGameScreen(silent) {
   gameScreenOpen = false;
   gameScreenActiveFor = null;
   document.getElementById("gameScreenOverlay").style.display = "none";
   if (tttListenerRef) { tttListenerRef.off(); tttListenerRef = null; }
+  if (currentUser) {
+    const myPresenceRef = db.ref("games/tictactoe/presence/" + emailToKey(currentUser.email));
+    myPresenceRef.onDisconnect().cancel();
+    myPresenceRef.remove();
+  }
   if (!silent) {
     db.ref("games/tictactoe").remove();
     db.ref("gameInvite").remove();
@@ -3023,6 +3081,18 @@ function exitGameScreen(silent) {
 }
 
 /* ---------- 井字遊戲 (第一款遊戲本體) ---------- */
+let tttGameSeenOnce = false;
+let tttOpponentSeenOnline = false;
+let tttOfflineToastShown = false;
+
+function registerGamePresence() {
+  if (!currentUser) return;
+  const myKey = emailToKey(currentUser.email);
+  const presenceRef = db.ref("games/tictactoe/presence/" + myKey);
+  presenceRef.set(true);
+  presenceRef.onDisconnect().remove();
+}
+
 function initTicTacToeScreen() {
   const body = document.getElementById("gameScreenBody");
   body.innerHTML = `
@@ -3030,7 +3100,9 @@ function initTicTacToeScreen() {
     <div class="ttt-board" id="tttBoard"></div>
   `;
   if (tttListenerRef) tttListenerRef.off();
-  let tttGameSeenOnce = false;
+  tttGameSeenOnce = false;
+  tttOpponentSeenOnline = false;
+  tttOfflineToastShown = false;
   tttListenerRef = db.ref("games/tictactoe");
   tttListenerRef.on("value", (snap) => {
     const state = snap.val();
@@ -3045,13 +3117,47 @@ function initTicTacToeScreen() {
     tttGameSeenOnce = true;
     renderTicTacToe(state);
   });
+  registerGamePresence();
 }
 function renderTicTacToe(state) {
   const boardEl = document.getElementById("tttBoard");
   const statusEl = document.getElementById("tttStatus");
+  const lightEl = document.getElementById("gameTurnLight");
   if (!boardEl || !statusEl) return;
   const myEmail = currentUser.email;
   const mySymbol = state.playerX === myEmail ? "X" : (state.playerO === myEmail ? "O" : null);
+  const opponentEmail = mySymbol === "X" ? state.playerO : (mySymbol === "O" ? state.playerX : null);
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+
+  if (opponentOnlineNow) {
+    tttOpponentSeenOnline = true;
+    tttOfflineToastShown = false;
+  }
+  const showOffline = tttOpponentSeenOnline && !opponentOnlineNow;
+
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) {
+      lightEl.classList.add("offline");
+      lightEl.title = "對方似乎已離開遊戲 / Собеседник, похоже, вышел";
+    } else if (!state.winner) {
+      if (state.turn === mySymbol) {
+        lightEl.classList.add("on-turn");
+        lightEl.title = "輪到你 / Ваш ход";
+      } else {
+        lightEl.classList.add("waiting");
+        lightEl.title = "等待對方 / Ход соперника";
+      }
+    } else {
+      lightEl.title = "";
+    }
+  }
+  if (showOffline && !tttOfflineToastShown) {
+    tttOfflineToastShown = true;
+    showGameToast("對方似乎已離開遊戲，你可以繼續等待或按✕離開 / Собеседник, похоже, вышел");
+  }
+
   boardEl.innerHTML = (state.board || []).map((v, i) => `<div class="ttt-cell" onclick="tttMove(${i})">${v || ''}</div>`).join('');
   if (state.winner) {
     if (state.winner === "draw") {
