@@ -1117,7 +1117,7 @@
     .gw-answer-shape.invalid { font-size: 16px; display: flex; align-items: center; justify-content: center; }
     .gw-theme-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 8px;
       width: 100%;
     }
@@ -1631,7 +1631,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.94</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.95</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1832,7 +1832,7 @@
 
 <script>
 
-const APP_VERSION = "21.94";
+const APP_VERSION = "21.95";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2024,7 +2024,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.94";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.95";
   }
 });
 
@@ -3365,17 +3365,12 @@ function resetGameState(gameId, inviteData) {
       updatedAt: Date.now()
     });
   } else if (gameId === "guesswho") {
-    const themeKeys = Object.keys(GUESSWHO_THEMES);
-    const theme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
-    const themeChars = GUESSWHO_THEMES[theme].chars;
-    const secretA = Math.floor(Math.random() * themeChars.length);
-    const secretB = Math.floor(Math.random() * themeChars.length);
     db.ref("games/guesswho").update({
       playerA: inviteData.fromEmail,
       playerB: inviteData.toEmail || null,
-      theme: theme,
-      secretA: secretA,
-      secretB: secretB,
+      theme: null,
+      secretA: null,
+      secretB: null,
       eliminatedA: [],
       eliminatedB: [],
       guessesA: [],
@@ -3383,7 +3378,7 @@ function resetGameState(gameId, inviteData) {
       chat: null,
       turn: "A",
       winner: null,
-      phase: "playing",
+      phase: "theme_select",
       updatedAt: Date.now()
     });
   }
@@ -3790,9 +3785,9 @@ function restartBulls() {
 
 /* ---------- 猜猜我是誰 (第三款遊戲) ---------- */
 const GUESSWHO_THEMES = {
-  people:    { name: "人物",  nameRu: "Люди",      icon: "🙂", chars: ["😀","😎","🤓","🧐","😷","🤡","🤠","👲","👳","🧕","👴","👵"] },
-  animals:   { name: "動物",  nameRu: "Животные",  icon: "🐾", chars: ["🐝","🦋","🐞","🕷️","🐢","🐍","🐙","🦀","🐬","🐳","🐄","🐑","🐎","🐖","🦒","🐘","🦘","🦔","🦅","🦉","🦇","🐧"] },
-  buildings: { name: "建築物", nameRu: "Здания",    icon: "🏠", chars: ["🏠","🏰","🗼","🏯","⛪","🕌","🛕","🏛️","🎡","🗽","🏝️","⛺"] }
+  people:    { name: "人物",  nameRu: "Люди",      icon: "🙂", chars: ["😀","😎","🤓","🧐","😷","🤡","🤠","👲","👳","🧕","👴","👵","🕵️","👮","🤴","👸"] },
+  animals:   { name: "動物",  nameRu: "Животные",  icon: "🐾", chars: ["🐝","🦋","🐞","🕷️","🐢","🐍","🐙","🦀","🐬","🐳","🐄","🐑","🐎","🐘","🦉","🐧"] },
+  buildings: { name: "建築物", nameRu: "Здания",    icon: "🏠", chars: ["🏠","🏰","🗼","🏯","⛪","🕌","🛕","🏛️","🎡","🗽","🏝️","⛺","🏭","🏢","🏫","🏥"] }
 };
 const GUESSWHO_CHARACTERS = GUESSWHO_THEMES.people.chars; // 保留舊變數名相容
 function initGuessWhoScreen() {
@@ -3841,6 +3836,17 @@ function renderGuessWho(state) {
   }
   if (showOffline) {
     body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  if (state.phase === "theme_select") {
+    const themeBtns = Object.entries(GUESSWHO_THEMES).map(([key, t]) =>
+      `<button class="gw-theme-btn" onclick="gwSelectTheme('${key}')">${t.icon}<br>${t.name}<br><span style="font-size:10px;color:var(--text-tertiary);">${t.nameRu}</span></button>`
+    ).join('') + `<button class="gw-theme-btn" onclick="gwSelectTheme('random')">🎲<br>隨機<br><span style="font-size:10px;color:var(--text-tertiary);">Случайно</span></button>`;
+    body.innerHTML = `
+      <div class="ttt-status">選一組主題，或按🎲隨機 / Выберите тему или нажмите 🎲</div>
+      <div class="gw-theme-grid">${themeBtns}</div>
+    `;
     return;
   }
 
@@ -3947,20 +3953,31 @@ function submitGuessWhoGuess() {
   });
 }
 function restartGuessWho() {
-  const themeKeys = Object.keys(GUESSWHO_THEMES);
-  const theme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
-  const themeChars = GUESSWHO_THEMES[theme].chars;
-  const secretA = Math.floor(Math.random() * themeChars.length);
-  const secretB = Math.floor(Math.random() * themeChars.length);
   db.ref("games/guesswho").update({
-    theme,
-    secretA, secretB,
+    theme: null,
+    secretA: null, secretB: null,
     eliminatedA: [], eliminatedB: [],
     guessesA: [], guessesB: [],
     chat: null,
     turn: "A",
-    winner: null, phase: "playing",
+    winner: null, phase: "theme_select",
     updatedAt: Date.now()
+  });
+}
+function gwSelectTheme(themeKey) {
+  db.ref("games/guesswho").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.phase !== "theme_select") return;
+    const themeKeys = Object.keys(GUESSWHO_THEMES);
+    const finalKey = themeKey === "random" ? themeKeys[Math.floor(Math.random() * themeKeys.length)] : themeKey;
+    const themeChars = GUESSWHO_THEMES[finalKey].chars;
+    const secretA = Math.floor(Math.random() * themeChars.length);
+    const secretB = Math.floor(Math.random() * themeChars.length);
+    db.ref("games/guesswho").update({
+      theme: finalKey,
+      secretA, secretB,
+      phase: "playing"
+    });
   });
 }
 function buildDirectTranslatePrompt(input) {
