@@ -503,6 +503,25 @@
       margin-bottom: 6px;
       margin-top: 14px;
     }
+    .settings-toggle { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+    .settings-toggle input { opacity: 0; width: 0; height: 0; }
+    .settings-toggle-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--border-strong);
+      border-radius: 24px;
+      transition: background 0.2s;
+    }
+    .settings-toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 18px; width: 18px;
+      left: 3px; bottom: 3px;
+      background: var(--text-primary);
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .settings-toggle input:checked + .settings-toggle-slider { background: var(--gold-dim); }
+    .settings-toggle input:checked + .settings-toggle-slider::before { transform: translateX(18px); background: var(--bg-deep); }
     .profile-setup-input {
       width: 100%;
       background: var(--bg-input);
@@ -1656,7 +1675,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.101</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.102</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1807,6 +1826,19 @@
       <div class="swatch" data-color="#8a8880" style="background:#8a8880;"></div>
       <div class="swatch" data-color="#686660" style="background:#686660;"></div>
     </div>
+    <div class="profile-setup-label">朗讀語速 / Скорость озвучки</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:11px;color:var(--text-tertiary);">慢</span>
+      <input type="range" id="settingsSpeechRate" min="0.6" max="1.5" step="0.05" value="1" style="flex:1;" />
+      <span style="font-size:11px;color:var(--text-tertiary);">快</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:14px;">
+      <span class="profile-setup-label" style="margin-top:0;">訊息通知音 / Звук уведомлений</span>
+      <label class="settings-toggle">
+        <input type="checkbox" id="settingsNotifSound" checked />
+        <span class="settings-toggle-slider"></span>
+      </label>
+    </div>
     <button id="settingsConfirm" onclick="saveSettings()">儲存 / Сохранить</button>
     <button id="settingsClose" onclick="closeSettings()">取消 / Отмена</button>
     <div id="adminClearBtn" style="display:none; margin-top:16px;">
@@ -1857,7 +1889,7 @@
 
 <script>
 
-const APP_VERSION = "21.101";
+const APP_VERSION = "21.102";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2049,11 +2081,15 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.101";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.102";
   }
 });
 
 function playNotificationSound() {
+  if (currentUser) {
+    const userKey = emailToKey(currentUser.email);
+    if (displayNamesCache[userKey]?.notifSoundOn === false) return;
+  }
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
@@ -4085,6 +4121,13 @@ function gwAnswerQuestion(key, answer) {
   });
 }
 
+const EMOJI_STRIP_REGEX = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu;
+function getMySpeechRateMultiplier() {
+  if (!currentUser) return 1;
+  const userKey = emailToKey(currentUser.email);
+  const val = displayNamesCache[userKey]?.speechRate;
+  return (typeof val === "number" && val > 0) ? val : 1;
+}
 function speakThisText(index) {
   const targetMsg = chatHistory[index];
   if (!targetMsg || !targetMsg.text) return;
@@ -4097,12 +4140,13 @@ function speakThisText(index) {
     }
   }
   if (!textToSpeak) return;
-  textToSpeak = textToSpeak.replace(/【.*?】/g, "").replace(/["'「」]/g, "").trim();
+  textToSpeak = textToSpeak.replace(/【.*?】/g, "").replace(/["'「」]/g, "").replace(EMOJI_STRIP_REGEX, "").trim();
+  if (!textToSpeak) return;
   speechSynthesis.cancel();
   const utteranceCorrect = new SpeechSynthesisUtterance(textToSpeak);
   utteranceCorrect.lang = "zh-TW";
   utteranceCorrect.volume = 1.0; 
-  utteranceCorrect.rate = 0.95;  
+  utteranceCorrect.rate = 0.95 * getMySpeechRateMultiplier();  
   speechSynthesis.speak(utteranceCorrect);
 }
 
@@ -4231,13 +4275,13 @@ function speakRussianText(index) {
   if (!targetMsg || !targetMsg.text) return;
   const matchRu = targetMsg.text.match(/【俄文翻譯[^】]*】([\s\S]*?)(?=【|$)/);
   if (!matchRu) return;
-  let textToSpeak = matchRu[1].trim().replace(/["'「」]/g, "").trim();
+  let textToSpeak = matchRu[1].trim().replace(/["'「」]/g, "").replace(EMOJI_STRIP_REGEX, "").trim();
   if (!textToSpeak) return;
   speechSynthesis.cancel();
   const utteranceRu = new SpeechSynthesisUtterance(textToSpeak);
   utteranceRu.lang = "ru-RU";
   utteranceRu.volume = 1.0;
-  utteranceRu.rate = 0.9;
+  utteranceRu.rate = 0.9 * getMySpeechRateMultiplier();
   speechSynthesis.speak(utteranceRu);
 }
 
@@ -4486,6 +4530,8 @@ function openSettings() {
   overlay.style.display = "flex";
   document.getElementById("settingsNameInput").value = data.name || "";
   selectedBubbleColor = data.bubbleColor || "";
+  document.getElementById("settingsSpeechRate").value = (typeof data.speechRate === "number") ? data.speechRate : 1;
+  document.getElementById("settingsNotifSound").checked = data.notifSoundOn !== false;
   initSwatchListeners("#settingsOverlay");
   if (selectedBubbleColor) {
     document.querySelectorAll("#settingsOverlay .swatch").forEach(s => {
@@ -4517,8 +4563,10 @@ function saveSettings() {
   const name = document.getElementById("settingsNameInput").value.trim();
   if (!name) { alert("請輸入暱稱 / Введите имя"); return; }
   if (!selectedBubbleColor) { alert("請選擇泡泡顏色 / Выберите цвет"); return; }
+  const speechRate = parseFloat(document.getElementById("settingsSpeechRate").value) || 1;
+  const notifSoundOn = document.getElementById("settingsNotifSound").checked;
   const userKey = emailToKey(currentUser.email);
-  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor }).then(() => {
+  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor, speechRate, notifSoundOn }).then(() => {
     document.getElementById("settingsOverlay").style.display = "none";
   });
 }
