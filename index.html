@@ -1078,6 +1078,10 @@
       gap: 6px;
     }
     .gw-chat-msg {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
       background: var(--bg-panel);
       border: 0.5px solid var(--border-strong);
       border-radius: 8px;
@@ -1087,20 +1091,37 @@
       line-height: 1.4;
     }
     .gw-chat-msg.mine { border-left: 3px solid var(--gold-dim); }
+    .gw-chat-msg-text { flex: 1; min-width: 0; }
+    .gw-quick-reply { display: flex; gap: 4px; flex-shrink: 0; }
+    .gw-quick-btn {
+      background: var(--bg-input);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .gw-quick-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     .gw-chat-original { color: var(--text-tertiary); font-size: 10px; }
-    .gw-chat-input-row { display: flex; gap: 6px; width: 100%; }
+    .gw-chat-input-row { display: flex; gap: 6px; width: 100%; align-items: stretch; }
     .gw-chat-input {
       flex: 1;
       background: var(--bg-input);
-      border: 0.5px solid var(--border-strong);
+      border: 1px solid var(--border-strong);
       border-radius: 8px;
       padding: 8px 10px;
       font-size: 12px;
       color: var(--text-primary);
       font-family: inherit;
       outline: none;
+      resize: none;
+      line-height: 1.4;
     }
-    .gw-chat-input:focus { border-color: var(--gold-dim); }
+    .gw-chat-input:disabled { opacity: 0.5; }
+    .gw-chat-input.my-turn { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,118,0.25); }
     .gw-chat-send-btn {
       background: var(--gold-dim);
       color: var(--bg-deep);
@@ -1582,7 +1603,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.86</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.87</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1783,7 +1804,7 @@
 
 <script>
 
-const APP_VERSION = "21.86";
+const APP_VERSION = "21.87";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1975,7 +1996,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.86";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.87";
   }
 });
 
@@ -3817,12 +3838,14 @@ function renderGuessWho(state) {
 
   const chatMsgs = state.chat ? Object.values(state.chat).sort((a, b) => a.ts - b.ts) : [];
   const chatHtml = chatMsgs.length
-    ? chatMsgs.map(m => `<div class="gw-chat-msg ${m.from === myEmail ? 'mine' : ''}"><div class="gw-chat-original">${m.original}</div>${m.translated}</div>`).join('')
+    ? chatMsgs.map(m => `<div class="gw-chat-msg ${m.from === myEmail ? 'mine' : ''}">
+        <div class="gw-chat-msg-text"><div class="gw-chat-original">${m.original}</div>${m.translated}</div>
+        ${m.from !== myEmail ? `<div class="gw-quick-reply"><button class="gw-quick-btn" onclick="gwQuickReply('yes')">Да/是</button><button class="gw-quick-btn" onclick="gwQuickReply('no')">Нет/否</button></div>` : ''}
+      </div>`).join('')
     : `<div class="bulls-hint">在下面輸入問題，AI會直接翻給對方看 / Введите вопрос ниже, ИИ переведёт его для соперника</div>`;
 
   body.innerHTML = `
     <div class="gw-my-secret"><span class="gw-secret-emoji">${GUESSWHO_CHARACTERS[mySecretIdx]}</span><span>這是你的角色，對方要猜這個<br>Это ваш персонаж, его должен угадать соперник</span></div>
-    <div class="ttt-status">${turnIsMe ? "Ваш ход (猜) / 輪到你猜" : "Ход соперника / 等對方猜"}</div>
     <div class="gw-grid">${gridHtml}</div>
     <div class="gw-guess-row">
       <select id="gwGuessSelect" class="gw-guess-select" ${turnIsMe ? '' : 'disabled'}>${options}</select>
@@ -3831,8 +3854,8 @@ function renderGuessWho(state) {
     ${historyHtml ? `<div class="gw-history">${historyHtml}</div>` : ''}
     <div class="gw-chat" id="gwChatLog">${chatHtml}</div>
     <div class="gw-chat-input-row">
-      <input type="text" id="gwChatInput" class="gw-chat-input" placeholder="問對方問題... / Задайте вопрос..." onkeydown="if(event.key==='Enter')gwSendQuestion()" />
-      <button class="gw-chat-send-btn" id="gwChatSendBtn" onclick="gwSendQuestion()">送出 / →</button>
+      <textarea rows="2" id="gwChatInput" class="gw-chat-input ${turnIsMe ? 'my-turn' : ''}" placeholder="${turnIsMe ? 'Твой ход, задай вопрос / 換你發問' : 'Дождитесь своего хода / 等對方發問'}" ${turnIsMe ? '' : 'disabled'} onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();gwSendQuestion();}"></textarea>
+      <button class="gw-chat-send-btn" id="gwChatSendBtn" onclick="gwSendQuestion()" ${turnIsMe ? '' : 'disabled'}>送出 / →</button>
     </div>
   `;
   const chatLog = document.getElementById("gwChatLog");
@@ -3900,6 +3923,11 @@ async function gwSendQuestion() {
   if (!input || !currentUser) return;
   const text = input.value.trim();
   if (!text) return;
+  const snap = await db.ref("games/guesswho").once("value");
+  const state = snap.val();
+  if (!state) return;
+  const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+  if (!mySide || state.turn !== mySide) { showGameToast("還沒輪到你發問 / Ещё не ваш ход"); return; }
   input.value = "";
   if (btn) { btn.disabled = true; btn.textContent = "翻譯中... / ..."; }
   try {
@@ -3910,11 +3938,23 @@ async function gwSendQuestion() {
       translated: (translated || "").trim(),
       ts: Date.now()
     });
+    db.ref("games/guesswho").update({ turn: mySide === "A" ? "B" : "A" });
   } catch (e) {
     showGameToast("翻譯失敗，請再試一次 / Ошибка перевода, попробуйте снова");
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = "送出 / →"; }
   }
+}
+function gwQuickReply(answer) {
+  if (!currentUser) return;
+  const original = answer === "yes" ? "是的" : "不是";
+  const translated = answer === "yes" ? "Да" : "Нет";
+  db.ref("games/guesswho/chat").push({
+    from: currentUser.email,
+    original: original,
+    translated: translated,
+    ts: Date.now()
+  });
 }
 
 function speakThisText(index) {
