@@ -921,6 +921,8 @@
       padding: 16px;
       gap: 14px;
       overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
     }
     #gameScreenOverlay.gs-collapsed .game-screen-body { display: none; }
     .ttt-board {
@@ -962,9 +964,10 @@
     .ttt-restart-btn:hover { background: var(--gold); }
 
     /* 公牛母牛 */
-    .bulls-input-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+    .bulls-input-row { display: flex; gap: 8px; align-items: center; width: 100%; box-sizing: border-box; }
     .bulls-digit-input {
       flex: 1;
+      min-width: 0;
       background: var(--bg-input);
       border: 0.5px solid var(--border-strong);
       border-radius: 8px;
@@ -1631,7 +1634,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.96</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.97</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1832,7 +1835,7 @@
 
 <script>
 
-const APP_VERSION = "21.96";
+const APP_VERSION = "21.97";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2024,7 +2027,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.96";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.97";
   }
 });
 
@@ -3693,7 +3696,7 @@ function renderBulls(state) {
 
   if (state.phase === "setup") {
     if (myNumber) {
-      body.innerHTML = `<div class="ttt-status">已送出，等待對方設定<br>Отправлено, ожидание соперника</div>`;
+      body.innerHTML = `<div class="ttt-status">你的數字是 ${myNumber} / Ваше число: ${myNumber}<br><span style="font-size:11px;color:var(--text-tertiary);">已送出，等待對方設定 / Отправлено, ожидание соперника</span></div>`;
     } else {
       body.innerHTML = `
         <div class="ttt-status">設定你的4位不重複數字<br>Придумайте число из 4 разных цифр</div>
@@ -3726,6 +3729,7 @@ function renderBulls(state) {
     ? myGuesses.map(g => `<div class="bulls-history-row"><span>${g.guess}</span><span class="bulls-ab">${g.a}A ${g.b}B</span></div>`).join('')
     : `<div class="bulls-hint">還沒猜過 / Пока нет попыток</div>`;
   body.innerHTML = `
+    <div class="bulls-hint">你的數字 / Ваше число: ${myNumber}</div>
     <div class="ttt-status">${turnIsMe ? "Ваш ход / 輪到你猜" : "Ход соперника / 等對方猜"}</div>
     <div class="bulls-input-row">
       <input type="text" inputmode="numeric" maxlength="4" id="bullsGuessInput" class="bulls-digit-input" placeholder="0-9" ${turnIsMe ? '' : 'disabled'} />
