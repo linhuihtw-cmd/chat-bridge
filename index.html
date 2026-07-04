@@ -91,6 +91,64 @@
     .chat-text strong {
       font-weight: 700;
     }
+    .msg-edit-btn {
+      background: none;
+      border: none;
+      color: inherit;
+      opacity: 0.45;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0 0 0 6px;
+      vertical-align: middle;
+    }
+    .msg-edit-btn:hover { opacity: 1; }
+    .msg-edited-tag {
+      font-size: 10px;
+      opacity: 0.55;
+      font-weight: 400;
+      margin-left: 4px;
+    }
+    .bubble.msg-editing {
+      max-width: 90%;
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .msg-edit-textarea {
+      width: 100%;
+      min-height: 50px;
+      background: var(--bg-input);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      padding: 8px;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    .msg-edit-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .msg-edit-actions button {
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .msg-edit-actions button:first-child {
+      background: transparent;
+      color: var(--text-tertiary);
+      border: 0.5px solid var(--border-strong);
+    }
 
     .clickable-name {
       cursor: pointer;
@@ -1675,7 +1733,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.102</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.103</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1889,7 +1947,7 @@
 
 <script>
 
-const APP_VERSION = "21.102";
+const APP_VERSION = "21.103";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2081,7 +2139,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.102";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.103";
   }
 });
 
@@ -2793,6 +2851,57 @@ function detectSimplifiedByDetectiveLogic(str) {
   return false;
 }
 
+let editingMessageKey = null;
+function startEditMessage(key) {
+  const msg = chatHistory.find(m => m.firebaseKey === key);
+  if (!msg || !currentUser || msg.senderEmail !== currentUser.email) return;
+  editingMessageKey = key;
+  renderChat();
+  const ta = document.getElementById("editInput-" + key);
+  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+function cancelEditMessage() {
+  editingMessageKey = null;
+  renderChat();
+}
+async function confirmEditMessage(key) {
+  const ta = document.getElementById("editInput-" + key);
+  if (!ta) return;
+  const newText = ta.value.trim();
+  if (!newText) { alert("內容不能是空的 / Текст не может быть пустым"); return; }
+  const msg = chatHistory.find(m => m.firebaseKey === key);
+  if (!msg) return;
+
+  const actionsRow = ta.parentElement.querySelector(".msg-edit-actions");
+  if (actionsRow) actionsRow.innerHTML = `<span style="font-size:12px;color:var(--text-tertiary);">重新翻譯中... / Перевод...</span>`;
+
+  try {
+    await db.ref("messages/" + key).update({ text: newText, edited: true, editedAt: Date.now() });
+
+    if (!isSkippableContent(newText)) {
+      const translatedText = await callDeepSeek(buildPrompt(newText));
+      const idx = chatHistory.findIndex(m => m.firebaseKey === key);
+      let aiMsg = chatHistory.find(m => m.role === "ai" && m.forUserKey === key);
+      if (!aiMsg && idx >= 0) {
+        // 舊訊息沒有forUserKey關聯，退而求其次找緊接在後面的AI卡片
+        for (let i = idx + 1; i < chatHistory.length; i++) {
+          if (chatHistory[i].role === "ai") { aiMsg = chatHistory[i]; break; }
+          if (chatHistory[i].role === "user") break;
+        }
+      }
+      if (aiMsg && aiMsg.firebaseKey) {
+        await db.ref("messages/" + aiMsg.firebaseKey).update({ text: translatedText, correction: null });
+      } else {
+        await db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now(), forUserKey: key });
+      }
+    }
+  } catch (e) {
+    showGameToast("編輯失敗，請再試一次 / Не удалось сохранить, попробуйте снова");
+  }
+  editingMessageKey = null;
+  renderChat();
+}
+
 function renderChat() {
   const chat = document.getElementById("chat");
   chat.innerHTML = chatHistory.map((m, index) => {
@@ -2833,13 +2942,25 @@ function renderChat() {
       const safeText = m.text.replace(/"/g, '&quot;');
       const safeName = displayName.replace(/"/g, '&quot;');
 
+      if (isOwnMessage && editingMessageKey === m.firebaseKey) {
+        return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble chat-text msg-editing" ${bubbleStyle}>
+          <textarea id="editInput-${m.firebaseKey}" class="msg-edit-textarea">${escapeHtmlText(m.text)}</textarea>
+          <div class="msg-edit-actions">
+            <button onclick="cancelEditMessage()">取消 / Отмена</button>
+            <button onclick="confirmEditMessage('${m.firebaseKey}')">儲存並重新翻譯 / Сохранить</button>
+          </div>
+        </div>${timeLabel}</div>`;
+      }
+
       let replyHtml = "";
       if (m.replyTo) {
         const rKey = m.replyTo.firebaseKey || "";
         replyHtml = `<div class="reply-quote" onclick="scrollToMessage('${rKey}')"><span class="reply-quote-name">${escapeHtmlText(m.replyTo.senderName)}</span><span class="reply-quote-text">${escapeHtmlText(m.replyTo.text.slice(0,40))}${m.replyTo.text.length > 40 ? "…" : ""}</span></div>`;
       }
+      const editedTag = m.edited ? `<span class="msg-edited-tag">（已編輯 / изменено）</span>` : "";
+      const editBtn = (isOwnMessage && !m.deleted) ? `<button class="msg-edit-btn" onclick="startEditMessage('${m.firebaseKey}')" title="編輯 / Редактировать">✎</button>` : "";
 
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-text" ${bubbleStyle}><span ${textColor}>${nameHtml}： ${replyHtml}${m.text}</span></div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-text" ${bubbleStyle}><span ${textColor}>${nameHtml}： ${replyHtml}${m.text}${editedTag}</span>${editBtn}</div>${timeLabel}</div>`;
     } else {
       let rawText = m.text;
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
@@ -3125,8 +3246,10 @@ async function sendMsg() {
     msgData.replyTo = currentReplyData;
     cancelReply();
   }
+  let userMsgKey = null;
   try {
-    await db.ref("messages").push(msgData);
+    const userMsgRef = await db.ref("messages").push(msgData);
+    userMsgKey = userMsgRef.key;
   } catch (e) {
     alert("⚠️ 訊息儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
     isSending = false;
@@ -3145,7 +3268,7 @@ async function sendMsg() {
   const translatedText = await callDeepSeek(buildPrompt(input));
   
   try {
-    await db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now() });
+    await db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now(), forUserKey: userMsgKey });
   } catch (e) {
     alert("⚠️ 翻譯結果儲存失敗，可能是儲存空間已滿。\n請聯繫管理員處理，或先匯出記錄備份。\n\n錯誤詳情：" + e.message);
   }
