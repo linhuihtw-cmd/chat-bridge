@@ -1016,6 +1016,18 @@
     }
     .bulls-history-row .bulls-ab { color: var(--gold-bright); font-weight: 500; }
     .bulls-hint { color: var(--text-tertiary); font-size: 11px; text-align: center; }
+    .bulls-turn-row { display: flex; width: 100%; }
+    .bulls-turn-row.mine { justify-content: flex-end; }
+    .bulls-turn-row.theirs { justify-content: flex-start; }
+    .bulls-turn-bubble {
+      max-width: 78%;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      box-sizing: border-box;
+    }
+    .bulls-ab-inline { font-weight: 600; letter-spacing: 0; }
 
     /* 猜猜我是誰 */
     .gw-my-secret {
@@ -1634,7 +1646,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.97</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.98</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1835,7 +1847,7 @@
 
 <script>
 
-const APP_VERSION = "21.97";
+const APP_VERSION = "21.98";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2027,7 +2039,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.97";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.98";
   }
 });
 
@@ -3725,8 +3737,18 @@ function renderBulls(state) {
   }
 
   // phase === "playing"
-  const historyHtml = myGuesses.length
-    ? myGuesses.map(g => `<div class="bulls-history-row"><span>${g.guess}</span><span class="bulls-ab">${g.a}A ${g.b}B</span></div>`).join('')
+  const entriesA = (state.guessesA || []).map(g => ({ ...g, side: "A", email: state.playerA }));
+  const entriesB = (state.guessesB || []).map(g => ({ ...g, side: "B", email: state.playerB }));
+  const allEntries = [...entriesA, ...entriesB].sort((x, y) => (x.ts || 0) - (y.ts || 0));
+  const historyHtml = allEntries.length
+    ? allEntries.map(e => {
+        const mine = e.side === mySide;
+        const color = getBubbleColor(e.email) || (mine ? "var(--gold-dim)" : "var(--bg-panel)");
+        const textColor = getBubbleColor(e.email) ? "#1a1810" : "var(--text-primary)";
+        return `<div class="bulls-turn-row ${mine ? 'mine' : 'theirs'}">
+          <div class="bulls-turn-bubble" style="background:${color};color:${textColor};">${e.guess} <span class="bulls-ab-inline">${e.a}A ${e.b}B</span></div>
+        </div>`;
+      }).join('')
     : `<div class="bulls-hint">還沒猜過 / Пока нет попыток</div>`;
   body.innerHTML = `
     <div class="bulls-hint">你的數字 / Ваше число: ${myNumber}</div>
@@ -3735,8 +3757,10 @@ function renderBulls(state) {
       <input type="text" inputmode="numeric" maxlength="4" id="bullsGuessInput" class="bulls-digit-input" placeholder="0-9" ${turnIsMe ? '' : 'disabled'} />
       <button class="bulls-submit-btn" onclick="bullsGuess()" ${turnIsMe ? '' : 'disabled'}>猜 / OK</button>
     </div>
-    <div class="bulls-history">${historyHtml}</div>
+    <div class="bulls-history" id="bullsHistoryLog">${historyHtml}</div>
   `;
+  const historyLog = document.getElementById("bullsHistoryLog");
+  if (historyLog) historyLog.scrollTop = historyLog.scrollHeight;
 }
 function bullsSetNumber() {
   const input = document.getElementById("bullsSetupInput");
@@ -3764,7 +3788,7 @@ function bullsGuess() {
     const opponentNumber = mySide === "A" ? state.numberB : state.numberA;
     const { a, b } = computeBullsCows(opponentNumber, val);
     const guessesField = mySide === "A" ? "guessesA" : "guessesB";
-    const updated = [...(state[guessesField] || []), { guess: val, a, b }];
+    const updated = [...(state[guessesField] || []), { guess: val, a, b, ts: Date.now() }];
     const won = a === 4;
     db.ref("games/bulls").update({
       [guessesField]: updated,
