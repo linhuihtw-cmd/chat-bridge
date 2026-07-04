@@ -1582,7 +1582,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.85</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.86</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1783,7 +1783,7 @@
 
 <script>
 
-const APP_VERSION = "21.85";
+const APP_VERSION = "21.86";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -1975,7 +1975,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.85";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.86";
   }
 });
 
@@ -3327,6 +3327,7 @@ function resetGameState(gameId, inviteData) {
       eliminatedB: [],
       guessesA: [],
       guessesB: [],
+      turn: "A",
       winner: null,
       phase: "playing",
       updatedAt: Date.now()
@@ -3787,6 +3788,7 @@ function renderGuessWho(state) {
   const mySecretIdx = mySide === "A" ? state.secretA : state.secretB;
   const myEliminated = (mySide === "A" ? state.eliminatedA : state.eliminatedB) || [];
   const myGuesses = (mySide === "A" ? state.guessesA : state.guessesB) || [];
+  const turnIsMe = state.turn === mySide;
 
   if (state.phase === "finished") {
     const winnerIsMe = state.winner === mySide;
@@ -3797,10 +3799,18 @@ function renderGuessWho(state) {
     return;
   }
 
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    lightEl.classList.add(turnIsMe ? "on-turn" : "waiting");
+  }
+
   const gridHtml = GUESSWHO_CHARACTERS.map((emoji, idx) =>
     `<div class="gw-card ${myEliminated.includes(idx) ? 'eliminated' : ''}" onclick="toggleGuessWhoEliminate(${idx})">${emoji}</div>`
   ).join('');
-  const options = GUESSWHO_CHARACTERS.map((emoji, idx) => `<option value="${idx}">${emoji}</option>`).join('');
+  const guessableIndices = GUESSWHO_CHARACTERS.map((_, idx) => idx).filter(idx => !myEliminated.includes(idx));
+  const options = guessableIndices.length
+    ? guessableIndices.map(idx => `<option value="${idx}">${GUESSWHO_CHARACTERS[idx]}</option>`).join('')
+    : `<option value="">--</option>`;
   const historyHtml = myGuesses.length
     ? myGuesses.map(g => `<span class="gw-history-item ${g.correct ? '' : 'wrong'}">${GUESSWHO_CHARACTERS[g.guess]}${g.correct ? '✅' : '❌'}</span>`).join('')
     : '';
@@ -3812,10 +3822,11 @@ function renderGuessWho(state) {
 
   body.innerHTML = `
     <div class="gw-my-secret"><span class="gw-secret-emoji">${GUESSWHO_CHARACTERS[mySecretIdx]}</span><span>這是你的角色，對方要猜這個<br>Это ваш персонаж, его должен угадать соперник</span></div>
+    <div class="ttt-status">${turnIsMe ? "Ваш ход (猜) / 輪到你猜" : "Ход соперника / 等對方猜"}</div>
     <div class="gw-grid">${gridHtml}</div>
     <div class="gw-guess-row">
-      <select id="gwGuessSelect" class="gw-guess-select">${options}</select>
-      <button class="bulls-submit-btn" onclick="submitGuessWhoGuess()">猜這個 / Угадать</button>
+      <select id="gwGuessSelect" class="gw-guess-select" ${turnIsMe ? '' : 'disabled'}>${options}</select>
+      <button class="bulls-submit-btn" onclick="submitGuessWhoGuess()" ${turnIsMe ? '' : 'disabled'}>猜這個 / Угадать</button>
     </div>
     ${historyHtml ? `<div class="gw-history">${historyHtml}</div>` : ''}
     <div class="gw-chat" id="gwChatLog">${chatHtml}</div>
@@ -3846,23 +3857,24 @@ function toggleGuessWhoEliminate(idx) {
 }
 function submitGuessWhoGuess() {
   const select = document.getElementById("gwGuessSelect");
-  if (!select) return;
+  if (!select || !select.value) return;
   const guessIdx = parseInt(select.value, 10);
   db.ref("games/guesswho").once("value").then((snap) => {
     const state = snap.val();
     if (!state || state.winner) return;
     const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
-    if (!mySide) return;
+    if (!mySide || state.turn !== mySide) return;
     const opponentSecret = mySide === "A" ? state.secretB : state.secretA;
     const correct = guessIdx === opponentSecret;
     const guessesField = mySide === "A" ? "guessesA" : "guessesB";
     const updated = [...(state[guessesField] || []), { guess: guessIdx, correct }];
     db.ref("games/guesswho").update({
       [guessesField]: updated,
+      turn: correct ? state.turn : (mySide === "A" ? "B" : "A"),
       winner: correct ? mySide : null,
       phase: correct ? "finished" : "playing"
     });
-    if (!correct) showGameToast("猜錯了，繼續加油！/ Неправильно, попробуйте ещё!");
+    if (!correct) showGameToast("猜錯了，換對方猜了 / Неправильно, теперь ход соперника");
   });
 }
 function restartGuessWho() {
@@ -3872,6 +3884,7 @@ function restartGuessWho() {
     secretA, secretB,
     eliminatedA: [], eliminatedB: [],
     guessesA: [], guessesB: [],
+    turn: "A",
     winner: null, phase: "playing",
     updatedAt: Date.now()
   });
