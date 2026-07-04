@@ -1035,10 +1035,8 @@
       gap: 6px;
     }
     .bulls-legend-item {
-      font-size: 10px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: 500;
+      font-size: 13px;
+      font-weight: 600;
     }
 
     /* 猜猜我是誰 */
@@ -1658,7 +1656,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.100</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.101</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1859,7 +1857,7 @@
 
 <script>
 
-const APP_VERSION = "21.100";
+const APP_VERSION = "21.101";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2051,7 +2049,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.100";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.101";
   }
 });
 
@@ -3429,6 +3427,14 @@ function enterGameScreen(gameId, inviteData) {
     overlay.style.left = "";
     overlay.style.top = "";
     overlay.style.right = "";
+    requestAnimationFrame(() => {
+      const rect = overlay.getBoundingClientRect();
+      const centerLeft = Math.max(4, (window.innerWidth - rect.width) / 2);
+      const centerTop = Math.max(4, (window.innerHeight - rect.height) / 2);
+      overlay.style.left = centerLeft + "px";
+      overlay.style.top = centerTop + "px";
+      overlay.style.right = "auto";
+    });
   }
   initGamePanelDrag();
   const g = getGameById(gameId);
@@ -3764,11 +3770,11 @@ function renderBulls(state) {
     : `<div class="bulls-hint">還沒猜過 / Пока нет попыток</div>`;
   const myName = getDisplayName(myEmail) || "你 / Вы";
   const oppName = getDisplayName(opponentEmail) || "對方 / Соперник";
-  const myColor = getBubbleColor(myEmail) || "var(--gold-dim)";
-  const oppColor = getBubbleColor(opponentEmail) || "var(--bg-panel)";
+  const myColor = getBubbleColor(myEmail) || "var(--gold-bright)";
+  const oppColor = getBubbleColor(opponentEmail) || "var(--gold-bright)";
   const legendHtml = `<div class="bulls-legend">
-    <span class="bulls-legend-item" style="background:${oppColor};color:${getBubbleColor(opponentEmail) ? '#1a1810' : 'var(--text-primary)'};">◀ ${oppName}</span>
-    <span class="bulls-legend-item" style="background:${myColor};color:${getBubbleColor(myEmail) ? '#1a1810' : 'var(--text-primary)'};">${myName} ▶</span>
+    <span class="bulls-legend-item" style="color:${oppColor};">◀ ${oppName}</span>
+    <span class="bulls-legend-item" style="color:${myColor};">${myName} ▶</span>
   </div>`;
   body.innerHTML = `
     <div class="bulls-hint">你的數字 / Ваше число: ${myNumber}</div>
