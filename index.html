@@ -1349,6 +1349,28 @@
       0%, 100% { box-shadow: 0 0 6px 2px rgba(217,189,142,0.5); }
       50% { box-shadow: 0 0 18px 6px rgba(217,189,142,0.95); }
     }
+    .rps-body-layout { display: flex; gap: 10px; width: 100%; align-items: flex-start; }
+    .rps-history-col {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding-top: 4px;
+      flex-shrink: 0;
+    }
+    .rps-history-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .rps-main-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
 
     .gomoku-board-wrap {
       width: 100%;
@@ -1901,7 +1923,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.121</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.122</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2116,7 +2138,7 @@
 
 <script>
 
-const APP_VERSION = "21.121";
+const APP_VERSION = "21.122";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2308,7 +2330,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.121";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.122";
   }
 });
 
@@ -4716,6 +4738,20 @@ function initRpsScreen() {
   });
   registerGamePresence("rps");
 }
+function rpsHistoryDotsHtml(state) {
+  const history = state.history || [];
+  if (!history.length) return '';
+  const dots = history.map(h => {
+    let color;
+    if (h.winner === "draw") color = "var(--text-tertiary)";
+    else {
+      const winnerEmail = h.winner === "A" ? state.playerA : state.playerB;
+      color = getBubbleColor(winnerEmail) || "var(--gold-dim)";
+    }
+    return `<div class="rps-history-dot" style="background:${color};"></div>`;
+  }).join('');
+  return `<div class="rps-history-col">${dots}</div>`;
+}
 function renderRps(state) {
   const body = document.getElementById("gameScreenBody");
   const lightEl = document.getElementById("gameTurnLight");
@@ -4753,18 +4789,17 @@ function renderRps(state) {
   }
 
   const scoreHtml = `<div class="bulls-hint">你 ${myScore} : ${oppScore} 對方 / Вы ${myScore} : ${oppScore} Соперник（先贏${RPS_WINS_NEEDED}局獲勝 / до ${RPS_WINS_NEEDED} побед）</div>`;
+  const historyColHtml = rpsHistoryDotsHtml(state);
 
+  let mainHtml;
   if (state.winner) {
     const winnerIsMe = state.winner === mySide;
-    body.innerHTML = `
+    mainHtml = `
       ${scoreHtml}
       <div class="ttt-status">${winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл"}</div>
       <button class="ttt-restart-btn" onclick="restartRps()">再玩一局 / Ещё раз</button>
     `;
-    return;
-  }
-
-  if (bothChosen) {
+  } else if (bothChosen) {
     const myLastChoice = mySide === "A" ? state.lastChoiceA : state.lastChoiceB;
     const oppLastChoice = mySide === "A" ? state.lastChoiceB : state.lastChoiceA;
     const resultIsMe = state.lastResult === mySide;
@@ -4772,7 +4807,7 @@ function renderRps(state) {
     const resultText = isDraw ? "平手！🤝 / Ничья!" : (resultIsMe ? "你這局贏了 / Вы выиграли раунд" : "對方這局贏了 / Соперник выиграл раунд");
     const oppWon = !isDraw && !resultIsMe;
     const myWon = !isDraw && resultIsMe;
-    body.innerHTML = `
+    mainHtml = `
       ${scoreHtml}
       <div class="rps-reveal-vertical">
         <div class="rps-reveal-item ${oppWon ? 'rps-winner' : ''}">${RPS_CHOICES[oppLastChoice]}</div>
@@ -4782,18 +4817,18 @@ function renderRps(state) {
       <div class="ttt-status">${resultText}</div>
       <button class="ttt-restart-btn" onclick="nextRpsRound()">下一局 / Следующий раунд</button>
     `;
-    return;
+  } else {
+    const buttonsHtml = Object.entries(RPS_CHOICES).map(([key, emoji]) =>
+      `<button class="rps-choice-btn" onclick="submitRpsChoice('${key}')" ${iHaveChosen ? 'disabled' : ''}>${emoji}</button>`
+    ).join('');
+    mainHtml = `
+      ${scoreHtml}
+      <div class="ttt-status">${iHaveChosen ? "已選擇，等待對方 / Вы выбрали, ждём соперника" : (oppHasChosen ? "對方已經出拳，換你了 / Соперник готов, ваш ход" : "出拳吧！/ Делайте ваш выбор!")}</div>
+      <div class="rps-choices">${buttonsHtml}</div>
+    `;
   }
 
-  const buttonsHtml = Object.entries(RPS_CHOICES).map(([key, emoji]) =>
-    `<button class="rps-choice-btn" onclick="submitRpsChoice('${key}')" ${iHaveChosen ? 'disabled' : ''}>${emoji}</button>`
-  ).join('');
-
-  body.innerHTML = `
-    ${scoreHtml}
-    <div class="ttt-status">${iHaveChosen ? "已選擇，等待對方 / Вы выбрали, ждём соперника" : (oppHasChosen ? "對方已經出拳，換你了 / Соперник готов, ваш ход" : "出拳吧！/ Делайте ваш выбор!")}</div>
-    <div class="rps-choices">${buttonsHtml}</div>
-  `;
+  body.innerHTML = `<div class="rps-body-layout">${historyColHtml}<div class="rps-main-col">${mainHtml}</div></div>`;
 }
 function submitRpsChoice(choice) {
   db.ref("games/rps").once("value").then((snap) => {
@@ -4816,6 +4851,7 @@ function submitRpsChoice(choice) {
       updated.lastResult = result;
       updated.lastChoiceA = choiceA;
       updated.lastChoiceB = choiceB;
+      updated.history = [...(state.history || []), { winner: result, ts: Date.now() }];
       if (scoreA >= RPS_WINS_NEEDED || scoreB >= RPS_WINS_NEEDED) {
         updated.winner = scoreA >= RPS_WINS_NEEDED ? "A" : "B";
       }
@@ -4831,6 +4867,7 @@ function restartRps() {
     scoreA: 0, scoreB: 0,
     roundChoiceA: null, roundChoiceB: null,
     lastChoiceA: null, lastChoiceB: null,
+    history: null,
     lastResult: null, winner: null,
     updatedAt: Date.now()
   });
