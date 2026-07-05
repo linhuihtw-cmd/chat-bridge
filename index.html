@@ -1349,12 +1349,11 @@
       0%, 100% { box-shadow: 0 0 6px 2px rgba(217,189,142,0.5); }
       50% { box-shadow: 0 0 18px 6px rgba(217,189,142,0.95); }
     }
-    .rps-body-layout { display: flex; gap: 10px; width: 100%; align-items: flex-start; }
+    .rps-body-layout { display: flex; gap: 10px; width: 100%; align-items: center; }
     .rps-history-col {
       display: flex;
       flex-direction: column;
       gap: 5px;
-      padding-top: 4px;
       flex-shrink: 0;
     }
     .rps-history-dot {
@@ -1923,7 +1922,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.122</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.123</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2138,7 +2137,7 @@
 
 <script>
 
-const APP_VERSION = "21.122";
+const APP_VERSION = "21.123";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2330,7 +2329,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.122";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.123";
   }
 });
 
