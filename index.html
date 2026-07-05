@@ -1305,6 +1305,14 @@
       border: 2px solid #8fd66f;
       box-shadow: 0 0 7px rgba(143,214,111,0.7), inset 0 0 4px rgba(143,214,111,0.4);
     }
+    .pipes-cell.pipes-path-alt {
+      color: #6fb3d6;
+      font-weight: 900;
+      font-size: 24px;
+      background: rgba(82,130,154,0.28);
+      border: 2px solid #6fb3d6;
+      box-shadow: 0 0 7px rgba(111,179,214,0.7), inset 0 0 4px rgba(111,179,214,0.4);
+    }
     .pipes-turn-dot {
       display: inline-block;
       width: 14px;
@@ -1820,7 +1828,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.118</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.119</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2035,7 +2043,7 @@
 
 <script>
 
-const APP_VERSION = "21.118";
+const APP_VERSION = "21.119";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2227,7 +2235,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.118";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.119";
   }
 });
 
@@ -4340,8 +4348,8 @@ const PIPES_COLS = 6;
 const PIPES_ROWS = 5;
 const PIPES_START = 0;
 const PIPES_END = PIPES_COLS * PIPES_ROWS - 1;
-const PIPES_TYPES = ["H", "V", "NE", "NW", "SE", "SW"];
-const PIPES_GLYPH = { H: "─", V: "│", NE: "└", NW: "┘", SE: "┌", SW: "┐" };
+const PIPES_TYPES = ["H", "V", "NE", "NW", "SE", "SW", "X", "T_SEW", "T_NEW", "T_NSE", "T_NSW"];
+const PIPES_GLYPH = { H: "─", V: "│", NE: "└", NW: "┘", SE: "┌", SW: "┐", X: "┼", T_SEW: "┬", T_NEW: "┴", T_NSE: "├", T_NSW: "┤" };
 const PIPES_QUEUE_LENGTH = PIPES_COLS * PIPES_ROWS - 6; // 30格 - 起點 - 終點 - 4個障礙物 = 24個可放置格
 
 function generatePipesObstacles() {
@@ -4375,6 +4383,11 @@ function pipesOpenings(idx, cellType) {
     case "NW": return new Set(["N", "W"]);
     case "SE": return new Set(["S", "E"]);
     case "SW": return new Set(["S", "W"]);
+    case "X": return new Set(["N", "E", "S", "W"]);
+    case "T_SEW": return new Set(["S", "E", "W"]);
+    case "T_NEW": return new Set(["N", "E", "W"]);
+    case "T_NSE": return new Set(["N", "S", "E"]);
+    case "T_NSW": return new Set(["N", "S", "W"]);
     default: return new Set();
   }
 }
@@ -4406,23 +4419,28 @@ function isPipesDeadlocked(grid) {
   return isPipesEndpointSealed(PIPES_START, grid) || isPipesEndpointSealed(PIPES_END, grid);
 }
 function findPipesReachableFromStart(grid) {
-  const visited = new Set([PIPES_START]);
+  const branchOf = new Map([[PIPES_START, "start"]]);
   const queue = [PIPES_START];
   while (queue.length) {
     const cur = queue.shift();
+    const curBranch = branchOf.get(cur);
     const curOpenings = pipesOpenings(cur, grid[cur]);
     for (const dir of ["N", "E", "S", "W"]) {
       if (!curOpenings.has(dir)) continue;
       const next = pipesNeighbor(cur, dir);
-      if (next === null || visited.has(next)) continue;
+      if (next === null) continue;
       const nextOpenings = pipesOpenings(next, grid[next]);
-      if (nextOpenings.has(pipesOpposite(dir))) {
-        visited.add(next);
+      if (!nextOpenings.has(pipesOpposite(dir))) continue;
+      const nextBranch = (cur === PIPES_START) ? (branchOf.size === 1 ? "main" : "alt") : curBranch;
+      if (!branchOf.has(next)) {
+        branchOf.set(next, nextBranch);
         queue.push(next);
+      } else if (branchOf.get(next) !== nextBranch && branchOf.get(next) !== "merged") {
+        branchOf.set(next, "merged");
       }
     }
   }
-  return visited;
+  return branchOf;
 }
 function initPipesScreen() {
   const body = document.getElementById("gameScreenBody");
@@ -4483,7 +4501,11 @@ function renderPipes(state) {
     if (idx === PIPES_START) return `<div class="pipes-cell pipes-fixed pipes-start-cell">🔵</div>`;
     if (idx === PIPES_END) return `<div class="pipes-cell pipes-fixed pipes-end-cell">🔴</div>`;
     if (cell === "obstacle") return `<div class="pipes-cell pipes-obstacle">⛔</div>`;
-    if (cell) return `<div class="pipes-cell pipes-filled ${pathSet.has(idx) ? 'pipes-path' : ''}">${PIPES_GLYPH[cell]}</div>`;
+    if (cell) {
+      const branch = pathSet.get(idx);
+      const branchClass = !branch ? '' : (branch === "alt" ? "pipes-path-alt" : "pipes-path");
+      return `<div class="pipes-cell pipes-filled ${branchClass}">${PIPES_GLYPH[cell]}</div>`;
+    }
     return `<div class="pipes-cell pipes-empty" onclick="placePipe(${idx})"></div>`;
   }).join('');
 
