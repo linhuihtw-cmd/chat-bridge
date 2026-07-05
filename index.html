@@ -1776,7 +1776,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.111</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.112</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1991,7 +1991,7 @@
 
 <script>
 
-const APP_VERSION = "21.111";
+const APP_VERSION = "21.112";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2183,7 +2183,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.111";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.112";
   }
 });
 
@@ -3601,6 +3601,7 @@ function resetGameState(gameId, inviteData) {
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
 let currentGameTitleText = "";
 let activeGameId = null;
+let gameLoadWatchdogTimer = null;
 function enterGameScreen(gameId, inviteData) {
   gameScreenOpen = true;
   activeGameId = gameId;
@@ -3633,6 +3634,15 @@ function enterGameScreen(gameId, inviteData) {
   gameStateSeenOnce = false;
   gameOpponentSeenOnline = false;
   gameOfflineToastShown = false;
+  clearTimeout(gameLoadWatchdogTimer);
+  gameLoadWatchdogTimer = setTimeout(() => {
+    if (!gameStateSeenOnce && gameScreenOpen && activeGameId === gameId) {
+      const body = document.getElementById("gameScreenBody");
+      if (body) {
+        body.innerHTML = `<div class="ttt-status">遊戲資料一直載入不出來，可能是連線延遲或資料沒同步成功<br>Данные игры не загружаются<br><button class="ttt-restart-btn" onclick="exitGameScreen()">✕ 離開重試 / Выйти и попробовать снова</button></div>`;
+      }
+    }
+  }, 6000);
   if (gameId === "tictactoe") {
     initTicTacToeScreen();
   } else if (gameId === "bulls") {
@@ -3698,6 +3708,7 @@ function toggleGameScreenMinimize() {
   document.getElementById("gameScreenMinBtn").textContent = collapsed ? "▲" : "▾";
 }
 function exitGameScreen(silent) {
+  clearTimeout(gameLoadWatchdogTimer);
   gameScreenOpen = false;
   gameScreenActiveFor = null;
   document.getElementById("gameScreenOverlay").style.display = "none";
