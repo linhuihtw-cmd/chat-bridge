@@ -1298,10 +1298,12 @@
       opacity: 0.85;
     }
     .pipes-cell.pipes-path {
-      color: #6a9a52;
+      color: #8fd66f;
       font-weight: 900;
-      background: rgba(106,154,82,0.18);
-      border-color: #6a9a52;
+      font-size: 24px;
+      background: rgba(106,154,82,0.28);
+      border: 2px solid #8fd66f;
+      box-shadow: 0 0 7px rgba(143,214,111,0.7), inset 0 0 4px rgba(143,214,111,0.4);
     }
     .pipes-turn-dot {
       display: inline-block;
@@ -1818,7 +1820,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.116</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.117</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2033,7 +2035,7 @@
 
 <script>
 
-const APP_VERSION = "21.116";
+const APP_VERSION = "21.117";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2225,7 +2227,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.116";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.117";
   }
 });
 
@@ -4386,6 +4388,23 @@ function pipesNeighbor(idx, dir) {
   return null;
 }
 function pipesOpposite(dir) { return { N: "S", S: "N", E: "W", W: "E" }[dir]; }
+function isPipesEndpointSealed(idx, grid) {
+  // 檢查起點或終點四周：只要還有一個方向是「空格（還有機會）」或「已經正確接上」，就還沒死；
+  // 全部方向都是障礙物或方向不對的水管，才算被封死
+  for (const dir of ["N", "E", "S", "W"]) {
+    const next = pipesNeighbor(idx, dir);
+    if (next === null) continue;
+    const cell = grid[next];
+    if (cell === "") return false; // 還是空格，未來還有機會
+    if (cell === "obstacle") continue;
+    const openings = pipesOpenings(next, cell);
+    if (openings.has(pipesOpposite(dir))) return false; // 已經有一個方向正確接上
+  }
+  return true;
+}
+function isPipesDeadlocked(grid) {
+  return isPipesEndpointSealed(PIPES_START, grid) || isPipesEndpointSealed(PIPES_END, grid);
+}
 function findPipesPath(grid) {
   const visited = new Map([[PIPES_START, null]]);
   const queue = [PIPES_START];
@@ -4475,11 +4494,15 @@ function renderPipes(state) {
   }).join('');
 
   const isFull = grid.every((c, i) => c || i === PIPES_START || i === PIPES_END);
+  const deadlocked = !connected && isPipesDeadlocked(grid);
 
   let statusHtml, extraHtml = "";
   if (connected) {
     statusHtml = "接通了！🎉 / Соединено!";
     extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">再玩一局 / Ещё раз</button>`;
+  } else if (deadlocked) {
+    statusHtml = "起點或終點已經被封死，死局了 / Тупик, старт или финиш заблокирован";
+    extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">重新開始 / Начать заново</button>`;
   } else if (isFull) {
     statusHtml = "棋盤填滿了，沒接通 / Поле заполнено, связи нет";
     extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">重新開始 / Начать заново</button>`;
@@ -4499,7 +4522,7 @@ function renderPipes(state) {
     <div class="bulls-hint">目前要放這個，接下來會出現右邊那幾個 / Сейчас нужно поставить эту, дальше — те, что справа</div>
   ` : '';
 
-  const turnDotHtml = (!connected && !isFull)
+  const turnDotHtml = (!connected && !isFull && !deadlocked)
     ? `<span class="pipes-turn-dot ${turnIsMe ? 'mine' : 'theirs'}"></span>`
     : '';
 
@@ -4507,7 +4530,7 @@ function renderPipes(state) {
     <div class="ttt-status">${turnDotHtml}${statusHtml}</div>
     <div class="bulls-hint">🔵 起點 / Старт　🔴 終點 / Финиш</div>
     <div class="pipes-board">${cellsHtml}</div>
-    ${(!connected && !isFull) ? queueHtml : ''}
+    ${(!connected && !isFull && !deadlocked) ? queueHtml : ''}
     ${extraHtml}
   `;
 }
