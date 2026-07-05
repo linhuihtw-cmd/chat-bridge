@@ -1733,7 +1733,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.105</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.107</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1886,10 +1886,11 @@
     </div>
     <div class="profile-setup-label">朗讀語速 / Скорость озвучки</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:11px;color:var(--text-tertiary);">慢</span>
-      <input type="range" id="settingsSpeechRate" min="0.6" max="1.5" step="0.05" value="1" style="flex:1;" />
-      <span style="font-size:11px;color:var(--text-tertiary);">快</span>
+      <span style="font-size:11px;color:var(--text-tertiary);">更慢 / Медленнее</span>
+      <input type="range" id="settingsSpeechRate" min="0.4" max="1" step="0.05" value="1" style="flex:1;" />
+      <span style="font-size:11px;color:var(--text-tertiary);">正常 / Обычно</span>
     </div>
+    <div style="font-size:10px;color:var(--text-tertiary);text-align:center;margin-top:2px;">正常語速為上限，可依需求調慢方便學習 / Максимум — обычная скорость, можно замедлить для изучения языка</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:14px;">
       <span class="profile-setup-label" style="margin-top:0;">訊息通知音 / Звук уведомлений</span>
       <label class="settings-toggle">
@@ -1947,7 +1948,7 @@
 
 <script>
 
-const APP_VERSION = "21.105";
+const APP_VERSION = "21.107";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2139,7 +2140,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.105";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.107";
   }
 });
 
@@ -3141,6 +3142,7 @@ function buildPrompt(input) {
 - 即使輸入內容非常簡短、破碎、或只是單一人名加標點符號/顏文字（例如俄文輸入「Лин?)」），仍然必須實際進行翻譯與轉換，絕對不可以將原文字照抄一遍當作翻譯結果；人名部分請音譯或保留為對應語言中該名字的常見寫法，標點符號與顏文字（例如句尾的「)」常代表微笑表情）請在語意解釋欄位說明其作用，繁體中文、簡體中文、中文發音這幾個欄位绝不可以原封不動地直接放入俄文原文
 - 中文輸入若是單一語助詞、感嘆詞（例如「咦」「嗯」「喔」「誒」）或極短單字，俄文翻譯欄位一樣要給出對應的道地俄文語助詞或感嘆詞（例如「咦？」可對應「И?」「Ой?」之類），不可以「這是語助詞」「無直接對應」為由省略此欄，此欄的省略規則只適用於「輸入本身就是俄文」這一種情況，沒有其他例外
 - 若輸入內容包含任一方文化中的流行語、網路用語、迷因、諧音哏、時事哏、或需要特定文化背景才能理解笑點/含意的表達（例如台灣的網路用語、俄羅斯的流行文化哏），語意解釋欄位除了字面意思外，還須簡短說明這個哏的文化背景或流行來源是什麼，讓對方即使不熟悉另一方的文化也能明白這句話為什麼有趣、或想表達什麼言外之意；如果只是單純直白的日常對話、沒有任何文化哏成分，則不需要牽強附會硬找梗，維持一般字面說明即可
+- 特別注意中俄互相流傳的刻板印象哏，例如中文網路常用「戰鬥民族」形容俄羅斯人強悍、耐寒、天不怕地不怕，並衍生出「俄羅斯人可以徒手打贏熊、跟熊喝酒、熊在俄羅斯到處走」這類誇張玩笑；如果句子內容出現「打敗熊」「跟熊喝酒」「馴服熊」等類似描述，即使沒有明講「戰鬥民族」四個字，也應該在語意解釋欄位主動點出這是在呼應「戰鬥民族」這個中文網路對俄羅斯人的刻板印象哏，而不是只解讀成單純的誇飾語氣
 
 輸入：${normalizedInput}`;
 }
