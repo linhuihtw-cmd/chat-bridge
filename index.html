@@ -1313,6 +1313,71 @@
       border: 2px solid #6fb3d6;
       box-shadow: 0 0 7px rgba(111,179,214,0.7), inset 0 0 4px rgba(111,179,214,0.4);
     }
+    .rps-choices { display: flex; gap: 14px; justify-content: center; }
+    .rps-choice-btn {
+      width: 56px;
+      height: 56px;
+      font-size: 30px;
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-strong);
+      border-radius: 14px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .rps-choice-btn:hover:not(:disabled) { border-color: var(--gold-dim); transform: scale(1.05); }
+    .rps-choice-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .rps-reveal { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .rps-reveal-item {
+      width: 60px;
+      height: 60px;
+      font-size: 34px;
+      background: var(--bg-panel);
+      border: 2px solid var(--gold-dim);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: rpsPop 0.35s ease-out;
+    }
+    .rps-reveal-vs { color: var(--text-tertiary); font-size: 13px; font-weight: 700; }
+    @keyframes rpsPop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .gomoku-board-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+    }
+    .gomoku-board {
+      display: grid;
+      grid-template-columns: repeat(15, 18px);
+      grid-template-rows: repeat(15, 18px);
+      gap: 1px;
+      background: var(--border-subtle);
+      padding: 3px;
+      border-radius: 4px;
+      width: max-content;
+    }
+    .gomoku-cell {
+      width: 18px;
+      height: 18px;
+      background: var(--bg-panel);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .gomoku-cell:hover { background: var(--bg-elevated); }
+    .gomoku-cell.filled { cursor: default; }
+    .gomoku-stone {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: block;
+    }
+    .gomoku-stone-a { background: var(--gold-bright); box-shadow: 0 0 2px rgba(0,0,0,0.4); }
+    .gomoku-stone-b { background: var(--accent-blue); box-shadow: 0 0 2px rgba(0,0,0,0.4); }
     .pipes-turn-dot {
       display: inline-block;
       width: 14px;
@@ -1828,7 +1893,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.119</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.120</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2043,7 +2108,7 @@
 
 <script>
 
-const APP_VERSION = "21.119";
+const APP_VERSION = "21.120";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2235,7 +2300,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.119";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.120";
   }
 });
 
@@ -3351,9 +3416,9 @@ const GAME_TRIGGER_PHRASE = "⚽⚽⚽⚽⚽";
 const GAME_CATALOG = [
   { id: "tictactoe", icon: "⭕", name: "井字遊戲", nameRu: "Крестики-нолики", available: true },
   { id: "bulls",     icon: "🔢", name: "公牛母牛",  nameRu: "Быки и коровы", available: true },
-  { id: "rps",       icon: "✊", name: "剪刀石頭布", nameRu: "Камень-ножницы-бумага", available: false },
+  { id: "rps",       icon: "✊", name: "剪刀石頭布", nameRu: "Камень-ножницы-бумага", available: true },
   { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", nameRu: "Угадай, кто я", available: true },
-  { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: false },
+  { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: true },
   { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true }
 ];
 
@@ -3649,6 +3714,29 @@ function resetGameState(gameId, inviteData) {
       status: "playing",
       updatedAt: Date.now()
     });
+  } else if (gameId === "rps") {
+    db.ref("games/rps").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      scoreA: 0,
+      scoreB: 0,
+      roundChoiceA: null,
+      roundChoiceB: null,
+      lastChoiceA: null,
+      lastChoiceB: null,
+      lastResult: null,
+      winner: null,
+      updatedAt: Date.now()
+    });
+  } else if (gameId === "gomoku") {
+    db.ref("games/gomoku").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      board: Array(225).fill(""),
+      turn: "A",
+      winner: null,
+      updatedAt: Date.now()
+    });
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
@@ -3704,6 +3792,10 @@ function enterGameScreen(gameId, inviteData) {
     initGuessWhoScreen();
   } else if (gameId === "pipes") {
     initPipesScreen();
+  } else if (gameId === "rps") {
+    initRpsScreen();
+  } else if (gameId === "gomoku") {
+    initGomokuScreen();
   } else {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
@@ -4574,6 +4666,280 @@ function restartPipes() {
     queue: generatePipesQueue(),
     turn: "A",
     status: "playing",
+    updatedAt: Date.now()
+  });
+}
+
+function restartPipes() {
+  db.ref("games/pipes").update({
+    grid: generatePipesObstacles(),
+    queue: generatePipesQueue(),
+    turn: "A",
+    status: "playing",
+    updatedAt: Date.now()
+  });
+}
+
+/* ---------- 剪刀石頭布 ---------- */
+const RPS_CHOICES = { rock: "✊", paper: "✋", scissors: "✌️" };
+const RPS_NAMES = { rock: "石頭 / Камень", paper: "布 / Бумага", scissors: "剪刀 / Ножницы" };
+const RPS_WINS_NEEDED = 2;
+function rpsJudge(a, b) {
+  if (a === b) return "draw";
+  if ((a === "rock" && b === "scissors") || (a === "scissors" && b === "paper") || (a === "paper" && b === "rock")) return "A";
+  return "B";
+}
+function initRpsScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `<div class="ttt-status" id="rpsStatus">載入中... / Загрузка...</div>`;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/rps");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderRps(state);
+  });
+  registerGamePresence("rps");
+}
+function renderRps(state) {
+  const body = document.getElementById("gameScreenBody");
+  const lightEl = document.getElementById("gameTurnLight");
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (!body) return;
+  const myEmail = currentUser.email;
+  const mySide = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+  const opponentEmail = mySide === "A" ? state.playerB : state.playerA;
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+  if (opponentOnlineNow) { gameOpponentSeenOnline = true; gameOfflineToastShown = false; }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (titleEl) titleEl.textContent = showOffline ? "Конец игры / 結束" : currentGameTitleText;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+  if (showOffline) {
+    body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  const myScore = mySide === "A" ? state.scoreA : state.scoreB;
+  const oppScore = mySide === "A" ? state.scoreB : state.scoreA;
+  const myChoiceField = mySide === "A" ? "roundChoiceA" : "roundChoiceB";
+  const oppChoiceField = mySide === "A" ? "roundChoiceB" : "roundChoiceA";
+  const iHaveChosen = !!state[myChoiceField];
+  const oppHasChosen = !!state[oppChoiceField];
+  const bothChosen = !!(state.roundChoiceA && state.roundChoiceB);
+
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (!state.winner) lightEl.classList.add(iHaveChosen ? "waiting" : "on-turn");
+  }
+
+  const scoreHtml = `<div class="bulls-hint">你 ${myScore} : ${oppScore} 對方 / Вы ${myScore} : ${oppScore} Соперник（先贏${RPS_WINS_NEEDED}局獲勝 / до ${RPS_WINS_NEEDED} побед）</div>`;
+
+  if (state.winner) {
+    const winnerIsMe = state.winner === mySide;
+    body.innerHTML = `
+      ${scoreHtml}
+      <div class="ttt-status">${winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл"}</div>
+      <button class="ttt-restart-btn" onclick="restartRps()">再玩一局 / Ещё раз</button>
+    `;
+    return;
+  }
+
+  if (bothChosen) {
+    const myLastChoice = mySide === "A" ? state.lastChoiceA : state.lastChoiceB;
+    const oppLastChoice = mySide === "A" ? state.lastChoiceB : state.lastChoiceA;
+    const resultIsMe = state.lastResult === mySide;
+    const resultText = state.lastResult === "draw" ? "平手！🤝 / Ничья!" : (resultIsMe ? "你這局贏了 / Вы выиграли раунд" : "對方這局贏了 / Соперник выиграл раунд");
+    body.innerHTML = `
+      ${scoreHtml}
+      <div class="rps-reveal">
+        <div class="rps-reveal-item mine">${RPS_CHOICES[myLastChoice]}</div>
+        <span class="rps-reveal-vs">VS</span>
+        <div class="rps-reveal-item">${RPS_CHOICES[oppLastChoice]}</div>
+      </div>
+      <div class="ttt-status">${resultText}</div>
+      <button class="ttt-restart-btn" onclick="nextRpsRound()">下一局 / Следующий раунд</button>
+    `;
+    return;
+  }
+
+  const buttonsHtml = Object.entries(RPS_CHOICES).map(([key, emoji]) =>
+    `<button class="rps-choice-btn" onclick="submitRpsChoice('${key}')" ${iHaveChosen ? 'disabled' : ''}>${emoji}</button>`
+  ).join('');
+
+  body.innerHTML = `
+    ${scoreHtml}
+    <div class="ttt-status">${iHaveChosen ? "已選擇，等待對方 / Вы выбрали, ждём соперника" : (oppHasChosen ? "對方已經出拳，換你了 / Соперник готов, ваш ход" : "出拳吧！/ Делайте ваш выбор!")}</div>
+    <div class="rps-choices">${buttonsHtml}</div>
+  `;
+}
+function submitRpsChoice(choice) {
+  db.ref("games/rps").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.winner) return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide) return;
+    const myField = mySide === "A" ? "roundChoiceA" : "roundChoiceB";
+    if (state[myField]) return;
+    const otherField = mySide === "A" ? "roundChoiceB" : "roundChoiceA";
+    const updated = { [myField]: choice };
+    if (state[otherField]) {
+      const choiceA = mySide === "A" ? choice : state.roundChoiceA;
+      const choiceB = mySide === "B" ? choice : state.roundChoiceB;
+      const result = rpsJudge(choiceA, choiceB);
+      let scoreA = state.scoreA || 0, scoreB = state.scoreB || 0;
+      if (result === "A") scoreA++; else if (result === "B") scoreB++;
+      updated.scoreA = scoreA;
+      updated.scoreB = scoreB;
+      updated.lastResult = result;
+      updated.lastChoiceA = choiceA;
+      updated.lastChoiceB = choiceB;
+      if (scoreA >= RPS_WINS_NEEDED || scoreB >= RPS_WINS_NEEDED) {
+        updated.winner = scoreA >= RPS_WINS_NEEDED ? "A" : "B";
+      }
+    }
+    db.ref("games/rps").update(updated);
+  });
+}
+function nextRpsRound() {
+  db.ref("games/rps").update({ roundChoiceA: null, roundChoiceB: null });
+}
+function restartRps() {
+  db.ref("games/rps").update({
+    scoreA: 0, scoreB: 0,
+    roundChoiceA: null, roundChoiceB: null,
+    lastChoiceA: null, lastChoiceB: null,
+    lastResult: null, winner: null,
+    updatedAt: Date.now()
+  });
+}
+
+/* ---------- 五子棋 ---------- */
+const GOMOKU_COLS = 15;
+const GOMOKU_ROWS = 15;
+function gomokuCheckWin(board, idx) {
+  const row = Math.floor(idx / GOMOKU_COLS);
+  const col = idx % GOMOKU_COLS;
+  const owner = board[idx];
+  if (!owner) return false;
+  const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  for (const [dr, dc] of dirs) {
+    let count = 1;
+    let r = row + dr, c = col + dc;
+    while (r >= 0 && r < GOMOKU_ROWS && c >= 0 && c < GOMOKU_COLS && board[r * GOMOKU_COLS + c] === owner) { count++; r += dr; c += dc; }
+    r = row - dr; c = col - dc;
+    while (r >= 0 && r < GOMOKU_ROWS && c >= 0 && c < GOMOKU_COLS && board[r * GOMOKU_COLS + c] === owner) { count++; r -= dr; c -= dc; }
+    if (count >= 5) return true;
+  }
+  return false;
+}
+function initGomokuScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `<div class="ttt-status" id="gomokuStatus">載入中... / Загрузка...</div>`;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/gomoku");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderGomoku(state);
+  });
+  registerGamePresence("gomoku");
+}
+function renderGomoku(state) {
+  const body = document.getElementById("gameScreenBody");
+  const lightEl = document.getElementById("gameTurnLight");
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (!body) return;
+  const myEmail = currentUser.email;
+  const mySide = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+  const opponentEmail = mySide === "A" ? state.playerB : state.playerA;
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+  if (opponentOnlineNow) { gameOpponentSeenOnline = true; gameOfflineToastShown = false; }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (titleEl) titleEl.textContent = showOffline ? "Конец игры / 結束" : currentGameTitleText;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+  const turnIsMe = state.turn === mySide;
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) lightEl.classList.add("offline");
+    else if (!state.winner) lightEl.classList.add(turnIsMe ? "on-turn" : "waiting");
+  }
+  if (showOffline) {
+    body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  const board = state.board || Array(GOMOKU_COLS * GOMOKU_ROWS).fill("");
+  const mySymbolClass = mySide === "A" ? "gomoku-stone-a" : "gomoku-stone-b";
+  const cellsHtml = board.map((c, idx) => {
+    const stone = c ? `<span class="gomoku-stone ${c === 'A' ? 'gomoku-stone-a' : 'gomoku-stone-b'}"></span>` : '';
+    return `<div class="gomoku-cell ${c ? 'filled' : ''}" onclick="${c ? '' : `gomokuMove(${idx})`}">${stone}</div>`;
+  }).join('');
+
+  const isFull = board.every(c => c);
+  let statusHtml, extraHtml = "";
+  if (state.winner) {
+    const winnerIsMe = state.winner === mySide;
+    statusHtml = winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл";
+    extraHtml = `<button class="ttt-restart-btn" onclick="restartGomoku()">再玩一局 / Ещё раз</button>`;
+  } else if (isFull) {
+    statusHtml = "平手！🤝 / Ничья!";
+    extraHtml = `<button class="ttt-restart-btn" onclick="restartGomoku()">再玩一局 / Ещё раз</button>`;
+  } else {
+    statusHtml = turnIsMe ? `Ваш ход (${mySide === 'A' ? '⚫' : '⚪'}) / 輪到你` : "Ход соперника / 等對方";
+  }
+
+  body.innerHTML = `
+    <div class="ttt-status">${statusHtml}</div>
+    <div class="gomoku-board-wrap"><div class="gomoku-board">${cellsHtml}</div></div>
+    ${extraHtml}
+  `;
+}
+function gomokuMove(idx) {
+  db.ref("games/gomoku").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.winner) return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide || state.turn !== mySide) return;
+    const board = (state.board || []).slice();
+    if (board[idx]) return;
+    board[idx] = mySide;
+    const won = gomokuCheckWin(board, idx);
+    db.ref("games/gomoku").update({
+      board: board,
+      turn: mySide === "A" ? "B" : "A",
+      winner: won ? mySide : null
+    });
+  });
+}
+function restartGomoku() {
+  db.ref("games/gomoku").update({
+    board: Array(GOMOKU_COLS * GOMOKU_ROWS).fill(""),
+    turn: "A",
+    winner: null,
     updatedAt: Date.now()
   });
 }
