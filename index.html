@@ -1922,7 +1922,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.123</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.124</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2137,7 +2137,7 @@
 
 <script>
 
-const APP_VERSION = "21.123";
+const APP_VERSION = "21.124";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2329,7 +2329,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.123";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.124";
   }
 });
 
@@ -4712,7 +4712,7 @@ function restartPipes() {
 /* ---------- 剪刀石頭布 ---------- */
 const RPS_CHOICES = { rock: "✊", paper: "✋", scissors: "✌️" };
 const RPS_NAMES = { rock: "石頭 / Камень", paper: "布 / Бумага", scissors: "剪刀 / Ножницы" };
-const RPS_WINS_NEEDED = 2;
+const RPS_TOTAL_ROUNDS = 10;
 function rpsJudge(a, b) {
   if (a === b) return "draw";
   if ((a === "rock" && b === "scissors") || (a === "scissors" && b === "paper") || (a === "paper" && b === "rock")) return "A";
@@ -4787,15 +4787,17 @@ function renderRps(state) {
     if (!state.winner) lightEl.classList.add(iHaveChosen ? "waiting" : "on-turn");
   }
 
-  const scoreHtml = `<div class="bulls-hint">你 ${myScore} : ${oppScore} 對方 / Вы ${myScore} : ${oppScore} Соперник（先贏${RPS_WINS_NEEDED}局獲勝 / до ${RPS_WINS_NEEDED} побед）</div>`;
+  const roundsPlayed = (state.history || []).length;
+  const scoreHtml = `<div class="bulls-hint">你 ${myScore} : ${oppScore} 對方 / Вы ${myScore} : ${oppScore} Соперник（第 ${roundsPlayed} / ${RPS_TOTAL_ROUNDS} 局 / раунд ${roundsPlayed} из ${RPS_TOTAL_ROUNDS}）</div>`;
   const historyColHtml = rpsHistoryDotsHtml(state);
 
   let mainHtml;
   if (state.winner) {
     const winnerIsMe = state.winner === mySide;
+    const finalText = state.winner === "draw" ? "平手！🤝 / Ничья!" : (winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл");
     mainHtml = `
       ${scoreHtml}
-      <div class="ttt-status">${winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл"}</div>
+      <div class="ttt-status">${finalText}</div>
       <button class="ttt-restart-btn" onclick="restartRps()">再玩一局 / Ещё раз</button>
     `;
   } else if (bothChosen) {
@@ -4851,8 +4853,10 @@ function submitRpsChoice(choice) {
       updated.lastChoiceA = choiceA;
       updated.lastChoiceB = choiceB;
       updated.history = [...(state.history || []), { winner: result, ts: Date.now() }];
-      if (scoreA >= RPS_WINS_NEEDED || scoreB >= RPS_WINS_NEEDED) {
-        updated.winner = scoreA >= RPS_WINS_NEEDED ? "A" : "B";
+      if (updated.history.length >= RPS_TOTAL_ROUNDS) {
+        if (scoreA > scoreB) updated.winner = "A";
+        else if (scoreB > scoreA) updated.winner = "B";
+        else updated.winner = "draw";
       }
     }
     db.ref("games/rps").update(updated);
