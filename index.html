@@ -1259,25 +1259,44 @@
     .pipes-cell.pipes-empty { cursor: pointer; }
     .pipes-cell.pipes-empty:hover { border-color: var(--gold-dim); }
     .pipes-cell.pipes-filled { font-weight: 700; }
-    .pipes-palette {
+    .pipes-queue {
       display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
       justify-content: center;
     }
-    .pipes-type-btn {
-      width: 34px;
-      height: 34px;
+    .pipes-queue-current {
+      width: 42px;
+      height: 42px;
       background: var(--bg-panel);
-      border: 1.5px solid var(--border-strong);
-      border-radius: 8px;
-      font-size: 18px;
-      color: var(--text-primary);
-      cursor: pointer;
-      font-family: inherit;
+      border: 2px solid var(--gold);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: var(--gold-bright);
+      flex-shrink: 0;
     }
-    .pipes-type-btn.selected { border-color: var(--gold); background: rgba(201,168,118,0.15); color: var(--gold-bright); }
-    .pipes-type-btn:hover { border-color: var(--gold-dim); }
+    .pipes-queue-arrow { color: var(--text-tertiary); font-size: 14px; flex-shrink: 0; }
+    .pipes-queue-next {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .pipes-queue-next-item {
+      width: 26px;
+      height: 26px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--text-tertiary);
+      opacity: 0.85;
+    }
     .gw-chat-original { color: var(--text-tertiary); font-size: 10px; }
     .gw-chat-input-row { display: flex; gap: 6px; width: 100%; align-items: stretch; }
     .gw-chat-input {
@@ -1776,7 +1795,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.114</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.115</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1991,7 +2010,7 @@
 
 <script>
 
-const APP_VERSION = "21.114";
+const APP_VERSION = "21.115";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2183,7 +2202,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.114";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.115";
   }
 });
 
@@ -3592,6 +3611,7 @@ function resetGameState(gameId, inviteData) {
       playerA: inviteData.fromEmail,
       playerB: inviteData.toEmail || null,
       grid: generatePipesObstacles(),
+      queue: generatePipesQueue(),
       turn: "A",
       status: "playing",
       updatedAt: Date.now()
@@ -4297,7 +4317,7 @@ const PIPES_START = 0;
 const PIPES_END = PIPES_COLS * PIPES_ROWS - 1;
 const PIPES_TYPES = ["H", "V", "NE", "NW", "SE", "SW"];
 const PIPES_GLYPH = { H: "─", V: "│", NE: "└", NW: "┘", SE: "┌", SW: "┐" };
-let pipesSelectedType = "H";
+const PIPES_QUEUE_LENGTH = PIPES_COLS * PIPES_ROWS - 6; // 30格 - 起點 - 終點 - 4個障礙物 = 24個可放置格
 
 function generatePipesObstacles() {
   const total = PIPES_COLS * PIPES_ROWS;
@@ -4313,6 +4333,13 @@ function generatePipesObstacles() {
     placed++;
   }
   return grid;
+}
+function generatePipesQueue() {
+  const q = [];
+  for (let i = 0; i < PIPES_QUEUE_LENGTH; i++) {
+    q.push(PIPES_TYPES[Math.floor(Math.random() * PIPES_TYPES.length)]);
+  }
+  return q;
 }
 function pipesOpenings(idx, cellType) {
   if (idx === PIPES_START || idx === PIPES_END) return new Set(["N", "E", "S", "W"]);
@@ -4430,21 +4457,25 @@ function renderPipes(state) {
     statusHtml = turnIsMe ? "Твой ход, выбери и поставь трубу / 輪到你放水管" : "Ход соперника / 等對方放水管";
   }
 
-  const paletteHtml = PIPES_TYPES.map(t =>
-    `<button class="pipes-type-btn ${pipesSelectedType === t ? 'selected' : ''}" onclick="pipesSelectType('${t}')">${PIPES_GLYPH[t]}</button>`
-  ).join('');
+  const queue = state.queue || [];
+  const currentType = queue[0];
+  const upcoming = queue.slice(1, 6);
+  const queueHtml = queue.length ? `
+    <div class="pipes-queue">
+      <div class="pipes-queue-current">${PIPES_GLYPH[currentType] || '?'}</div>
+      <span class="pipes-queue-arrow">→</span>
+      <div class="pipes-queue-next">${upcoming.map(t => `<div class="pipes-queue-next-item">${PIPES_GLYPH[t]}</div>`).join('')}</div>
+    </div>
+    <div class="bulls-hint">目前要放這個，接下來會出現右邊那幾個 / Сейчас нужно поставить эту, дальше — те, что справа</div>
+  ` : '';
 
   body.innerHTML = `
     <div class="ttt-status">${statusHtml}</div>
     <div class="bulls-hint">🔵起點／🔴終點，四面八方都能接，不限定方向 / 🔵старт／🔴финиш, можно подключать труб с любой стороны</div>
     <div class="pipes-board">${cellsHtml}</div>
-    ${(!connected && !isFull) ? `<div class="pipes-palette">${paletteHtml}</div>` : ''}
+    ${(!connected && !isFull) ? queueHtml : ''}
     ${extraHtml}
   `;
-}
-function pipesSelectType(type) {
-  pipesSelectedType = type;
-  db.ref("games/pipes").once("value").then((snap) => { if (snap.val()) renderPipes(snap.val()); });
 }
 function placePipe(idx) {
   db.ref("games/pipes").once("value").then((snap) => {
@@ -4453,11 +4484,13 @@ function placePipe(idx) {
     const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
     if (!mySide || state.turn !== mySide) return;
     const grid = state.grid || [];
-    if (grid[idx]) return;
+    const queue = state.queue || [];
+    if (grid[idx] || !queue.length) return;
     const newGrid = grid.slice();
-    newGrid[idx] = pipesSelectedType;
+    newGrid[idx] = queue[0];
     db.ref("games/pipes").update({
       grid: newGrid,
+      queue: queue.slice(1),
       turn: mySide === "A" ? "B" : "A"
     });
   });
@@ -4465,6 +4498,7 @@ function placePipe(idx) {
 function restartPipes() {
   db.ref("games/pipes").update({
     grid: generatePipesObstacles(),
+    queue: generatePipesQueue(),
     turn: "A",
     status: "playing",
     updatedAt: Date.now()
