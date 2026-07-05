@@ -1820,7 +1820,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.117</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.118</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2035,7 +2035,7 @@
 
 <script>
 
-const APP_VERSION = "21.117";
+const APP_VERSION = "21.118";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2227,7 +2227,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.117";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.118";
   }
 });
 
@@ -4405,17 +4405,11 @@ function isPipesEndpointSealed(idx, grid) {
 function isPipesDeadlocked(grid) {
   return isPipesEndpointSealed(PIPES_START, grid) || isPipesEndpointSealed(PIPES_END, grid);
 }
-function findPipesPath(grid) {
-  const visited = new Map([[PIPES_START, null]]);
+function findPipesReachableFromStart(grid) {
+  const visited = new Set([PIPES_START]);
   const queue = [PIPES_START];
   while (queue.length) {
     const cur = queue.shift();
-    if (cur === PIPES_END) {
-      const path = [];
-      let node = cur;
-      while (node !== null) { path.push(node); node = visited.get(node); }
-      return path;
-    }
     const curOpenings = pipesOpenings(cur, grid[cur]);
     for (const dir of ["N", "E", "S", "W"]) {
       if (!curOpenings.has(dir)) continue;
@@ -4423,12 +4417,12 @@ function findPipesPath(grid) {
       if (next === null || visited.has(next)) continue;
       const nextOpenings = pipesOpenings(next, grid[next]);
       if (nextOpenings.has(pipesOpposite(dir))) {
-        visited.set(next, cur);
+        visited.add(next);
         queue.push(next);
       }
     }
   }
-  return null;
+  return visited;
 }
 function initPipesScreen() {
   const body = document.getElementById("gameScreenBody");
@@ -4482,9 +4476,9 @@ function renderPipes(state) {
   }
 
   const grid = state.grid || [];
-  const pathIndices = findPipesPath(grid);
-  const connected = !!pathIndices;
-  const pathSet = connected ? new Set(pathIndices) : new Set();
+  const reachableSet = findPipesReachableFromStart(grid);
+  const connected = reachableSet.has(PIPES_END);
+  const pathSet = reachableSet;
   const cellsHtml = grid.map((cell, idx) => {
     if (idx === PIPES_START) return `<div class="pipes-cell pipes-fixed pipes-start-cell">🔵</div>`;
     if (idx === PIPES_END) return `<div class="pipes-cell pipes-fixed pipes-end-cell">🔴</div>`;
