@@ -1235,6 +1235,49 @@
       line-height: 1.5;
     }
     .gw-theme-btn:hover { border-color: var(--gold-dim); }
+
+    /* 接水管 */
+    .pipes-board {
+      display: grid;
+      grid-template-columns: repeat(6, 36px);
+      grid-template-rows: repeat(5, 36px);
+      gap: 3px;
+    }
+    .pipes-cell {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--gold-bright);
+      user-select: none;
+    }
+    .pipes-cell.pipes-fixed { font-size: 17px; background: var(--bg-elevated); border-color: var(--gold-dim); }
+    .pipes-cell.pipes-obstacle { font-size: 15px; opacity: 0.6; }
+    .pipes-cell.pipes-empty { cursor: pointer; }
+    .pipes-cell.pipes-empty:hover { border-color: var(--gold-dim); }
+    .pipes-cell.pipes-filled { font-weight: 700; }
+    .pipes-palette {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .pipes-type-btn {
+      width: 34px;
+      height: 34px;
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-strong);
+      border-radius: 8px;
+      font-size: 18px;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pipes-type-btn.selected { border-color: var(--gold); background: rgba(201,168,118,0.15); color: var(--gold-bright); }
+    .pipes-type-btn:hover { border-color: var(--gold-dim); }
     .gw-chat-original { color: var(--text-tertiary); font-size: 10px; }
     .gw-chat-input-row { display: flex; gap: 6px; width: 100%; align-items: stretch; }
     .gw-chat-input {
@@ -1733,7 +1776,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.107</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.108</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -1948,7 +1991,7 @@
 
 <script>
 
-const APP_VERSION = "21.107";
+const APP_VERSION = "21.108";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2140,7 +2183,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.107";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.108";
   }
 });
 
@@ -3291,7 +3334,8 @@ const GAME_CATALOG = [
   { id: "bulls",     icon: "🔢", name: "公牛母牛",  nameRu: "Быки и коровы", available: true },
   { id: "rps",       icon: "✊", name: "剪刀石頭布", nameRu: "Камень-ножницы-бумага", available: false },
   { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", nameRu: "Угадай, кто я", available: true },
-  { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: false }
+  { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: false },
+  { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true }
 ];
 
 let selectedGameMenuIds = [];
@@ -3569,6 +3613,15 @@ function resetGameState(gameId, inviteData) {
       phase: "theme_select",
       updatedAt: Date.now()
     });
+  } else if (gameId === "pipes") {
+    db.ref("games/pipes").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      grid: generatePipesObstacles(),
+      turn: "A",
+      status: "playing",
+      updatedAt: Date.now()
+    });
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
@@ -3612,6 +3665,8 @@ function enterGameScreen(gameId, inviteData) {
     initBullsScreen();
   } else if (gameId === "guesswho") {
     initGuessWhoScreen();
+  } else if (gameId === "pipes") {
+    initPipesScreen();
   } else {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
@@ -4255,6 +4310,186 @@ function getMySpeechRateMultiplier() {
   const val = displayNamesCache[userKey]?.speechRate;
   return (typeof val === "number" && val > 0) ? val : 1;
 }
+/* ---------- 接水管 (合作型：輪流放水管，一起接通起點到終點) ---------- */
+const PIPES_COLS = 6;
+const PIPES_ROWS = 5;
+const PIPES_START = 0;
+const PIPES_END = PIPES_COLS * PIPES_ROWS - 1;
+const PIPES_TYPES = ["H", "V", "NE", "NW", "SE", "SW"];
+const PIPES_GLYPH = { H: "─", V: "│", NE: "└", NW: "┘", SE: "┌", SW: "┐" };
+let pipesSelectedType = "H";
+
+function generatePipesObstacles() {
+  const total = PIPES_COLS * PIPES_ROWS;
+  const grid = Array(total).fill(null);
+  const forbidden = new Set([PIPES_START, PIPES_END, PIPES_START + 1, PIPES_END - 1, PIPES_START + PIPES_COLS, PIPES_END - PIPES_COLS]);
+  let placed = 0;
+  let attempts = 0;
+  while (placed < 4 && attempts < 100) {
+    attempts++;
+    const idx = Math.floor(Math.random() * total);
+    if (forbidden.has(idx) || grid[idx] === "obstacle") continue;
+    grid[idx] = "obstacle";
+    placed++;
+  }
+  return grid;
+}
+function pipesOpenings(idx, cellType) {
+  if (idx === PIPES_START || idx === PIPES_END) return new Set(["N", "E", "S", "W"]);
+  switch (cellType) {
+    case "H": return new Set(["E", "W"]);
+    case "V": return new Set(["N", "S"]);
+    case "NE": return new Set(["N", "E"]);
+    case "NW": return new Set(["N", "W"]);
+    case "SE": return new Set(["S", "E"]);
+    case "SW": return new Set(["S", "W"]);
+    default: return new Set();
+  }
+}
+function pipesNeighbor(idx, dir) {
+  const row = Math.floor(idx / PIPES_COLS);
+  const col = idx % PIPES_COLS;
+  if (dir === "N" && row > 0) return idx - PIPES_COLS;
+  if (dir === "S" && row < PIPES_ROWS - 1) return idx + PIPES_COLS;
+  if (dir === "E" && col < PIPES_COLS - 1) return idx + 1;
+  if (dir === "W" && col > 0) return idx - 1;
+  return null;
+}
+function pipesOpposite(dir) { return { N: "S", S: "N", E: "W", W: "E" }[dir]; }
+function checkPipesConnected(grid) {
+  const visited = new Set([PIPES_START]);
+  const queue = [PIPES_START];
+  while (queue.length) {
+    const cur = queue.shift();
+    if (cur === PIPES_END) return true;
+    const curOpenings = pipesOpenings(cur, grid[cur]);
+    for (const dir of ["N", "E", "S", "W"]) {
+      if (!curOpenings.has(dir)) continue;
+      const next = pipesNeighbor(cur, dir);
+      if (next === null || visited.has(next)) continue;
+      const nextOpenings = pipesOpenings(next, grid[next]);
+      if (nextOpenings.has(pipesOpposite(dir))) {
+        visited.add(next);
+        queue.push(next);
+      }
+    }
+  }
+  return false;
+}
+function initPipesScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `<div class="ttt-status" id="pipesStatus">載入中... / Загрузка...</div>`;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  gameStateSeenOnce = false;
+  gameOpponentSeenOnline = false;
+  gameOfflineToastShown = false;
+  activeGameListenerRef = db.ref("games/pipes");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderPipes(state);
+  });
+  registerGamePresence("pipes");
+}
+function renderPipes(state) {
+  const body = document.getElementById("gameScreenBody");
+  const lightEl = document.getElementById("gameTurnLight");
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (!body) return;
+  const myEmail = currentUser.email;
+  const mySide = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+  const opponentEmail = mySide === "A" ? state.playerB : state.playerA;
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+  if (opponentOnlineNow) { gameOpponentSeenOnline = true; gameOfflineToastShown = false; }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (titleEl) titleEl.textContent = showOffline ? "Конец игры / 結束" : currentGameTitleText;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+  const turnIsMe = state.turn === mySide;
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) lightEl.classList.add("offline");
+    else if (state.status === "playing") lightEl.classList.add(turnIsMe ? "on-turn" : "waiting");
+  }
+  if (showOffline) {
+    body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  const grid = state.grid || [];
+  const cellsHtml = grid.map((cell, idx) => {
+    if (idx === PIPES_START) return `<div class="pipes-cell pipes-fixed">🚰</div>`;
+    if (idx === PIPES_END) return `<div class="pipes-cell pipes-fixed">🪣</div>`;
+    if (cell === "obstacle") return `<div class="pipes-cell pipes-obstacle">⛔</div>`;
+    if (cell) return `<div class="pipes-cell pipes-filled">${PIPES_GLYPH[cell]}</div>`;
+    return `<div class="pipes-cell pipes-empty" onclick="placePipe(${idx})"></div>`;
+  }).join('');
+
+  const connected = checkPipesConnected(grid);
+  const isFull = grid.every((c, i) => c || i === PIPES_START || i === PIPES_END);
+
+  let statusHtml, extraHtml = "";
+  if (connected) {
+    statusHtml = "接通了！🎉 / Соединено!";
+    extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">再玩一局 / Ещё раз</button>`;
+  } else if (isFull) {
+    statusHtml = "棋盤填滿了，沒接通 / Поле заполнено, связи нет";
+    extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">重新開始 / Начать заново</button>`;
+  } else {
+    statusHtml = turnIsMe ? "Твой ход, выбери и поставь трубу / 輪到你放水管" : "Ход соперника / 等對方放水管";
+  }
+
+  const paletteHtml = PIPES_TYPES.map(t =>
+    `<button class="pipes-type-btn ${pipesSelectedType === t ? 'selected' : ''}" onclick="pipesSelectType('${t}')">${PIPES_GLYPH[t]}</button>`
+  ).join('');
+
+  body.innerHTML = `
+    <div class="ttt-status">${statusHtml}</div>
+    <div class="pipes-board">${cellsHtml}</div>
+    ${(!connected && !isFull) ? `<div class="pipes-palette">${paletteHtml}</div>` : ''}
+    ${extraHtml}
+  `;
+}
+function pipesSelectType(type) {
+  pipesSelectedType = type;
+  db.ref("games/pipes").once("value").then((snap) => { if (snap.val()) renderPipes(snap.val()); });
+}
+function placePipe(idx) {
+  db.ref("games/pipes").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide || state.turn !== mySide) return;
+    const grid = state.grid || [];
+    if (grid[idx]) return;
+    const newGrid = grid.slice();
+    newGrid[idx] = pipesSelectedType;
+    db.ref("games/pipes").update({
+      grid: newGrid,
+      turn: mySide === "A" ? "B" : "A"
+    });
+  });
+}
+function restartPipes() {
+  db.ref("games/pipes").update({
+    grid: generatePipesObstacles(),
+    turn: "A",
+    status: "playing",
+    updatedAt: Date.now()
+  });
+}
+
 function speakThisText(index) {
   const targetMsg = chatHistory[index];
   if (!targetMsg || !targetMsg.text) return;
