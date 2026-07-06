@@ -2031,7 +2031,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.131</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.132</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2211,6 +2211,12 @@
       <div class="profile-setup-label" style="margin-top:0;">成員管理 / Управление участниками</div>
       <div id="adminMemberList" style="margin-bottom:12px;"></div>
       <button onclick="secureClearDatabase()" style="width:100%;background:#5c3428;color:#d4bfb0;border:none;border-radius:10px;padding:10px;font-size:13px;font-family:inherit;cursor:pointer;">⚠️ 清除歷史紀錄（管理者）</button>
+      <div class="profile-setup-label">特定對象上線通知 / Уведомление о входе конкретного человека</div>
+      <select id="onlineAlertTargetSelect" class="profile-setup-input" style="margin-bottom:8px;">
+        <option value="">不啟用 / Отключено</option>
+      </select>
+      <input type="text" id="onlineAlertAudioUrlInput" class="profile-setup-input" placeholder="音檔網址 / URL аудиофайла（上傳到GitHub後貼在這）" />
+      <button type="button" class="game-modal-btn-secondary" style="margin-top:8px;" onclick="previewOnlineAlertAudio()">▶ 試聽 / Прослушать</button>
     </div>
   </div>
 </div>
@@ -2255,7 +2261,7 @@
 
 <script>
 
-const APP_VERSION = "21.131";
+const APP_VERSION = "21.132";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2380,8 +2386,12 @@ auth.onAuthStateChanged((user) => {
       renderPendingList(snapshot.val());
     });
     document.getElementById("presencePanelWrapper").style.display = "block";
+    let previousOnlineState = {};
     db.ref("presence").on("value", (snapshot) => {
-      renderPresencePanel(snapshot.val());
+      const data = snapshot.val() || {};
+      checkOnlineAlertTransition(data, previousOnlineState);
+      Object.keys(data).forEach(k => { previousOnlineState[k] = !!(data[k] && data[k].online); });
+      renderPresencePanel(data);
     });
     document.getElementById("backupPanelWrapper").style.display = "block";
     db.ref("backupHistory").on("value", (snapshot) => {
@@ -2447,7 +2457,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.131";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.132";
   }
 });
 
@@ -3035,6 +3045,24 @@ function setupPresence(userKey, email) {
 let presenceClockInterval = null;
 let latestPresenceData = null;
 
+function checkOnlineAlertTransition(presenceData, previousOnlineState) {
+  if (!currentUser) return;
+  const myKey = emailToKey(currentUser.email);
+  const myPrefs = displayNamesCache[myKey] || {};
+  const targetEmail = myPrefs.onlineAlertTargetEmail;
+  const audioUrl = myPrefs.onlineAlertAudioUrl;
+  if (!targetEmail || !audioUrl) return;
+  const targetKey = emailToKey(targetEmail);
+  const entry = presenceData[targetKey];
+  const isOnlineNow = !!(entry && entry.online);
+  const wasOnlineBefore = !!previousOnlineState[targetKey];
+  if (isOnlineNow && !wasOnlineBefore) {
+    try {
+      const audio = new Audio(audioUrl);
+      audio.play().catch(() => {});
+    } catch (e) {}
+  }
+}
 function renderPresencePanel(presenceData) {
   latestPresenceData = presenceData;
   const panel = document.getElementById("presencePanel");
@@ -5833,6 +5861,15 @@ function openSettings() {
             ${isSelf ? "" : `<button class="btn-kick" onclick="kickUser('${key}','${u.email.replace(/'/g,"\\'")}');closeSettings();" style="font-size:11px;padding:3px 8px;">移除</button>`}
           </div>`;
         }).join("");
+        const targetSelect = document.getElementById("onlineAlertTargetSelect");
+        if (targetSelect) {
+          const others = Object.values(users).filter(u => u.email !== currentUser.email);
+          targetSelect.innerHTML = '<option value="">不啟用 / Отключено</option>' +
+            others.map(u => `<option value="${u.email}">${getDisplayName(u.email)}（${u.email}）</option>`).join('');
+          targetSelect.value = data.onlineAlertTargetEmail || "";
+        }
+        const urlInput = document.getElementById("onlineAlertAudioUrlInput");
+        if (urlInput) urlInput.value = data.onlineAlertAudioUrl || "";
       });
     }
   }
@@ -5845,10 +5882,22 @@ function saveSettings() {
   const speechRate = parseFloat(document.getElementById("settingsSpeechRate").value) || 1;
   const notifSoundOn = document.getElementById("settingsNotifSound").checked;
   const notifSound = document.querySelector('input[name="notifSoundStyle"]:checked')?.value || "default";
+  const onlineAlertTargetEmail = document.getElementById("onlineAlertTargetSelect")?.value || "";
+  const onlineAlertAudioUrl = document.getElementById("onlineAlertAudioUrlInput")?.value.trim() || "";
   const userKey = emailToKey(currentUser.email);
-  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor, speechRate, notifSoundOn, notifSound }).then(() => {
+  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor, speechRate, notifSoundOn, notifSound, onlineAlertTargetEmail, onlineAlertAudioUrl }).then(() => {
     document.getElementById("settingsOverlay").style.display = "none";
   });
+}
+function previewOnlineAlertAudio() {
+  const url = document.getElementById("onlineAlertAudioUrlInput")?.value.trim();
+  if (!url) { showGameToast("請先貼上音檔網址 / Сначала вставьте ссылку на аудио"); return; }
+  try {
+    const audio = new Audio(url);
+    audio.play().catch(() => showGameToast("播放失敗，請確認網址是否正確 / Не удалось воспроизвести"));
+  } catch (e) {
+    showGameToast("播放失敗 / Ошибка воспроизведения");
+  }
 }
 
 function closeSettings() {
