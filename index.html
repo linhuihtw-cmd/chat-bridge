@@ -580,6 +580,39 @@
     }
     .settings-toggle input:checked + .settings-toggle-slider { background: var(--gold-dim); }
     .settings-toggle input:checked + .settings-toggle-slider::before { transform: translateX(18px); background: var(--bg-deep); }
+    .notif-sound-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+    .notif-sound-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .notif-sound-row:hover { background: var(--bg-panel); }
+    .notif-sound-row input[type="radio"] { accent-color: var(--gold-dim); flex-shrink: 0; }
+    .notif-sound-row span { flex: 1; }
+    .notif-preview-btn {
+      background: var(--bg-input);
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-primary);
+      border-radius: 6px;
+      width: 26px;
+      height: 26px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .notif-preview-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     .profile-setup-input {
       width: 100%;
       background: var(--bg-input);
@@ -1998,7 +2031,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.130</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.131</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2157,12 +2190,20 @@
       <span style="font-size:11px;color:var(--text-tertiary);">正常 / Обычно</span>
     </div>
     <div style="font-size:10px;color:var(--text-tertiary);text-align:center;margin-top:2px;">正常語速為上限，可依需求調慢方便學習 / Максимум — обычная скорость, можно замедлить для изучения языка</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
       <span class="profile-setup-label" style="margin-top:0;">訊息通知音 / Звук уведомлений</span>
       <label class="settings-toggle">
         <input type="checkbox" id="settingsNotifSound" checked />
         <span class="settings-toggle-slider"></span>
       </label>
+    </div>
+    <div class="notif-sound-list">
+      <label class="notif-sound-row"><input type="radio" name="notifSoundStyle" value="default" /><span>經典雙音 / Классический</span><button type="button" class="notif-preview-btn" onclick="previewNotifSound('default')">▶</button></label>
+      <label class="notif-sound-row"><input type="radio" name="notifSoundStyle" value="beep" /><span>簡短提示 / Короткий сигнал</span><button type="button" class="notif-preview-btn" onclick="previewNotifSound('beep')">▶</button></label>
+      <label class="notif-sound-row"><input type="radio" name="notifSoundStyle" value="rising" /><span>上升音階 / Восходящая мелодия</span><button type="button" class="notif-preview-btn" onclick="previewNotifSound('rising')">▶</button></label>
+      <label class="notif-sound-row"><input type="radio" name="notifSoundStyle" value="trill" /><span>活潑鈴聲 / Весёлая трель</span><button type="button" class="notif-preview-btn" onclick="previewNotifSound('trill')">▶</button></label>
+      <label class="notif-sound-row"><input type="radio" name="notifSoundStyle" value="soft" /><span>溫和低音 / Мягкий тон</span><button type="button" class="notif-preview-btn" onclick="previewNotifSound('soft')">▶</button></label>
+      <label class="notif-sound-row"><input type="radio" name="notifSoundStyle" value="playful" /><span>俏皮音階 / Игривая мелодия</span><button type="button" class="notif-preview-btn" onclick="previewNotifSound('playful')">▶</button></label>
     </div>
     <button id="settingsConfirm" onclick="saveSettings()">儲存 / Сохранить</button>
     <button id="settingsClose" onclick="closeSettings()">取消 / Отмена</button>
@@ -2214,7 +2255,7 @@
 
 <script>
 
-const APP_VERSION = "21.130";
+const APP_VERSION = "21.131";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2406,35 +2447,49 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.130";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.131";
   }
 });
 
-function playNotificationSound() {
-  if (currentUser) {
-    const userKey = emailToKey(currentUser.email);
-    if (displayNamesCache[userKey]?.notifSoundOn === false) return;
-  }
+const NOTIF_SOUND_PRESETS = {
+  default: [{ freq: 587.33, at: 0 }, { freq: 880, at: 0.1 }],
+  beep: [{ freq: 800, at: 0 }],
+  rising: [{ freq: 523.25, at: 0 }, { freq: 659.25, at: 0.09 }, { freq: 783.99, at: 0.18 }],
+  trill: [{ freq: 1000, at: 0 }, { freq: 1200, at: 0.05 }, { freq: 1000, at: 0.1 }, { freq: 1200, at: 0.15 }],
+  soft: [{ freq: 392, at: 0 }, { freq: 349.23, at: 0.15 }],
+  playful: [{ freq: 659.25, at: 0 }, { freq: 783.99, at: 0.08 }, { freq: 987.77, at: 0.16 }, { freq: 1174.66, at: 0.24 }]
+};
+function playToneSequence(sequence) {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); 
-    
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.4);
+    sequence.forEach(step => {
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(step.freq, audioCtx.currentTime + step.at);
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime + step.at);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + step.at + 0.3);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start(audioCtx.currentTime + step.at);
+      oscillator.stop(audioCtx.currentTime + step.at + 0.3);
+    });
   } catch (e) {
     console.log("音效阻擋");
   }
+}
+function previewNotifSound(style) {
+  playToneSequence(NOTIF_SOUND_PRESETS[style] || NOTIF_SOUND_PRESETS.default);
+}
+function playNotificationSound() {
+  let style = "default";
+  if (currentUser) {
+    const userKey = emailToKey(currentUser.email);
+    const prefs = displayNamesCache[userKey] || {};
+    if (prefs.notifSoundOn === false) return;
+    style = prefs.notifSound || "default";
+  }
+  playToneSequence(NOTIF_SOUND_PRESETS[style] || NOTIF_SOUND_PRESETS.default);
 }
 
 function flashTabTitle() {
@@ -5754,6 +5809,8 @@ function openSettings() {
   selectedBubbleColor = data.bubbleColor || "";
   document.getElementById("settingsSpeechRate").value = (typeof data.speechRate === "number") ? data.speechRate : 1;
   document.getElementById("settingsNotifSound").checked = data.notifSoundOn !== false;
+  const savedStyle = data.notifSound || "default";
+  document.querySelectorAll('input[name="notifSoundStyle"]').forEach(r => { r.checked = (r.value === savedStyle); });
   initSwatchListeners("#settingsOverlay");
   if (selectedBubbleColor) {
     document.querySelectorAll("#settingsOverlay .swatch").forEach(s => {
@@ -5787,8 +5844,9 @@ function saveSettings() {
   if (!selectedBubbleColor) { alert("請選擇泡泡顏色 / Выберите цвет"); return; }
   const speechRate = parseFloat(document.getElementById("settingsSpeechRate").value) || 1;
   const notifSoundOn = document.getElementById("settingsNotifSound").checked;
+  const notifSound = document.querySelector('input[name="notifSoundStyle"]:checked')?.value || "default";
   const userKey = emailToKey(currentUser.email);
-  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor, speechRate, notifSoundOn }).then(() => {
+  db.ref("displayNames/" + userKey).set({ name, bubbleColor: selectedBubbleColor, speechRate, notifSoundOn, notifSound }).then(() => {
     document.getElementById("settingsOverlay").style.display = "none";
   });
 }
