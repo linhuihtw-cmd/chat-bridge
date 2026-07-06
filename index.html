@@ -1427,22 +1427,22 @@
     }
     .wordmatch-btn:hover { border-color: var(--gold-dim); transform: scale(1.05); }
     .wordmatch-btn.selected { border-color: var(--gold); box-shadow: 0 0 8px rgba(217,189,142,0.6); }
-    .wordmatch-btn.matched { cursor: default; opacity: 0.85; }
+    .wordmatch-btn.matched { cursor: pointer; opacity: 0.85; }
     .wordmatch-btn.matched:hover { transform: none; }
     .wordmatch-display-row {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      gap: 4px;
       width: 100%;
     }
     .wordmatch-display {
-      flex: 1;
-      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
       background: var(--bg-panel);
       border: 1.5px solid var(--border-strong);
       border-radius: 10px;
-      padding: 8px 10px;
+      padding: 8px 12px;
       display: flex;
       flex-direction: column;
       gap: 3px;
@@ -1459,17 +1459,13 @@
     .wordmatch-display-line {
       font-size: 15px;
       font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      position: relative;
-      padding-right: 22px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      word-break: break-word;
     }
     .wordmatch-tag {
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
+      flex-shrink: 0;
       font-size: 9px;
       color: var(--text-tertiary);
       font-weight: 400;
@@ -2002,7 +1998,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.128</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.129</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2217,7 +2213,7 @@
 
 <script>
 
-const APP_VERSION = "21.128";
+const APP_VERSION = "21.129";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2409,7 +2405,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.128";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.129";
   }
 });
 
@@ -5314,14 +5310,13 @@ function wordmatchClick(side, pos) {
     const order = side === "left" ? state.leftOrder : state.rightOrder;
     const pairId = order[pos];
     const matched = state.matched || [];
-    if (matched.includes(pairId)) return;
-
     const pair = state.pairs[pairId];
     if (side === "left") {
       wordmatchSpeak(pair.zh, "zh-CN");
     } else {
       wordmatchSpeak(pair.ru, "ru-RU");
     }
+    if (matched.includes(pairId)) return; // 已配對成功的還是能重聽，只是不再重複判斷配對
 
     const myEmail = currentUser.email;
     const updates = {};
