@@ -1411,6 +1411,24 @@
     }
     .gomoku-stone-a { background: var(--gold-bright); box-shadow: 0 0 2px rgba(0,0,0,0.4); }
     .gomoku-stone-b { background: var(--accent-blue); box-shadow: 0 0 2px rgba(0,0,0,0.4); }
+
+    .wordmatch-layout { display: flex; gap: 24px; justify-content: center; width: 100%; }
+    .wordmatch-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .wordmatch-btn {
+      width: 54px;
+      height: 44px;
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-strong);
+      border-radius: 10px;
+      font-size: 20px;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-primary);
+    }
+    .wordmatch-btn:hover { border-color: var(--gold-dim); transform: scale(1.05); }
+    .wordmatch-btn.selected { border-color: var(--gold); box-shadow: 0 0 8px rgba(217,189,142,0.6); }
+    .wordmatch-btn.matched { cursor: default; opacity: 0.85; }
+    .wordmatch-btn.matched:hover { transform: none; }
     .pipes-turn-dot {
       display: inline-block;
       width: 14px;
@@ -1926,7 +1944,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.125</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.126</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2141,7 +2159,7 @@
 
 <script>
 
-const APP_VERSION = "21.125";
+const APP_VERSION = "21.126";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2333,7 +2351,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.125";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.126";
   }
 });
 
@@ -3452,7 +3470,8 @@ const GAME_CATALOG = [
   { id: "rps",       icon: "✊", name: "剪刀石頭布", nameRu: "Камень-ножницы-бумага", available: true },
   { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", nameRu: "Угадай, кто я", available: true },
   { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: true },
-  { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true }
+  { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true },
+  { id: "wordmatch", icon: "🔊", name: "聽音連連看", nameRu: "Слушай и соедини", available: true }
 ];
 
 let selectedGameMenuIds = [];
@@ -3770,6 +3789,8 @@ function resetGameState(gameId, inviteData) {
       winner: null,
       updatedAt: Date.now()
     });
+  } else if (gameId === "wordmatch") {
+    db.ref("games/wordmatch").update(generateWordmatchRound(inviteData.fromEmail, inviteData.toEmail));
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
@@ -3829,6 +3850,8 @@ function enterGameScreen(gameId, inviteData) {
     initRpsScreen();
   } else if (gameId === "gomoku") {
     initGomokuScreen();
+  } else if (gameId === "wordmatch") {
+    initWordmatchScreen();
   } else {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
@@ -4997,6 +5020,185 @@ function restartGomoku() {
     turn: "A",
     winner: null,
     updatedAt: Date.now()
+  });
+}
+
+/* ---------- 聽音連連看（語言學習：純聽音配對，不顯示任何中文字，避免簡繁體問題） ---------- */
+const WORDMATCH_POOL = [
+  { zh: "你好", ru: "Привет" },
+  { zh: "謝謝", ru: "Спасибо" },
+  { zh: "對不起", ru: "Извини" },
+  { zh: "我愛你", ru: "Я тебя люблю" },
+  { zh: "早安", ru: "Доброе утро" },
+  { zh: "晚安", ru: "Спокойной ночи" },
+  { zh: "加油", ru: "Давай" },
+  { zh: "沒關係", ru: "Ничего страшного" },
+  { zh: "再見", ru: "Пока" },
+  { zh: "生日快樂", ru: "С днём рождения" },
+  { zh: "我想你", ru: "Я скучаю по тебе" },
+  { zh: "辛苦了", ru: "Ты молодец" },
+  { zh: "恭喜", ru: "Поздравляю" },
+  { zh: "等一下", ru: "Подожди немного" },
+  { zh: "我知道了", ru: "Я понял" },
+  { zh: "好的", ru: "Хорошо" },
+  { zh: "為什麼", ru: "Почему" },
+  { zh: "在哪裡", ru: "Где" },
+  { zh: "多少錢", ru: "Сколько стоит" },
+  { zh: "你在做什麼", ru: "Что ты делаешь" }
+];
+const WORDMATCH_COLORS = ["#c9a876", "#6a9a52", "#6fb3d6", "#c97a52", "#a56fc9"];
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function generateWordmatchRound(fromEmail, toEmail) {
+  const pool = shuffleArray(WORDMATCH_POOL).slice(0, 5);
+  return {
+    playerA: fromEmail,
+    playerB: toEmail || null,
+    pairs: pool,
+    leftOrder: shuffleArray([0, 1, 2, 3, 4]),
+    rightOrder: shuffleArray([0, 1, 2, 3, 4]),
+    matched: [],
+    selectedLeftPos: null,
+    selectedRightPos: null,
+    updatedAt: Date.now()
+  };
+}
+function wordmatchSpeak(text, lang) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.volume = 1.0;
+    u.rate = (lang === "zh-CN" ? 0.85 : 0.8) * getMySpeechRateMultiplier();
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function initWordmatchScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `<div class="ttt-status" id="wordmatchStatus">載入中... / Загрузка...</div>`;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/wordmatch");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderWordmatch(state);
+  });
+  registerGamePresence("wordmatch");
+}
+function renderWordmatch(state) {
+  const body = document.getElementById("gameScreenBody");
+  const lightEl = document.getElementById("gameTurnLight");
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (!body) return;
+  const myEmail = currentUser.email;
+  const opponentEmail = state.playerA === myEmail ? state.playerB : state.playerA;
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+  if (opponentOnlineNow) { gameOpponentSeenOnline = true; gameOfflineToastShown = false; }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (titleEl) titleEl.textContent = showOffline ? "Конец игры / 結束" : currentGameTitleText;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) lightEl.classList.add("offline");
+  }
+  if (showOffline) {
+    body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  const matched = state.matched || [];
+  const allMatched = matched.length >= 5;
+
+  const leftHtml = state.leftOrder.map((pairId, pos) => {
+    const isMatched = matched.includes(pairId);
+    const isSelected = state.selectedLeftPos === pos;
+    const color = isMatched ? WORDMATCH_COLORS[pairId] : '';
+    return `<button class="wordmatch-btn ${isSelected ? 'selected' : ''} ${isMatched ? 'matched' : ''}" style="${color ? `border-color:${color};background:${color}22;color:${color};` : ''}" onclick="wordmatchClick('left', ${pos})">🔊</button>`;
+  }).join('');
+  const rightHtml = state.rightOrder.map((pairId, pos) => {
+    const isMatched = matched.includes(pairId);
+    const isSelected = state.selectedRightPos === pos;
+    const color = isMatched ? WORDMATCH_COLORS[pairId] : '';
+    return `<button class="wordmatch-btn ${isSelected ? 'selected' : ''} ${isMatched ? 'matched' : ''}" style="${color ? `border-color:${color};background:${color}22;color:${color};` : ''}" onclick="wordmatchClick('right', ${pos})">🔊</button>`;
+  }).join('');
+
+  const statusHtml = allMatched
+    ? `全部連對了！🎉 / Все совпало!<br><button class="ttt-restart-btn" onclick="restartWordmatch()">再玩一局 / Ещё раз</button>`
+    : `點左邊聽中文，點右邊聽俄文，找出配對 / Слева — китайский, справа — русский. Найдите пары`;
+
+  body.innerHTML = `
+    <div class="ttt-status">${statusHtml}</div>
+    <div class="wordmatch-layout">
+      <div class="wordmatch-col">
+        <div class="bulls-hint">中文 / Китайский</div>
+        ${leftHtml}
+      </div>
+      <div class="wordmatch-col">
+        <div class="bulls-hint">Русский / 俄文</div>
+        ${rightHtml}
+      </div>
+    </div>
+  `;
+}
+function wordmatchClick(side, pos) {
+  db.ref("games/wordmatch").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    const order = side === "left" ? state.leftOrder : state.rightOrder;
+    const pairId = order[pos];
+    const matched = state.matched || [];
+    if (matched.includes(pairId)) return;
+
+    const pair = state.pairs[pairId];
+    if (side === "left") {
+      wordmatchSpeak(pair.zh, "zh-CN");
+    } else {
+      wordmatchSpeak(pair.ru, "ru-RU");
+    }
+
+    const updates = {};
+    if (side === "left") updates.selectedLeftPos = pos;
+    else updates.selectedRightPos = pos;
+
+    const otherPos = side === "left" ? state.selectedRightPos : state.selectedLeftPos;
+    if (otherPos !== null && otherPos !== undefined) {
+      const otherOrder = side === "left" ? state.rightOrder : state.leftOrder;
+      const otherPairId = otherOrder[otherPos];
+      if (otherPairId === pairId) {
+        updates.matched = [...matched, pairId];
+        updates.selectedLeftPos = null;
+        updates.selectedRightPos = null;
+      } else {
+        if (side === "left") updates.selectedRightPos = null;
+        else updates.selectedLeftPos = null;
+      }
+    }
+    db.ref("games/wordmatch").update(updates);
+  });
+}
+function restartWordmatch() {
+  db.ref("games/wordmatch").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    db.ref("games/wordmatch").update(generateWordmatchRound(state.playerA, state.playerB));
   });
 }
 
