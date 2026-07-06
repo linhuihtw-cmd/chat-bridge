@@ -1998,7 +1998,7 @@
   </div>
 </div>
 
-<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.129</span></h2>
+<h2>We are L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.130</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2063,6 +2063,7 @@
     <div class="game-modal-subtitle">Выберите игры, в которые хотите поиграть<br>最多可選 5 個，對方會從中挑一個</div>
     <div class="game-thumb-grid" id="gameMenuGrid"></div>
     <button class="game-modal-btn" id="gameMenuSendBtn" onclick="sendGameInvite()" disabled>發送邀請 / Отправить приглашение</button>
+    <button class="game-modal-btn-secondary" onclick="startSoloWordmatch()">🔊 單人練習聽音連連看 / Соло-тренировка</button>
     <button class="game-modal-btn-secondary" onclick="closeGameMenu()">取消 / Отмена</button>
   </div>
 </div>
@@ -2213,7 +2214,7 @@
 
 <script>
 
-const APP_VERSION = "21.129";
+const APP_VERSION = "21.130";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2405,7 +2406,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "We are L⇄V ∞ · 聊天橋 v21.129";
+    document.title = "We are L⇄V ∞ · 聊天橋 v21.130";
   }
 });
 
@@ -5172,6 +5173,14 @@ function shuffleArray(arr) {
   }
   return a;
 }
+function startSoloWordmatch() {
+  if (!currentUser) return;
+  closeGameMenu();
+  const inviteData = { fromEmail: currentUser.email, toEmail: currentUser.email, createdAt: Date.now() };
+  gameScreenActiveFor = inviteData.createdAt;
+  resetGameState("wordmatch", inviteData);
+  enterGameScreen("wordmatch", inviteData);
+}
 function generateWordmatchRound(fromEmail, toEmail) {
   const pool = shuffleArray(WORDMATCH_POOL).slice(0, 5);
   return {
@@ -5245,7 +5254,12 @@ function renderWordmatch(state) {
   }
   if (lightEl) {
     lightEl.classList.remove("on-turn", "waiting", "offline");
-    if (showOffline) lightEl.classList.add("offline");
+    if (showOffline) {
+      lightEl.classList.add("offline");
+    } else {
+      const pending = !!state.leftSelected !== !!state.rightSelected; // 只有一邊被選定，等待配對
+      lightEl.classList.add(pending ? "on-turn" : "waiting");
+    }
   }
   if (showOffline) {
     body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
