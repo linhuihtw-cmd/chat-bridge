@@ -2684,18 +2684,25 @@ function exportAsHtml() {
       let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
       let blocks = rawText.match(tagRegex) || [rawText];
       let hasExplain = false;
+      const EXPORT_FIXED_LABELS = {
+        pinyin: "【中文發音 / Пиньинь】",
+        ru: "【俄文翻譯 / Русский перевод】",
+        explain: "【語意解釋 / Смысловое пояснение】"
+      };
       let lines = blocks.map(block => {
         let trimmed = block.trim();
         if (!trimmed) return "";
+        let contentMatch = trimmed.match(/^【[^】]+】([\s\S]*)$/);
+        let rawContent = contentMatch ? contentMatch[1].trim() : trimmed;
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】)/i.test(trimmed)) {
-          return `<div class="export-line">${escapeHtmlText(trimmed)} <button onclick="exportSpeak(${idx}, 'zh')">🔊 Озвучить</button></div>`;
+          return `<div class="export-line">${escapeHtmlText(EXPORT_FIXED_LABELS.pinyin + rawContent)} <button onclick="exportSpeak(${idx}, 'zh')">🔊 Озвучить</button></div>`;
         }
         if (/【俄文翻譯[^】]*】/.test(trimmed)) {
-          return `<div class="export-line">${escapeHtmlText(trimmed)} <button onclick="exportSpeak(${idx}, 'ru')">🔊 朗讀俄文</button></div>`;
+          return `<div class="export-line">${escapeHtmlText(EXPORT_FIXED_LABELS.ru + rawContent)} <button onclick="exportSpeak(${idx}, 'ru')">🔊 朗讀俄文</button></div>`;
         }
         if (trimmed.startsWith("【語意解釋")) {
           hasExplain = true;
-          return `<div class="export-line export-explain" data-idx="${idx}" style="display:none;">${escapeHtmlText(trimmed)}</div>`;
+          return `<div class="export-line export-explain" data-idx="${idx}" style="display:none;">${escapeHtmlText(EXPORT_FIXED_LABELS.explain + rawContent)}</div>`;
         }
         return `<div class="export-line">${escapeHtmlText(trimmed)}</div>`;
       });
@@ -3406,18 +3413,39 @@ function renderChat() {
         ? [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain]
         : [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain];
 
+      // 固定、保證拼寫正確的標籤文字，不使用AI自己生成的標籤，避免拼寫混入錯誤語言規則
+      const FIXED_LABELS = {
+        trad: "【繁體中文 / Традиционный китайский】",
+        pinyin: "【中文發音 / Пиньинь】",
+        simp: "【簡體中文 / Упрощенный китайский】",
+        ru: "【俄文翻譯 / Русский перевод】",
+        explain: "【語意解釋 / Смысловое пояснение】"
+      };
+
       let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
-        if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isInputRussian) return "";
+        let contentMatch = trimmedLine.match(/^【[^】]+】([\s\S]*)$/);
+        let rawContent = contentMatch ? contentMatch[1].trim() : trimmedLine;
+
         if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
-          return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
+          return `<div class="card-line">${FIXED_LABELS.pinyin}${rawContent} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
         }
+        if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isInputRussian) return "";
         if (/【俄文翻譯[^】]*】/.test(trimmedLine)) {
-          return `<div class="card-line">${trimmedLine} <button class="inner-audio-btn" onclick="speakRussianText(${index})">🔊 朗讀俄文</button> <button class="inline-copy-btn" onclick="copyRussianText(${index}, this)">📋 Скопировать</button></div>`;
+          return `<div class="card-line">${FIXED_LABELS.ru}${rawContent} <button class="inner-audio-btn" onclick="speakRussianText(${index})">🔊 朗讀俄文</button> <button class="inline-copy-btn" onclick="copyRussianText(${index}, this)">📋 Скопировать</button></div>`;
         }
         if (trimmedLine.startsWith("【語意解釋")) {
-          let explainContent = trimmedLine.replace(/^【[^】]+】/, "").trim();
-          if (explainContent.length === 0) return "";
-          return `<div class="card-line collapsible-explanation" style="display:none;">${trimmedLine}</div>`;
+          if (rawContent.length === 0) return "";
+          return `<div class="card-line collapsible-explanation" style="display:none;">${FIXED_LABELS.explain}${rawContent}</div>`;
+        }
+        if (trimmedLine.startsWith("【繁體中文")) {
+          if (rawContent.length === 0) return "";
+          let safeContent = rawContent.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          return `<div class="card-line">${FIXED_LABELS.trad}${rawContent} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
+        }
+        if (trimmedLine.startsWith("【簡體中文")) {
+          if (rawContent.length === 0) return "";
+          let safeContent = rawContent.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          return `<div class="card-line">${FIXED_LABELS.simp}${rawContent} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
         }
 
         let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
