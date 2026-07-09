@@ -3422,6 +3422,18 @@ function renderChat() {
         explain: "【語意解釋 / Смысловое пояснение】"
       };
 
+      // 已知AI偶爾會混入烏克蘭拼法的詞，顯示前自動修正回標準俄文拼法（僅修正這幾個固定詞彙，不動使用者實際翻譯內容）
+      function fixRussianSpelling(text) {
+        return text
+          .replace(/Китайський/g, "Китайский")
+          .replace(/Російський/g, "Русский")
+          .replace(/Пояснення/g, "Пояснение")
+          .replace(/пояснення/g, "пояснение")
+          .replace(/Упрощений/g, "Упрощенный")
+          .replace(/Піньїнь/g, "Пиньинь")
+          .replace(/Українськ/g, "Русск");
+      }
+
       let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
         let contentMatch = trimmedLine.match(/^【[^】]+】([\s\S]*)$/);
         let rawContent = contentMatch ? contentMatch[1].trim() : trimmedLine;
@@ -3431,11 +3443,11 @@ function renderChat() {
         }
         if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isInputRussian) return "";
         if (/【俄文翻譯[^】]*】/.test(trimmedLine)) {
-          return `<div class="card-line">${FIXED_LABELS.ru}${rawContent} <button class="inner-audio-btn" onclick="speakRussianText(${index})">🔊 朗讀俄文</button> <button class="inline-copy-btn" onclick="copyRussianText(${index}, this)">📋 Скопировать</button></div>`;
+          return `<div class="card-line">${FIXED_LABELS.ru}${fixRussianSpelling(rawContent)} <button class="inner-audio-btn" onclick="speakRussianText(${index})">🔊 朗讀俄文</button> <button class="inline-copy-btn" onclick="copyRussianText(${index}, this)">📋 Скопировать</button></div>`;
         }
         if (trimmedLine.startsWith("【語意解釋")) {
           if (rawContent.length === 0) return "";
-          return `<div class="card-line collapsible-explanation" style="display:none;">${FIXED_LABELS.explain}${rawContent}</div>`;
+          return `<div class="card-line collapsible-explanation" style="display:none;">${FIXED_LABELS.explain}${fixRussianSpelling(rawContent)}</div>`;
         }
         if (trimmedLine.startsWith("【繁體中文")) {
           if (rawContent.length === 0) return "";
