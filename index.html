@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.135</title>
+  <title>L⇄V ∞ v21.136</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2047,7 +2047,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.135</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.136</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2278,7 +2278,7 @@
 
 <script>
 
-const APP_VERSION = "21.134";
+const APP_VERSION = "21.136";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2474,7 +2474,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.135";
+    document.title = "L⇄V ∞ v21.136";
   }
 });
 
@@ -2527,11 +2527,19 @@ function playNotificationSound() {
   playToneSequence(NOTIF_SOUND_PRESETS[style] || NOTIF_SOUND_PRESETS.default);
 }
 
+// 統一判斷「通知」這個開關現在是不是開著的，聲音跟跳出視窗都要遵守同一個開關，不能各自為政
+function isNotificationEnabled() {
+  if (!currentUser) return true;
+  const userKey = emailToKey(currentUser.email);
+  const prefs = displayNamesCache[userKey] || {};
+  return prefs.notifSoundOn !== false;
+}
+
 function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.135";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.136";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -6114,7 +6122,7 @@ function triggerNewMessageAlert(newMsg) {
     flashTabTitle();
   }
 
-  if ("Notification" in window && Notification.permission === "granted" && !isTabActive) {
+  if ("Notification" in window && Notification.permission === "granted" && !isTabActive && isNotificationEnabled()) {
     let previewText = newMsg.role === "user" ? newMsg.text : "翻譯字卡已送達";
     if (previewText.length > 60) previewText = previewText.slice(0, 60) + "...";
     try {
@@ -6138,7 +6146,7 @@ function triggerCorrectionAlert(bodyText, firebaseKey) {
     scrollToMessage(firebaseKey);
   }
 
-  if ("Notification" in window && Notification.permission === "granted" && !isTabActive) {
+  if ("Notification" in window && Notification.permission === "granted" && !isTabActive && isNotificationEnabled()) {
     try {
       const notif = new Notification("🌉 雙語聊天橋 — 需要補充說明", {
         body: bodyText,
