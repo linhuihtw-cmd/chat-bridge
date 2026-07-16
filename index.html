@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.140</title>
+  <title>L⇄V ∞ v21.141</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -127,18 +127,18 @@
       font-style: normal;
       margin-bottom: 8px;
       padding-bottom: 8px;
-      border-bottom: 1px dashed rgba(0,0,0,0.2);
+      border-bottom: 1px dashed var(--gold-dim);
     }
-    /* 卡片內所有按鈕統一樣式：實色小標籤，不管卡片本身是什麼顏色都固定同一個樣子，不再用透明度去猜測底色深淺 */
+    /* 卡片內所有按鈕統一樣式：用聊天橋本來就有的暖棕金色主題，不管卡片本身是什麼顏色都固定同一個樣子，也跟整體風格融合，不再用透明度去猜測底色深淺 */
     .ai-card .inline-copy-btn,
     .ai-card .inner-audio-btn,
     .ai-card .toggle-explain-btn,
     .ai-card .card-collapse-arrow,
     .ai-card .btn-correction-fix,
     .ai-card .btn-correction-confused {
-      background: rgba(255,255,255,0.92);
-      color: #2b2822;
-      border: 1px solid rgba(0,0,0,0.18);
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      border: 1px solid var(--gold-dim);
       font-weight: 500;
     }
     .ai-card .inline-copy-btn:hover,
@@ -146,13 +146,13 @@
     .ai-card .toggle-explain-btn:hover,
     .ai-card .btn-correction-fix:hover,
     .ai-card .btn-correction-confused:hover {
-      background: #ffffff;
-      border-color: rgba(0,0,0,0.3);
+      background: var(--gold);
+      border-color: var(--gold);
     }
     .ai-card .card-status-icon,
     .ai-card .correction-status,
     .ai-card .correction-result {
-      color: #2b2822;
+      color: var(--bg-deep);
     }
     .msg-edit-textarea {
       width: 100%;
@@ -2112,7 +2112,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.140</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.141</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2343,7 +2343,7 @@
 
 <script>
 
-const APP_VERSION = "21.140";
+const APP_VERSION = "21.141";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2539,7 +2539,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.140";
+    document.title = "L⇄V ∞ v21.141";
   }
 });
 
@@ -2604,7 +2604,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.140";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.141";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
