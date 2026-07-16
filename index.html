@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<!-- ⚠️⚠️⚠️ 這是【聊天橋 We are L⇄V ∞】的前端（網頁）——只能貼到 GitHub 的 index.html，絕對不能貼到 Cloudflare Worker ⚠️⚠️⚠️ -->
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.136</title>
+  <title>L⇄V ∞ v21.137</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -116,6 +115,29 @@
       flex-direction: column;
       gap: 8px;
     }
+
+    /* 訊息合併群組：讓使用者原文＋AI翻譯卡片視覺上變成同一個整體，不再是分開的兩層 */
+    .msg-group {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .msg-group.own { align-items: flex-end; }
+    .msg-group.other { align-items: flex-start; }
+    .msg-group .msg-box { margin-bottom: 0; }
+    .msg-group .user-part .bubble {
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+      margin-bottom: 0;
+    }
+    .msg-group .ai-part .ai-card {
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      margin-top: 1px;
+    }
+    .msg-group.own .bubble, .msg-group.own .ai-card { align-self: flex-end; }
+    .msg-group.other .bubble, .msg-group.other .ai-card { align-self: flex-start; }
     .msg-edit-textarea {
       width: 100%;
       min-height: 50px;
@@ -2048,7 +2070,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.136</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.137</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2279,7 +2301,7 @@
 
 <script>
 
-const APP_VERSION = "21.136";
+const APP_VERSION = "21.137";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2475,7 +2497,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.136";
+    document.title = "L⇄V ∞ v21.137";
   }
 });
 
@@ -2540,7 +2562,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.136";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.137";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3351,11 +3373,14 @@ function renderChat() {
       const editedTag = m.edited ? `<span class="msg-edited-tag">（已編輯 / изменено）</span>` : "";
       const editBtn = (isOwnMessage && !m.deleted) ? `<button class="msg-edit-btn" onclick="startEditMessage('${m.firebaseKey}')" title="編輯 / Редактировать">✎</button>` : "";
 
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-text" ${bubbleStyle}><span ${textColor}>${nameHtml}： ${replyHtml}${m.text}${editedTag}</span>${editBtn}</div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-group ${isOwnMessage ? 'own' : 'other'}"><div class="msg-box user-part" id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-text" ${bubbleStyle}><span ${textColor}>${nameHtml}： ${replyHtml}${m.text}${editedTag}</span>${editBtn}</div>${timeLabel}</div>`;
     } else {
       let rawText = m.text;
+      const prevMsgForGroup = index > 0 ? chatHistory[index - 1] : null;
+      const hasOpenGroup = prevMsgForGroup && prevMsgForGroup.role === "user" && !prevMsgForGroup.deleted;
+      const groupOpenTagForOrphan = hasOpenGroup ? "" : `<div class="msg-group other">`;
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
-        return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
+        return `${dateSeparator}${groupOpenTagForOrphan}<div class="msg-box ai-part" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div></div>`;
       }
       rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
 
@@ -3510,7 +3535,9 @@ function renderChat() {
         }
       }
 
-      return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
+      const isOwnMessage = currentUser && correspondingSenderEmail === currentUser.email;
+      const groupOpen = hasOpenGroup ? "" : `<div class="msg-group ${isOwnMessage ? 'own' : 'other'}">`;
+      return `${dateSeparator}${groupOpen}<div class="msg-box ai-part" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div></div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
