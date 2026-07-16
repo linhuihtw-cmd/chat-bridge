@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.137</title>
+  <title>L⇄V ∞ v21.138</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -116,28 +116,18 @@
       gap: 8px;
     }
 
-    /* 訊息合併群組：讓使用者原文＋AI翻譯卡片視覺上變成同一個整體，不再是分開的兩層 */
-    .msg-group {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      margin-bottom: 12px;
+    /* 訊息卡片：原文＋翻譯內容合併成同一張卡片，顏色跟著發話者的泡泡色走，依發話者左右對齊 */
+    .msg-box.own { align-items: flex-end; }
+    .msg-box.other { align-items: flex-start; }
+    .msg-box.own, .msg-box.other { display: flex; flex-direction: column; }
+    .ai-card .original-line {
+      font-size: 12px;
+      opacity: 0.75;
+      font-style: italic;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(0,0,0,0.15);
     }
-    .msg-group.own { align-items: flex-end; }
-    .msg-group.other { align-items: flex-start; }
-    .msg-group .msg-box { margin-bottom: 0; }
-    .msg-group .user-part .bubble {
-      border-bottom-left-radius: 4px;
-      border-bottom-right-radius: 4px;
-      margin-bottom: 0;
-    }
-    .msg-group .ai-part .ai-card {
-      border-top-left-radius: 4px;
-      border-top-right-radius: 4px;
-      margin-top: 1px;
-    }
-    .msg-group.own .bubble, .msg-group.own .ai-card { align-self: flex-end; }
-    .msg-group.other .bubble, .msg-group.other .ai-card { align-self: flex-start; }
     .msg-edit-textarea {
       width: 100%;
       min-height: 50px;
@@ -184,7 +174,6 @@
       background: var(--bg-elevated);
       color: var(--text-primary);
       border: 0.5px solid var(--border-strong);
-      align-self: flex-end;
       border-top-right-radius: 4px;
       width: 75%;
       position: relative;
@@ -2070,7 +2059,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.137</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.138</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2301,7 +2290,7 @@
 
 <script>
 
-const APP_VERSION = "21.137";
+const APP_VERSION = "21.138";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2497,7 +2486,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.137";
+    document.title = "L⇄V ∞ v21.138";
   }
 });
 
@@ -2562,7 +2551,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.137";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.138";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3373,16 +3362,9 @@ function renderChat() {
       const editedTag = m.edited ? `<span class="msg-edited-tag">（已編輯 / изменено）</span>` : "";
       const editBtn = (isOwnMessage && !m.deleted) ? `<button class="msg-edit-btn" onclick="startEditMessage('${m.firebaseKey}')" title="編輯 / Редактировать">✎</button>` : "";
 
-      return `${dateSeparator}<div class="msg-group ${isOwnMessage ? 'own' : 'other'}"><div class="msg-box user-part" id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-text" ${bubbleStyle}><span ${textColor}>${nameHtml}： ${replyHtml}${m.text}${editedTag}</span>${editBtn}</div>${timeLabel}</div>`;
+      return `${dateSeparator}<div id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}" style="display:none;"></div>`;
     } else {
       let rawText = m.text;
-      const prevMsgForGroup = index > 0 ? chatHistory[index - 1] : null;
-      const hasOpenGroup = prevMsgForGroup && prevMsgForGroup.role === "user" && !prevMsgForGroup.deleted;
-      const groupOpenTagForOrphan = hasOpenGroup ? "" : `<div class="msg-group other">`;
-      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
-        return `${dateSeparator}${groupOpenTagForOrphan}<div class="msg-box ai-part" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div></div>`;
-      }
-      rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
 
       let correspondingUserInput = "";
       let correspondingSenderEmail = "";
@@ -3394,6 +3376,13 @@ function renderChat() {
           correspondingUserMsg = chatHistory[i];
           break;
         }
+      }
+      const isOwnMessage = currentUser && correspondingSenderEmail === currentUser.email;
+      const cardBubbleColor = getBubbleColor(correspondingSenderEmail);
+      const cardColorStyle = cardBubbleColor ? `style="background:${cardBubbleColor}; border-color:${cardBubbleColor}; color:#1a1810;"` : "";
+
+      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
+        return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
       }
 
       if (currentUser?.email === ADMIN_EMAIL && correspondingUserMsg?.localDeletedBy) {
@@ -3410,6 +3399,7 @@ function renderChat() {
       }
 
       let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
+      rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
       let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
 
       let tradContent = "";
@@ -3535,9 +3525,18 @@ function renderChat() {
         }
       }
 
-      const isOwnMessage = currentUser && correspondingSenderEmail === currentUser.email;
-      const groupOpen = hasOpenGroup ? "" : `<div class="msg-group ${isOwnMessage ? 'own' : 'other'}">`;
-      return `${dateSeparator}${groupOpen}<div class="msg-box ai-part" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div></div>`;
+      let replyHtml2 = "";
+      if (correspondingUserMsg?.replyTo) {
+        const rKey2 = correspondingUserMsg.replyTo.firebaseKey || "";
+        replyHtml2 = `<div class="reply-quote" onclick="scrollToMessage('${rKey2}')"><span class="reply-quote-name">${escapeHtmlText(correspondingUserMsg.replyTo.senderName)}</span><span class="reply-quote-text">${escapeHtmlText(correspondingUserMsg.replyTo.text.slice(0,40))}${correspondingUserMsg.replyTo.text.length > 40 ? "…" : ""}</span></div>`;
+      }
+      const editedTag2 = correspondingUserMsg?.edited ? `<span class="msg-edited-tag">（已編輯 / изменено）</span>` : "";
+      const editBtn2 = (isOwnMessage && correspondingUserMsg && !correspondingUserMsg.deleted) ? `<button class="msg-edit-btn" onclick="startEditMessage('${correspondingUserMsg.firebaseKey}')" title="編輯 / Редактировать">✎</button>` : "";
+      const displayNameForCard = getDisplayName(correspondingSenderEmail);
+      const originalTextEscaped = escapeHtmlText(correspondingUserMsg?.text || correspondingUserInput);
+      const originalLineHtml = `<div class="original-line">${replyHtml2}<strong>${displayNameForCard}</strong>：${originalTextEscaped}${editedTag2}${editBtn2}</div>`;
+
+      return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card" ${cardColorStyle}><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${originalLineHtml}${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
