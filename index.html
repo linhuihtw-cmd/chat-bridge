@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.138</title>
+  <title>L⇄V ∞ v21.139</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -121,12 +121,31 @@
     .msg-box.other { align-items: flex-start; }
     .msg-box.own, .msg-box.other { display: flex; flex-direction: column; }
     .ai-card .original-line {
-      font-size: 12px;
-      opacity: 0.75;
-      font-style: italic;
-      margin-bottom: 6px;
-      padding-bottom: 6px;
-      border-bottom: 1px dashed rgba(0,0,0,0.15);
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 1;
+      font-style: normal;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed rgba(0,0,0,0.2);
+    }
+    /* 卡片套用自訂泡泡色時，裡面的按鈕/文字要換成適合淺色底的樣式，不然會用深色主題的淺灰色文字看不清楚 */
+    .ai-card.custom-color .inline-copy-btn {
+      color: rgba(26,24,16,0.65);
+      border-color: rgba(26,24,16,0.3);
+    }
+    .ai-card.custom-color .inline-copy-btn:hover {
+      background: rgba(26,24,16,0.08);
+      color: #1a1810;
+      border-color: rgba(26,24,16,0.5);
+    }
+    .ai-card.custom-color .card-status-icon,
+    .ai-card.custom-color .toggle-explain-btn {
+      color: rgba(26,24,16,0.7);
+    }
+    .ai-card.custom-color .card-line.correction-status,
+    .ai-card.custom-color .card-line.correction-result {
+      color: rgba(26,24,16,0.75);
     }
     .msg-edit-textarea {
       width: 100%;
@@ -557,6 +576,33 @@
       overflow-y: auto;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
       box-sizing: border-box;
+    }
+
+    /* 簡約棕色系捲軸：細軌道、跟金色主題呼應，取代瀏覽器預設的粗捲軸 */
+    #settingsBox::-webkit-scrollbar,
+    #profileSetupBox::-webkit-scrollbar,
+    #chat::-webkit-scrollbar {
+      width: 6px;
+    }
+    #settingsBox::-webkit-scrollbar-track,
+    #profileSetupBox::-webkit-scrollbar-track,
+    #chat::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #settingsBox::-webkit-scrollbar-thumb,
+    #profileSetupBox::-webkit-scrollbar-thumb,
+    #chat::-webkit-scrollbar-thumb {
+      background: var(--gold-dim);
+      border-radius: 6px;
+    }
+    #settingsBox::-webkit-scrollbar-thumb:hover,
+    #profileSetupBox::-webkit-scrollbar-thumb:hover,
+    #chat::-webkit-scrollbar-thumb:hover {
+      background: var(--gold);
+    }
+    #settingsBox, #profileSetupBox, #chat {
+      scrollbar-width: thin;
+      scrollbar-color: var(--gold-dim) transparent;
     }
     .profile-setup-title {
       color: var(--gold);
@@ -2059,7 +2105,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.138</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.139</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2290,7 +2336,7 @@
 
 <script>
 
-const APP_VERSION = "21.138";
+const APP_VERSION = "21.139";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2486,7 +2532,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.138";
+    document.title = "L⇄V ∞ v21.139";
   }
 });
 
@@ -2551,7 +2597,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.138";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.139";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3380,6 +3426,7 @@ function renderChat() {
       const isOwnMessage = currentUser && correspondingSenderEmail === currentUser.email;
       const cardBubbleColor = getBubbleColor(correspondingSenderEmail);
       const cardColorStyle = cardBubbleColor ? `style="background:${cardBubbleColor}; border-color:${cardBubbleColor}; color:#1a1810;"` : "";
+      const cardColorClass = cardBubbleColor ? "custom-color" : "";
 
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
         return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
@@ -3536,7 +3583,7 @@ function renderChat() {
       const originalTextEscaped = escapeHtmlText(correspondingUserMsg?.text || correspondingUserInput);
       const originalLineHtml = `<div class="original-line">${replyHtml2}<strong>${displayNameForCard}</strong>：${originalTextEscaped}${editedTag2}${editBtn2}</div>`;
 
-      return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card" ${cardColorStyle}><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${originalLineHtml}${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
+      return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card ${cardColorClass}" ${cardColorStyle}><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${originalLineHtml}${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
