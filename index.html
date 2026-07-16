@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.139</title>
+  <title>L⇄V ∞ v21.140</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -129,23 +129,30 @@
       padding-bottom: 8px;
       border-bottom: 1px dashed rgba(0,0,0,0.2);
     }
-    /* 卡片套用自訂泡泡色時，裡面的按鈕/文字要換成適合淺色底的樣式，不然會用深色主題的淺灰色文字看不清楚 */
-    .ai-card.custom-color .inline-copy-btn {
-      color: rgba(26,24,16,0.65);
-      border-color: rgba(26,24,16,0.3);
+    /* 卡片內所有按鈕統一樣式：實色小標籤，不管卡片本身是什麼顏色都固定同一個樣子，不再用透明度去猜測底色深淺 */
+    .ai-card .inline-copy-btn,
+    .ai-card .inner-audio-btn,
+    .ai-card .toggle-explain-btn,
+    .ai-card .card-collapse-arrow,
+    .ai-card .btn-correction-fix,
+    .ai-card .btn-correction-confused {
+      background: rgba(255,255,255,0.92);
+      color: #2b2822;
+      border: 1px solid rgba(0,0,0,0.18);
+      font-weight: 500;
     }
-    .ai-card.custom-color .inline-copy-btn:hover {
-      background: rgba(26,24,16,0.08);
-      color: #1a1810;
-      border-color: rgba(26,24,16,0.5);
+    .ai-card .inline-copy-btn:hover,
+    .ai-card .inner-audio-btn:hover,
+    .ai-card .toggle-explain-btn:hover,
+    .ai-card .btn-correction-fix:hover,
+    .ai-card .btn-correction-confused:hover {
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.3);
     }
-    .ai-card.custom-color .card-status-icon,
-    .ai-card.custom-color .toggle-explain-btn {
-      color: rgba(26,24,16,0.7);
-    }
-    .ai-card.custom-color .card-line.correction-status,
-    .ai-card.custom-color .card-line.correction-result {
-      color: rgba(26,24,16,0.75);
+    .ai-card .card-status-icon,
+    .ai-card .correction-status,
+    .ai-card .correction-result {
+      color: #2b2822;
     }
     .msg-edit-textarea {
       width: 100%;
@@ -570,7 +577,7 @@
       border: 1px solid var(--gold-dim);
       border-radius: 16px;
       padding: 28px 24px 24px;
-      max-width: 320px;
+      max-width: 360px;
       width: 88%;
       max-height: 85vh;
       overflow-y: auto;
@@ -2105,7 +2112,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.139</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.140</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2336,7 +2343,7 @@
 
 <script>
 
-const APP_VERSION = "21.139";
+const APP_VERSION = "21.140";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2532,7 +2539,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.139";
+    document.title = "L⇄V ∞ v21.140";
   }
 });
 
@@ -2597,7 +2604,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.139";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.140";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
