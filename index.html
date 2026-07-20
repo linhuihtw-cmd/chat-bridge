@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.141</title>
+  <title>L⇄V ∞ v21.142</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2112,7 +2112,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.141</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.142</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2343,7 +2343,7 @@
 
 <script>
 
-const APP_VERSION = "21.141";
+const APP_VERSION = "21.142";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2539,7 +2539,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.141";
+    document.title = "L⇄V ∞ v21.142";
   }
 });
 
@@ -2604,7 +2604,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.141";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.142";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3432,8 +3432,8 @@ function renderChat() {
       }
       const isOwnMessage = currentUser && correspondingSenderEmail === currentUser.email;
       const cardBubbleColor = getBubbleColor(correspondingSenderEmail);
-      const cardColorStyle = cardBubbleColor ? `style="background:${cardBubbleColor}; border-color:${cardBubbleColor}; color:#1a1810;"` : "";
-      const cardColorClass = cardBubbleColor ? "custom-color" : "";
+      const cardColorStyle = cardBubbleColor ? `style="border-color:${cardBubbleColor}; border-width:2px;"` : "";
+      const cardColorClass = "";
 
       if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
         return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
