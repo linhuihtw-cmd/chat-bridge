@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.159</title>
+  <title>L⇄V ∞ v21.160</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.159</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.160</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.159";
+const APP_VERSION = "21.160";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.159";
+    document.title = "L⇄V ∞ v21.160";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.159";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.160";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4704,8 +4704,7 @@ function renderGuessWho(state) {
     : `<div class="bulls-hint">在下面輸入問題，AI會直接翻給對方看 / Введите вопрос ниже, ИИ переведёт его для соперника</div>`;
 
   body.innerHTML = `
-    <div class="bulls-hint">本局主題 / Тема: ${(GUESSWHO_THEMES[state.theme] || GUESSWHO_THEMES.people).icon} ${(GUESSWHO_THEMES[state.theme] || GUESSWHO_THEMES.people).name} / ${(GUESSWHO_THEMES[state.theme] || GUESSWHO_THEMES.people).nameRu}</div>
-    <div class="gw-my-secret"><span class="gw-secret-emoji">${themeChars[mySecretIdx]}</span><span>這是你的角色，對方要猜這個<br>Это ваш персонаж, его должен угадать соперник</span></div>
+    <div class="gw-my-secret"><span class="gw-secret-emoji">${themeChars[mySecretIdx]}</span><span>👈🏻 我的 / Моё</span></div>
     <div class="gw-grid">${gridHtml}</div>
     <div class="gw-guess-row">
       <select id="gwGuessSelect" class="gw-guess-select" ${turnIsMe ? '' : 'disabled'}>${options}</select>
