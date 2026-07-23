@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.160</title>
+  <title>L⇄V ∞ v21.161</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1363,12 +1363,18 @@
       border: 1.5px solid var(--border-strong);
       border-radius: 10px;
       padding: 10px 4px;
-      font-size: 20px;
       color: var(--text-primary);
       cursor: pointer;
       font-family: inherit;
       line-height: 1.5;
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
+    .gw-theme-icon { font-size: 20px; }
+    .gw-theme-label { font-size: 12px; color: var(--text-secondary); }
     .gw-theme-btn:hover { border-color: var(--gold-dim); }
 
     /* 接水管 */
@@ -2130,7 +2136,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.160</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.161</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2367,7 @@
 
 <script>
 
-const APP_VERSION = "21.160";
+const APP_VERSION = "21.161";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2563,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.160";
+    document.title = "L⇄V ∞ v21.161";
   }
 });
 
@@ -2622,7 +2628,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.160";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.161";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4649,8 +4655,8 @@ function renderGuessWho(state) {
 
   if (state.phase === "theme_select") {
     const themeBtns = Object.entries(GUESSWHO_THEMES).map(([key, t]) =>
-      `<button class="gw-theme-btn" onclick="gwSelectTheme('${key}')">${t.icon}<br>${t.name}<br><span style="font-size:10px;color:var(--text-tertiary);">${t.nameRu}</span></button>`
-    ).join('') + `<button class="gw-theme-btn" onclick="gwSelectTheme('random')">🎲<br>隨機<br><span style="font-size:10px;color:var(--text-tertiary);">Случайно</span></button>`;
+      `<button class="gw-theme-btn" onclick="gwSelectTheme('${key}')"><span class="gw-theme-icon">${t.icon}</span><br><span class="gw-theme-label">${t.name}</span><br><span class="gw-theme-label">${t.nameRu}</span></button>`
+    ).join('') + `<button class="gw-theme-btn" onclick="gwSelectTheme('random')"><span class="gw-theme-icon">🎲</span><br><span class="gw-theme-label">隨機</span><br><span class="gw-theme-label">Случайно</span></button>`;
     body.innerHTML = `
       <div class="ttt-status">選一組主題，或按🎲隨機 / Выберите тему или нажмите 🎲</div>
       <div class="gw-theme-grid">${themeBtns}</div>
