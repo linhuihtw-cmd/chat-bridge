@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.147</title>
+  <title>L⇄V ∞ v21.148</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -123,6 +123,11 @@
     /* .chat-text 本身寫死了靠左，這裡要用更高優先權的選擇器蓋過去，own/other的對齊才能真正生效 */
     .msg-box.own .chat-text { align-self: flex-end; }
     .msg-box.other .chat-text { align-self: flex-start; }
+    /* 尖角要跟著訊息方向轉邊：自己的訊息(own)靠右，尖角也該在右邊；對方的(other)維持左邊尖角 */
+    .msg-box.own .chat-text {
+      border-top-left-radius: 14px;
+      border-top-right-radius: 4px;
+    }
     .ai-card .original-line, .translation-append {
       font-size: 14px;
       margin-top: 6px;
@@ -2125,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.147</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.148</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2356,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.147";
+const APP_VERSION = "21.148";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2552,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.147";
+    document.title = "L⇄V ∞ v21.148";
   }
 });
 
@@ -2617,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.147";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.148";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
