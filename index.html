@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.143</title>
+  <title>L⇄V ∞ v21.144</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -120,40 +120,47 @@
     .msg-box.own { align-items: flex-end; }
     .msg-box.other { align-items: flex-start; }
     .msg-box.own, .msg-box.other { display: flex; flex-direction: column; }
-    .ai-card .original-line {
+    .ai-card .original-line, .translation-append {
       font-size: 14px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--gold-dim);
+    }
+    .ai-card .original-line {
       font-weight: 600;
-      opacity: 1;
-      font-style: normal;
       margin-bottom: 8px;
       padding-bottom: 8px;
       border-bottom: 1px dashed var(--gold-dim);
+      border-top: none;
+      margin-top: 0;
+      padding-top: 0;
     }
     /* 卡片內所有按鈕統一樣式：用聊天橋本來就有的暖棕金色主題，不管卡片本身是什麼顏色都固定同一個樣子，也跟整體風格融合，不再用透明度去猜測底色深淺 */
-    .ai-card .inline-copy-btn,
-    .ai-card .inner-audio-btn,
-    .ai-card .toggle-explain-btn,
-    .ai-card .card-collapse-arrow,
-    .ai-card .btn-correction-fix,
-    .ai-card .btn-correction-confused {
+    .ai-card .inline-copy-btn, .translation-append .inline-copy-btn,
+    .ai-card .inner-audio-btn, .translation-append .inner-audio-btn,
+    .ai-card .toggle-explain-btn, .translation-append .toggle-explain-btn,
+    .ai-card .card-collapse-arrow, .translation-append .card-collapse-arrow,
+    .ai-card .btn-correction-fix, .translation-append .btn-correction-fix,
+    .ai-card .btn-correction-confused, .translation-append .btn-correction-confused {
       background: var(--gold-dim);
       color: var(--bg-deep);
       border: 1px solid var(--gold-dim);
       font-weight: 500;
     }
-    .ai-card .inline-copy-btn:hover,
-    .ai-card .inner-audio-btn:hover,
-    .ai-card .toggle-explain-btn:hover,
-    .ai-card .btn-correction-fix:hover,
-    .ai-card .btn-correction-confused:hover {
+    .ai-card .inline-copy-btn:hover, .translation-append .inline-copy-btn:hover,
+    .ai-card .inner-audio-btn:hover, .translation-append .inner-audio-btn:hover,
+    .ai-card .toggle-explain-btn:hover, .translation-append .toggle-explain-btn:hover,
+    .ai-card .btn-correction-fix:hover, .translation-append .btn-correction-fix:hover,
+    .ai-card .btn-correction-confused:hover, .translation-append .btn-correction-confused:hover {
       background: var(--gold);
       border-color: var(--gold);
     }
-    .ai-card .card-status-icon,
-    .ai-card .correction-status,
-    .ai-card .correction-result {
+    .ai-card .card-status-icon, .translation-append .card-status-icon,
+    .ai-card .correction-status, .translation-append .correction-status,
+    .ai-card .correction-result, .translation-append .correction-result {
       color: var(--bg-deep);
     }
+    .bubble.chat-text { position: relative; }
     .msg-edit-textarea {
       width: 100%;
       min-height: 50px;
@@ -1647,17 +1654,17 @@
     .gw-chat-send-btn:hover { background: var(--gold); }
     .gw-chat-send-btn:disabled { background: var(--border-subtle); color: var(--text-tertiary); cursor: not-allowed; }
 
-    .msg-box.needs-correction .ai-card {
+    .msg-box.needs-correction .ai-card, .msg-box.needs-correction .translation-append {
       background: var(--bg-elevated);
       border-color: var(--border-strong);
       border-left: 3px solid #c09040;
     }
-    .msg-box.needs-correction .ai-card .card-collapse-arrow {
+    .msg-box.needs-correction .ai-card .card-collapse-arrow, .msg-box.needs-correction .translation-append .card-collapse-arrow {
       background: var(--bg-elevated);
       border-color: var(--border-strong);
       color: var(--gold-dim);
     }
-    .msg-box.needs-correction .ai-card .card-line {
+    .msg-box.needs-correction .ai-card .card-line, .msg-box.needs-correction .translation-append .card-line {
       color: var(--text-primary);
     }
     .msg-box.needs-correction .card-status-icon::before {
@@ -1666,12 +1673,12 @@
       font-size: 14px;
       margin-right: 4px;
     }
-    .msg-box.correction-done .ai-card {
+    .msg-box.correction-done .ai-card, .msg-box.correction-done .translation-append {
       background: var(--bg-elevated);
       border-color: var(--border-strong);
       border-left: 3px solid #5a7a4a;
     }
-    .msg-box.correction-done .ai-card .card-collapse-arrow {
+    .msg-box.correction-done .ai-card .card-collapse-arrow, .msg-box.correction-done .translation-append .card-collapse-arrow {
       background: var(--bg-elevated);
       border-color: var(--border-strong);
     }
@@ -2115,7 +2122,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.143</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.144</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2346,7 +2353,7 @@
 
 <script>
 
-const APP_VERSION = "21.143";
+const APP_VERSION = "21.144";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2542,7 +2549,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.143";
+    document.title = "L⇄V ∞ v21.144";
   }
 });
 
@@ -2607,7 +2614,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.143";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.144";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3360,6 +3367,141 @@ async function confirmEditMessage(key) {
   renderChat();
 }
 
+// 共用函式：把AI翻譯訊息組成「卡片內容」的HTML（不含外層容器），
+// 讓使用者泡泡（正常情況）跟獨立卡片（極端情況，例如找不到對應原文時）都能共用同一套解析邏輯
+function buildTranslationBodyHtml(assistantMsg, asstIndex, correspondingUserInput, isInputRussian, correspondingSenderEmail) {
+  let rawText = assistantMsg.text;
+  if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
+    return { isError: true, html: `🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}` };
+  }
+
+  let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
+  rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
+  let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
+
+  let tradContent = "";
+  let blockMap = { trad: null, pinyin: null, simp: null, ru: null, explain: null };
+  matchedBlocks.forEach(block => {
+    let trimmed = block.replace(/^\s*\*\s*/, "").trim();
+    if (!trimmed) return;
+    if (trimmed.startsWith("【繁體中文")) {
+      blockMap.trad = trimmed;
+      let match = trimmed.match(/^【[^】]+】([\s\S]*)$/);
+      if (match) tradContent = match[1].trim();
+    } else if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmed)) {
+      blockMap.pinyin = trimmed;
+    } else if (trimmed.startsWith("【簡體中文")) {
+      blockMap.simp = trimmed;
+    } else if (/【俄文翻譯[^】]*】/.test(trimmed)) {
+      blockMap.ru = trimmed;
+    } else if (trimmed.startsWith("【語意解釋")) {
+      blockMap.explain = trimmed;
+    }
+  });
+
+  let hideTrad = false;
+  if (blockMap.trad && tradContent !== "" && correspondingUserInput !== "") {
+    let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
+    let normalizedInput = normalizeForCompare(correspondingUserInput);
+    let normalizedTrad = normalizeForCompare(tradContent);
+    let isIncluded = normalizedInput.includes(normalizedTrad) || normalizedTrad.includes(normalizedInput);
+    if (!hasSimplified && isIncluded) hideTrad = true;
+  }
+
+  let orderedBlocks = isInputRussian
+    ? [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain]
+    : [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain];
+
+  const FIXED_LABELS = {
+    trad: "【繁體中文 / Традиционный китайский】",
+    pinyin: "【中文發音 / Пиньинь】",
+    simp: "【簡體中文 / Упрощенный китайский】",
+    ru: "【俄文翻譯 / Русский перевод】",
+    explain: "【語意解釋 / Смысловое пояснение】"
+  };
+
+  function fixRussianSpelling(text) {
+    return text
+      .replace(/Китайський/g, "Китайский")
+      .replace(/Російський/g, "Русский")
+      .replace(/Пояснення/g, "Пояснение")
+      .replace(/пояснення/g, "пояснение")
+      .replace(/Упрощений/g, "Упрощенный")
+      .replace(/Піньїнь/g, "Пиньинь")
+      .replace(/Українськ/g, "Русск");
+  }
+
+  let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
+    let contentMatch = trimmedLine.match(/^【[^】]+】([\s\S]*)$/);
+    let rawContent = contentMatch ? contentMatch[1].trim() : trimmedLine;
+
+    if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
+      return `<div class="card-line">${FIXED_LABELS.pinyin}${rawContent} <button class="inner-audio-btn" onclick="speakThisText(${asstIndex})">🔊 Озвучить</button></div>`;
+    }
+    if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isInputRussian) return "";
+    if (/【俄文翻譯[^】]*】/.test(trimmedLine)) {
+      return `<div class="card-line">${FIXED_LABELS.ru}${fixRussianSpelling(rawContent)} <button class="inner-audio-btn" onclick="speakRussianText(${asstIndex})">🔊 朗讀俄文</button> <button class="inline-copy-btn" onclick="copyRussianText(${asstIndex}, this)">📋 Скопировать</button></div>`;
+    }
+    if (trimmedLine.startsWith("【語意解釋")) {
+      if (rawContent.length === 0) return "";
+      return `<div class="card-line collapsible-explanation" style="display:none;">${FIXED_LABELS.explain}${fixRussianSpelling(rawContent)}</div>`;
+    }
+    if (trimmedLine.startsWith("【繁體中文")) {
+      if (rawContent.length === 0) return "";
+      let safeContent = rawContent.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return `<div class="card-line">${FIXED_LABELS.trad}${rawContent} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
+    }
+    if (trimmedLine.startsWith("【簡體中文")) {
+      if (rawContent.length === 0) return "";
+      let safeContent = rawContent.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return `<div class="card-line">${FIXED_LABELS.simp}${rawContent} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
+    }
+
+    let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
+    if (matchField && matchField[2].trim().length > 0) {
+      let contentText = matchField[2].trim();
+      let safeContent = contentText.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return `<div class="card-line">${trimmedLine} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
+    }
+    return `<div class="card-line">${trimmedLine}</div>`;
+  });
+
+  let nonEmptyLines = processedLines.filter(l => l !== "");
+  let firstLineHtml = nonEmptyLines.length > 0 ? nonEmptyLines[0] : "";
+  let firstLineDisplay = firstLineHtml.replace(/【[^】]+】/, "");
+  let finalHtmlText = nonEmptyLines.slice(1).join('');
+  let hasExplanation = nonEmptyLines.join('').includes("collapsible-explanation");
+  let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByButton(this)">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
+
+  let correctionBtns = "";
+  let correctedContentHtml = "";
+  if (hasExplanation && currentUser) {
+    const isSpeaker = currentUser.email === correspondingSenderEmail;
+    const correction = assistantMsg.correction || {};
+
+    if (correction.correctedText) {
+      correctedContentHtml = `<div class="card-line correction-result">${escapeHtmlText(correction.correctedText)}</div>`;
+    }
+
+    if (isSpeaker) {
+      if (correction.correctedText) {
+        correctionBtns = `<div class="card-line correction-status">✎ 已送出更正說明 / Уточнение отправлено</div>`;
+      } else {
+        correctionBtns = `<div class="card-line correction-buttons" id="correctionArea-${asstIndex}"><button class="btn-correction-fix" onclick="toggleCorrectionInput(${asstIndex})">✎ Я не про это</button></div>`;
+      }
+    } else {
+      if (correction.confused) {
+        correctionBtns = `<div class="card-line correction-status">❓ 已告知對方「我不太明白」/ Отправлено: Я не понимаю</div>`;
+      } else {
+        correctionBtns = `<div class="card-line correction-buttons"><button class="btn-correction-confused" onclick="markConfused(${asstIndex})">❓ Я не понимаю</button></div>`;
+      }
+    }
+  }
+
+  const html = `<span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByButton(this)">▾</button>${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div>`;
+  return { isError: false, html };
+}
+
 function renderChat() {
   const chat = document.getElementById("chat");
   chat.innerHTML = chatHistory.map((m, index) => {
@@ -3418,10 +3560,32 @@ function renderChat() {
       const editedTag = m.edited ? `<span class="msg-edited-tag">（已編輯 / изменено）</span>` : "";
       const editBtn = (isOwnMessage && !m.deleted) ? `<button class="msg-edit-btn" onclick="startEditMessage('${m.firebaseKey}')" title="編輯 / Редактировать">✎</button>` : "";
 
-      return `${dateSeparator}<div id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}" style="display:none;"></div>`;
-    } else {
-      let rawText = m.text;
+      // 往後看一則，如果是對應這句話的AI翻譯，就把翻譯內容組裝進同一個泡泡裡，不再另外產生一個獨立卡片
+      let translationAppendHtml = "";
+      const nextMsg = chatHistory[index + 1];
+      if (nextMsg && nextMsg.role !== "user") {
+        const adminKey2 = emailToKey(ADMIN_EMAIL);
+        const isAdminHidden = currentUser?.email === ADMIN_EMAIL && m.localDeletedBy && m.localDeletedBy.includes(adminKey2);
+        if (!isAdminHidden) {
+          const isInputRussian2 = isPrimarilyRussian(m.text.trim());
+          const result = buildTranslationBodyHtml(nextMsg, index + 1, m.text.trim(), isInputRussian2, m.senderEmail);
+          if (result.isError) {
+            translationAppendHtml = `<div class="translation-append error-card-inline">${result.html}</div>`;
+          } else {
+            translationAppendHtml = `<div class="translation-append">${result.html}</div>`;
+          }
+        }
+      }
 
+      return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}" data-text="${safeText}" data-name="${safeName}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-text" ${bubbleStyle}><span ${textColor}>${nameHtml}： ${replyHtml}${m.text}${editedTag}</span>${editBtn}${translationAppendHtml}</div>${timeLabel}</div>`;
+    } else {
+      // 檢查前一則是不是正常的使用者訊息（會吸收這則翻譯進它的泡泡裡），如果是，這裡就不用重複顯示
+      const prevMsg = index > 0 ? chatHistory[index - 1] : null;
+      const wasAbsorbed = prevMsg && prevMsg.role === "user" && !prevMsg.deleted &&
+        !(currentUser?.email === ADMIN_EMAIL && prevMsg.localDeletedBy && prevMsg.localDeletedBy.includes(emailToKey(ADMIN_EMAIL)));
+      if (wasAbsorbed) return "";
+
+      // 極端情況（例如找不到對應的使用者訊息、或使用者訊息已被刪除）：獨立顯示成一張卡片，當作備援
       let correspondingUserInput = "";
       let correspondingSenderEmail = "";
       let correspondingUserMsg = null;
@@ -3436,164 +3600,23 @@ function renderChat() {
       const isOwnMessage = currentUser && correspondingSenderEmail === currentUser.email;
       const cardBubbleColor = getBubbleColor(correspondingSenderEmail);
       const cardColorStyle = cardBubbleColor ? `style="border-color:${cardBubbleColor}; border-width:2px;"` : "";
-      const cardColorClass = "";
-
-      if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
-        return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">🤖 <b>DeepSeek 系統回報 / Отчет системы</b><br>${rawText}</div>${timeLabel}</div>`;
-      }
-
-      if (currentUser?.email === ADMIN_EMAIL && correspondingUserMsg?.localDeletedBy) {
-        const adminKey = emailToKey(ADMIN_EMAIL);
-        if (correspondingUserMsg.localDeletedBy.includes(adminKey)) return `${dateSeparator}`;
-      }
 
       if (correspondingUserMsg?.deleted && correspondingUserMsg?.silentRecall === true) {
         return `${dateSeparator}`;
       }
-
       if (correspondingUserMsg?.deleted && correspondingUserMsg?.deletedBy === correspondingSenderEmail && !correspondingUserMsg?.silentRecall) {
         return `${dateSeparator}`;
       }
 
-      let tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
-      rawText = rawText.replace(/\[pinyin_audio\]/gi, '').trim();
-      let matchedBlocks = rawText.match(tagRegex) || rawText.split('\n');
-
-      let tradContent = "";
-      let blockMap = { trad: null, pinyin: null, simp: null, ru: null, explain: null };
-      matchedBlocks.forEach(block => {
-        let trimmed = block.replace(/^\s*\*\s*/, "").trim();
-        if (!trimmed) return;
-        if (trimmed.startsWith("【繁體中文")) {
-          blockMap.trad = trimmed;
-          let match = trimmed.match(/^【[^】]+】([\s\S]*)$/);
-          if (match) tradContent = match[1].trim();
-        } else if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmed)) {
-          blockMap.pinyin = trimmed;
-        } else if (trimmed.startsWith("【簡體中文")) {
-          blockMap.simp = trimmed;
-        } else if (/【俄文翻譯[^】]*】/.test(trimmed)) {
-          blockMap.ru = trimmed;
-        } else if (trimmed.startsWith("【語意解釋")) {
-          blockMap.explain = trimmed;
-        }
-      });
-
-      let hideTrad = false;
-      if (blockMap.trad && tradContent !== "" && correspondingUserInput !== "") {
-        let hasSimplified = detectSimplifiedByDetectiveLogic(correspondingUserInput);
-        let normalizedInput = normalizeForCompare(correspondingUserInput);
-        let normalizedTrad = normalizeForCompare(tradContent);
-        let isIncluded = normalizedInput.includes(normalizedTrad) || normalizedTrad.includes(normalizedInput);
-        if (!hasSimplified && isIncluded) hideTrad = true;
+      const isInputRussian = isPrimarilyRussian(correspondingUserInput);
+      const result = buildTranslationBodyHtml(m, index, correspondingUserInput, isInputRussian, correspondingSenderEmail);
+      if (result.isError) {
+        return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble error-card">${result.html}</div>${timeLabel}</div>`;
       }
-
-      let isInputRussian = isPrimarilyRussian(correspondingUserInput);
-
-      let orderedBlocks = isInputRussian
-        ? [hideTrad ? null : blockMap.trad, blockMap.pinyin, blockMap.simp, blockMap.ru, blockMap.explain]
-        : [blockMap.ru, blockMap.simp, blockMap.pinyin, hideTrad ? null : blockMap.trad, blockMap.explain];
-
-      // 固定、保證拼寫正確的標籤文字，不使用AI自己生成的標籤，避免拼寫混入錯誤語言規則
-      const FIXED_LABELS = {
-        trad: "【繁體中文 / Традиционный китайский】",
-        pinyin: "【中文發音 / Пиньинь】",
-        simp: "【簡體中文 / Упрощенный китайский】",
-        ru: "【俄文翻譯 / Русский перевод】",
-        explain: "【語意解釋 / Смысловое пояснение】"
-      };
-
-      // 已知AI偶爾會混入烏克蘭拼法的詞，顯示前自動修正回標準俄文拼法（僅修正這幾個固定詞彙，不動使用者實際翻譯內容）
-      function fixRussianSpelling(text) {
-        return text
-          .replace(/Китайський/g, "Китайский")
-          .replace(/Російський/g, "Русский")
-          .replace(/Пояснення/g, "Пояснение")
-          .replace(/пояснення/g, "пояснение")
-          .replace(/Упрощений/g, "Упрощенный")
-          .replace(/Піньїнь/g, "Пиньинь")
-          .replace(/Українськ/g, "Русск");
-      }
-
-      let processedLines = orderedBlocks.filter(b => b !== null && b !== undefined).map(trimmedLine => {
-        let contentMatch = trimmedLine.match(/^【[^】]+】([\s\S]*)$/);
-        let rawContent = contentMatch ? contentMatch[1].trim() : trimmedLine;
-
-        if (/(【中文發音[^】]*】|【[^】]*Пиньинь[^】]*】|【[^в]*Pinyin[^】]*】)/i.test(trimmedLine)) {
-          return `<div class="card-line">${FIXED_LABELS.pinyin}${rawContent} <button class="inner-audio-btn" onclick="speakThisText(${index})">🔊 Озвучить</button></div>`;
-        }
-        if (/【俄文翻譯[^】]*】/.test(trimmedLine) && isInputRussian) return "";
-        if (/【俄文翻譯[^】]*】/.test(trimmedLine)) {
-          return `<div class="card-line">${FIXED_LABELS.ru}${fixRussianSpelling(rawContent)} <button class="inner-audio-btn" onclick="speakRussianText(${index})">🔊 朗讀俄文</button> <button class="inline-copy-btn" onclick="copyRussianText(${index}, this)">📋 Скопировать</button></div>`;
-        }
-        if (trimmedLine.startsWith("【語意解釋")) {
-          if (rawContent.length === 0) return "";
-          return `<div class="card-line collapsible-explanation" style="display:none;">${FIXED_LABELS.explain}${fixRussianSpelling(rawContent)}</div>`;
-        }
-        if (trimmedLine.startsWith("【繁體中文")) {
-          if (rawContent.length === 0) return "";
-          let safeContent = rawContent.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          return `<div class="card-line">${FIXED_LABELS.trad}${rawContent} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
-        }
-        if (trimmedLine.startsWith("【簡體中文")) {
-          if (rawContent.length === 0) return "";
-          let safeContent = rawContent.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          return `<div class="card-line">${FIXED_LABELS.simp}${rawContent} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
-        }
-
-        let matchField = trimmedLine.match(/^【([^】]+)】([\s\S]*)$/);
-        if (matchField && matchField[2].trim().length > 0) {
-          let contentText = matchField[2].trim();
-          let safeContent = contentText.replace(/["'「」]/g, "").replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          return `<div class="card-line">${trimmedLine} <button class="inline-copy-btn" onclick="copyThisLine('${safeContent}', this)">📋 Скопировать</button></div>`;
-        }
-        return `<div class="card-line">${trimmedLine}</div>`;
-      });
-
-      let nonEmptyLines = processedLines.filter(l => l !== "");
-      let firstLineHtml = nonEmptyLines.length > 0 ? nonEmptyLines[0] : "";
-      let firstLineDisplay = firstLineHtml.replace(/【[^】]+】/, "");
-      let finalHtmlText = nonEmptyLines.slice(1).join('');
-      let hasExplanation = nonEmptyLines.join('').includes("collapsible-explanation");
-      let toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByKey('${m.firebaseKey || ''}')">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
-
-      let correctionBtns = "";
-      let correctedContentHtml = "";
-      if (hasExplanation && currentUser) {
-        const isSpeaker = currentUser.email === correspondingSenderEmail;
-        const correction = m.correction || {};
-
-        if (correction.correctedText) {
-          correctedContentHtml = `<div class="card-line correction-result">${escapeHtmlText(correction.correctedText)}</div>`;
-        }
-
-        if (isSpeaker) {
-          if (correction.correctedText) {
-            correctionBtns = `<div class="card-line correction-status">✎ 已送出更正說明 / Уточнение отправлено</div>`;
-          } else {
-            correctionBtns = `<div class="card-line correction-buttons" id="correctionArea-${index}"><button class="btn-correction-fix" onclick="toggleCorrectionInput(${index})">✎ Я не про это</button></div>`;
-          }
-        } else {
-          if (correction.confused) {
-            correctionBtns = `<div class="card-line correction-status">❓ 已告知對方「我不太明白」/ Отправлено: Я не понимаю</div>`;
-          } else {
-            correctionBtns = `<div class="card-line correction-buttons"><button class="btn-correction-confused" onclick="markConfused(${index})">❓ Я не понимаю</button></div>`;
-          }
-        }
-      }
-
-      let replyHtml2 = "";
-      if (correspondingUserMsg?.replyTo) {
-        const rKey2 = correspondingUserMsg.replyTo.firebaseKey || "";
-        replyHtml2 = `<div class="reply-quote" onclick="scrollToMessage('${rKey2}')"><span class="reply-quote-name">${escapeHtmlText(correspondingUserMsg.replyTo.senderName)}</span><span class="reply-quote-text">${escapeHtmlText(correspondingUserMsg.replyTo.text.slice(0,40))}${correspondingUserMsg.replyTo.text.length > 40 ? "…" : ""}</span></div>`;
-      }
-      const editedTag2 = correspondingUserMsg?.edited ? `<span class="msg-edited-tag">（已編輯 / изменено）</span>` : "";
-      const editBtn2 = (isOwnMessage && correspondingUserMsg && !correspondingUserMsg.deleted) ? `<button class="msg-edit-btn" onclick="startEditMessage('${correspondingUserMsg.firebaseKey}')" title="編輯 / Редактировать">✎</button>` : "";
       const displayNameForCard = getDisplayName(correspondingSenderEmail);
       const originalTextEscaped = escapeHtmlText(correspondingUserMsg?.text || correspondingUserInput);
-      const originalLineHtml = `<div class="original-line">${replyHtml2}<strong>${displayNameForCard}</strong>：${originalTextEscaped}${editedTag2}${editBtn2}</div>`;
-
-      return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card ${cardColorClass}" ${cardColorStyle}><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByKey('${m.firebaseKey || ''}')">▾</button>${originalLineHtml}${firstLineDisplay}<div class="card-body" style="display:none;">${finalHtmlText}${toggleBtn}${correctedContentHtml}${correctionBtns}</div></div>${timeLabel}</div>`;
+      const originalLineHtml = `<div class="original-line"><strong>${displayNameForCard}</strong>：${originalTextEscaped}</div>`;
+      return `${dateSeparator}<div class="msg-box ${isOwnMessage ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}"><div class="bubble ai-card" ${cardColorStyle}>${originalLineHtml}${result.html}</div>${timeLabel}</div>`;
     }
   }).join("");
   chat.scrollTop = chat.scrollHeight;
@@ -3601,7 +3624,17 @@ function renderChat() {
   if (currentUser) {
     chatHistory.forEach((m, idx) => {
       if (m.role !== "ai" || !m.correction || m.firebaseKey === undefined) return;
-      const el = document.getElementById("msg-" + m.firebaseKey);
+      // 先找對應的使用者訊息，因為現在容器的id通常是使用者訊息的id（翻譯內容被吸收進使用者泡泡了）
+      let correspondingUserKey = "";
+      let senderEmail = "";
+      for (let i = idx - 1; i >= 0; i--) {
+        if (chatHistory[i] && chatHistory[i].role === "user") {
+          correspondingUserKey = chatHistory[i].firebaseKey || "";
+          senderEmail = chatHistory[i].senderEmail || "";
+          break;
+        }
+      }
+      const el = document.getElementById("msg-" + correspondingUserKey) || document.getElementById("msg-" + m.firebaseKey);
       if (!el) return;
       if (m.correction.correctedText) {
         el.classList.remove("needs-correction");
@@ -3609,16 +3642,9 @@ function renderChat() {
       } else if (m.correction.confused) {
         el.classList.remove("correction-done");
         el.classList.add("needs-correction");
-        let senderEmail = "";
-        for (let i = idx - 1; i >= 0; i--) {
-          if (chatHistory[i] && chatHistory[i].role === "user") {
-            senderEmail = chatHistory[i].senderEmail || "";
-            break;
-          }
-        }
         const bubbleColor = getBubbleColor(senderEmail);
-        const aiCard = el.querySelector(".ai-card");
-        if (aiCard && bubbleColor) aiCard.style.borderLeftColor = bubbleColor;
+        const cardEl = el.querySelector(".ai-card") || el.querySelector(".translation-append");
+        if (cardEl && bubbleColor) cardEl.style.borderLeftColor = bubbleColor;
       }
     });
   }
@@ -5766,6 +5792,18 @@ function toggleExplanationByKey(firebaseKey) {
   btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
 }
 
+// 新版：直接從按鈕本身往上找最近的卡片容器（.ai-card 或 .translation-append），
+// 不再依賴 id 比對，因為翻譯內容現在可能長在使用者泡泡裡，不一定有自己專屬的id
+function toggleExplanationByButton(btn) {
+  const container = btn.closest(".ai-card") || btn.closest(".translation-append");
+  if (!container) return;
+  const explanationDiv = container.querySelector(".collapsible-explanation");
+  if (!explanationDiv) return;
+  const isHidden = explanationDiv.style.display === "none";
+  explanationDiv.style.display = isHidden ? "block" : "none";
+  btn.innerText = isHidden ? "📖 隱藏詳細解釋 / Скрыть пояснение" : "📖 顯示詳細解釋 / Показать пояснение";
+}
+
 function toggleCardByKey(firebaseKey) {
   const el = document.getElementById("msg-" + firebaseKey);
   if (!el) return;
@@ -5777,6 +5815,17 @@ function toggleCardByKey(firebaseKey) {
   const isHidden = body.style.display === "none";
   body.style.display = isHidden ? "block" : "none";
   if (arrow) arrow.style.transform = isHidden ? "rotate(180deg)" : "rotate(0deg)";
+}
+
+// 新版：同樣改用按鈕本身往上找容器，不依賴id
+function toggleCardByButton(btn) {
+  const container = btn.closest(".ai-card") || btn.closest(".translation-append");
+  if (!container) return;
+  const body = container.querySelector(".card-body");
+  if (!body) return;
+  const isHidden = body.style.display === "none";
+  body.style.display = isHidden ? "block" : "none";
+  btn.style.transform = isHidden ? "rotate(180deg)" : "rotate(0deg)";
 }
 
 function toggleCard(index) {
