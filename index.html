@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.148</title>
+  <title>L⇄V ∞ v21.150</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.148</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.150</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.148";
+const APP_VERSION = "21.150";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.148";
+    document.title = "L⇄V ∞ v21.150";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.148";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.150";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -2924,7 +2924,7 @@ function toggleBackupHistory() {
   list.style.display = list.style.display === "none" ? "block" : "none";
 }
 
-const CAPACITY_WARNING_THRESHOLD = 5;
+const CAPACITY_WARNING_THRESHOLD = 500;
 function renderConsensusPanel(requestData, myDecision, otherDecision, otherEmail) {
   const panel = document.getElementById("consensusPanel");
   if (!panel) return;
@@ -3800,7 +3800,8 @@ const GAME_CATALOG = [
   { id: "guesswho",  icon: "🕵️", name: "猜猜我是誰", nameRu: "Угадай, кто я", available: true },
   { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: true },
   { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true },
-  { id: "wordmatch", icon: "🔊", name: "聽音連連看", nameRu: "Слушай и соедини", available: true }
+  { id: "wordmatch", icon: "🔊", name: "聽音連連看", nameRu: "Слушай и соедини", available: true },
+  { id: "breakout",  icon: "🧱", name: "合力接磚塊", nameRu: "Вместе разбиваем кирпичи", available: true }
 ];
 
 let selectedGameMenuIds = [];
@@ -4120,6 +4121,20 @@ function resetGameState(gameId, inviteData) {
     });
   } else if (gameId === "wordmatch") {
     db.ref("games/wordmatch").update(generateWordmatchRound(inviteData.fromEmail, inviteData.toEmail));
+  } else if (gameId === "breakout") {
+    db.ref("games/breakout").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      hostEmail: inviteData.fromEmail,
+      paddleA: 140,
+      paddleB: 140,
+      ball: { x: 140, y: 200, vx: 2.2, vy: 2.6 },
+      bricks: generateBreakoutBricks(),
+      score: 0,
+      lives: 3,
+      status: "playing",
+      updatedAt: Date.now()
+    });
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
@@ -4181,6 +4196,8 @@ function enterGameScreen(gameId, inviteData) {
     initGomokuScreen();
   } else if (gameId === "wordmatch") {
     initWordmatchScreen();
+  } else if (gameId === "breakout") {
+    initBreakoutScreen();
   } else {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
@@ -4239,6 +4256,7 @@ function toggleGameScreenMinimize() {
 }
 function exitGameScreen(silent) {
   clearTimeout(gameLoadWatchdogTimer);
+  if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
   gameScreenOpen = false;
   gameScreenActiveFor = null;
   document.getElementById("gameScreenOverlay").style.display = "none";
@@ -5627,6 +5645,210 @@ function restartWordmatch() {
     const state = snap.val();
     if (!state) return;
     db.ref("games/wordmatch").update(generateWordmatchRound(state.playerA, state.playerB));
+  });
+}
+
+/* ---------- 合力接磚塊 ---------- */
+const BREAKOUT_WIDTH = 280;
+const BREAKOUT_HEIGHT = 420;
+const BREAKOUT_PADDLE_W = 60;
+const BREAKOUT_PADDLE_H = 8;
+const BREAKOUT_BALL_R = 6;
+const BREAKOUT_PADDLE_A_Y = 260; // 上層板子（隊友A）
+const BREAKOUT_PADDLE_B_Y = 400; // 下層板子（隊友B，最底線）
+const BREAKOUT_BRICK_ROWS = 4;
+const BREAKOUT_BRICK_COLS = 6;
+const BREAKOUT_BRICK_W = 40;
+const BREAKOUT_BRICK_H = 16;
+const BREAKOUT_BRICK_TOP = 30;
+const BREAKOUT_BRICK_GAP = 4;
+
+function generateBreakoutBricks() {
+  const bricks = [];
+  for (let r = 0; r < BREAKOUT_BRICK_ROWS; r++) {
+    for (let c = 0; c < BREAKOUT_BRICK_COLS; c++) {
+      bricks.push({ alive: true });
+    }
+  }
+  return bricks;
+}
+
+let breakoutLoopInterval = null;
+let breakoutIsHost = false;
+let breakoutLocalPaddleX = 140;
+let breakoutLatestState = null;
+let breakoutMyRole = null; // "A" 或 "B"
+
+function initBreakoutScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `
+    <div class="ttt-status" id="breakoutStatus">載入中... / Загрузка...</div>
+    <canvas id="breakoutCanvas" width="${BREAKOUT_WIDTH}" height="${BREAKOUT_HEIGHT}" style="background:var(--bg-deep); border-radius:8px; touch-action:none; display:block; margin:0 auto;"></canvas>
+    <div style="text-align:center; font-size:11px; color:var(--text-tertiary); margin-top:6px;">左右拖曳畫面來移動你的板子 / Двигайте пальцем влево-вправо</div>
+  `;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+  activeGameListenerRef = db.ref("games/breakout");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    breakoutLatestState = state;
+    const myEmail = currentUser.email;
+    breakoutMyRole = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+    breakoutIsHost = state.hostEmail === myEmail;
+    renderBreakout(state);
+  });
+  registerGamePresence("breakout");
+  setupBreakoutControls();
+  if (!breakoutLoopInterval) {
+    breakoutLoopInterval = setInterval(breakoutPhysicsTick, 40); // 每40毫秒跑一次，只有host真的會計算
+  }
+}
+
+function setupBreakoutControls() {
+  const canvas = document.getElementById("breakoutCanvas");
+  if (!canvas) return;
+  function moveTo(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = BREAKOUT_WIDTH / rect.width;
+    let x = (clientX - rect.left) * scaleX;
+    x = Math.max(BREAKOUT_PADDLE_W / 2, Math.min(BREAKOUT_WIDTH - BREAKOUT_PADDLE_W / 2, x));
+    breakoutLocalPaddleX = x;
+    if (breakoutMyRole === "A") db.ref("games/breakout/paddleA").set(x);
+    else if (breakoutMyRole === "B") db.ref("games/breakout/paddleB").set(x);
+  }
+  canvas.onmousedown = (e) => { moveTo(e.clientX); canvas.onmousemove = (ev) => moveTo(ev.clientX); };
+  canvas.onmouseup = () => { canvas.onmousemove = null; };
+  canvas.onmouseleave = () => { canvas.onmousemove = null; };
+  canvas.ontouchstart = (e) => { moveTo(e.touches[0].clientX); };
+  canvas.ontouchmove = (e) => { e.preventDefault(); moveTo(e.touches[0].clientX); };
+}
+
+function breakoutPhysicsTick() {
+  if (!breakoutIsHost || !breakoutLatestState || breakoutLatestState.status !== "playing") return;
+  const state = breakoutLatestState;
+  let ball = { ...state.ball };
+  let bricks = state.bricks.map(b => ({ ...b }));
+  let score = state.score;
+  let lives = state.lives;
+  let status = "playing";
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  if (ball.x - BREAKOUT_BALL_R <= 0 || ball.x + BREAKOUT_BALL_R >= BREAKOUT_WIDTH) ball.vx *= -1;
+  if (ball.y - BREAKOUT_BALL_R <= 0) ball.vy *= -1;
+
+  for (let i = 0; i < bricks.length; i++) {
+    if (!bricks[i].alive) continue;
+    const col = i % BREAKOUT_BRICK_COLS;
+    const row = Math.floor(i / BREAKOUT_BRICK_COLS);
+    const bx = col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_GAP;
+    const by = row * (BREAKOUT_BRICK_H + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_TOP;
+    if (ball.x + BREAKOUT_BALL_R > bx && ball.x - BREAKOUT_BALL_R < bx + BREAKOUT_BRICK_W &&
+        ball.y + BREAKOUT_BALL_R > by && ball.y - BREAKOUT_BALL_R < by + BREAKOUT_BRICK_H) {
+      bricks[i].alive = false;
+      ball.vy *= -1;
+      score += 10;
+      break;
+    }
+  }
+
+  function hitPaddle(paddleX, paddleY) {
+    if (ball.vy > 0 &&
+        ball.y + BREAKOUT_BALL_R >= paddleY && ball.y + BREAKOUT_BALL_R <= paddleY + BREAKOUT_PADDLE_H + 6 &&
+        ball.x >= paddleX - BREAKOUT_PADDLE_W / 2 && ball.x <= paddleX + BREAKOUT_PADDLE_W / 2) {
+      const hitPos = (ball.x - paddleX) / (BREAKOUT_PADDLE_W / 2); // -1 ~ 1，決定反彈角度
+      ball.vy = -Math.abs(ball.vy);
+      ball.vx = hitPos * 3;
+      return true;
+    }
+    return false;
+  }
+
+  if (!hitPaddle(state.paddleA, BREAKOUT_PADDLE_A_Y)) {
+    hitPaddle(state.paddleB, BREAKOUT_PADDLE_B_Y);
+  }
+
+  if (ball.y - BREAKOUT_BALL_R > BREAKOUT_HEIGHT) {
+    lives -= 1;
+    if (lives <= 0) {
+      status = "gameover";
+    } else {
+      ball = { x: BREAKOUT_WIDTH / 2, y: 200, vx: 2.2, vy: 2.6 };
+    }
+  }
+
+  if (bricks.every(b => !b.alive)) {
+    status = "win";
+  }
+
+  db.ref("games/breakout").update({ ball, bricks, score, lives, status, updatedAt: Date.now() });
+}
+
+function renderBreakout(state) {
+  const canvas = document.getElementById("breakoutCanvas");
+  const statusEl = document.getElementById("breakoutStatus");
+  const lightEl = document.getElementById("gameTurnLight");
+  if (!canvas || !statusEl) return;
+  if (lightEl) { lightEl.classList.remove("on-turn", "waiting", "offline"); lightEl.title = ""; }
+
+  statusEl.innerHTML = state.status === "win" ? "🎉 完成！所有磚塊都清空了 / Все кирпичи разбиты!" + `<br><button class="ttt-restart-btn" onclick="restartBreakout()">再玩一局 / Ещё раз</button>`
+    : state.status === "gameover" ? "💥 遊戲結束 / Игра окончена" + `<br><button class="ttt-restart-btn" onclick="restartBreakout()">再玩一局 / Ещё раз</button>`
+    : `分數 ${state.score} ・ 生命 ${"❤️".repeat(Math.max(state.lives, 0))}`;
+
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
+
+  // 磚塊
+  state.bricks.forEach((b, i) => {
+    if (!b.alive) return;
+    const col = i % BREAKOUT_BRICK_COLS;
+    const row = Math.floor(i / BREAKOUT_BRICK_COLS);
+    const bx = col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_GAP;
+    const by = row * (BREAKOUT_BRICK_H + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_TOP;
+    ctx.fillStyle = ["#c9a876", "#a8946f", "#8a7355", "#6b5a42"][row % 4];
+    ctx.fillRect(bx, by, BREAKOUT_BRICK_W, BREAKOUT_BRICK_H);
+  });
+
+  // 兩塊板子，各自用該玩家的泡泡顏色標示
+  const colorA = getBubbleColor(state.playerA) || "#c9a876";
+  const colorB = getBubbleColor(state.playerB) || "#a8946f";
+  ctx.fillStyle = colorA;
+  ctx.fillRect(state.paddleA - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_A_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
+  ctx.fillStyle = colorB;
+  ctx.fillRect(state.paddleB - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_B_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
+
+  // 球
+  ctx.beginPath();
+  ctx.arc(state.ball.x, state.ball.y, BREAKOUT_BALL_R, 0, Math.PI * 2);
+  ctx.fillStyle = "#e8e6e0";
+  ctx.fill();
+
+  if (state.status !== "playing") {
+    if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+  }
+}
+
+function restartBreakout() {
+  db.ref("games/breakout").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    db.ref("games/breakout").update({
+      ball: { x: BREAKOUT_WIDTH / 2, y: 200, vx: 2.2, vy: 2.6 },
+      bricks: generateBreakoutBricks(),
+      score: 0,
+      lives: 3,
+      status: "playing"
+    });
+    if (!breakoutLoopInterval) breakoutLoopInterval = setInterval(breakoutPhysicsTick, 40);
   });
 }
 
