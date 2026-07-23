@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.150</title>
+  <title>L⇄V ∞ v21.151</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.150</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.151</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.150";
+const APP_VERSION = "21.151";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.150";
+    document.title = "L⇄V ∞ v21.151";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.150";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.151";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4126,9 +4126,9 @@ function resetGameState(gameId, inviteData) {
       playerA: inviteData.fromEmail,
       playerB: inviteData.toEmail || null,
       hostEmail: inviteData.fromEmail,
-      paddleA: 140,
-      paddleB: 140,
-      ball: { x: 140, y: 200, vx: 2.2, vy: 2.6 },
+      paddleA: 120,
+      paddleB: 120,
+      ball: { x: 120, y: 110, vx: 2.2, vy: 2.6 },
       bricks: generateBreakoutBricks(),
       score: 0,
       lives: 3,
@@ -5649,19 +5649,19 @@ function restartWordmatch() {
 }
 
 /* ---------- 合力接磚塊 ---------- */
-const BREAKOUT_WIDTH = 280;
-const BREAKOUT_HEIGHT = 420;
-const BREAKOUT_PADDLE_W = 60;
+const BREAKOUT_WIDTH = 240; // 容器扣掉左右各16px內距後大約248px可用，這裡留一點餘裕
+const BREAKOUT_HEIGHT = 300;
+const BREAKOUT_PADDLE_W = 55;
 const BREAKOUT_PADDLE_H = 8;
 const BREAKOUT_BALL_R = 6;
-const BREAKOUT_PADDLE_A_Y = 260; // 上層板子（隊友A）
-const BREAKOUT_PADDLE_B_Y = 400; // 下層板子（隊友B，最底線）
+const BREAKOUT_PADDLE_A_Y = 170; // 上層板子（隊友A）
+const BREAKOUT_PADDLE_B_Y = 250; // 下層板子（隊友B，最底線），跟A之間縮短間距
 const BREAKOUT_BRICK_ROWS = 4;
 const BREAKOUT_BRICK_COLS = 6;
-const BREAKOUT_BRICK_W = 40;
-const BREAKOUT_BRICK_H = 16;
-const BREAKOUT_BRICK_TOP = 30;
-const BREAKOUT_BRICK_GAP = 4;
+const BREAKOUT_BRICK_W = 35;
+const BREAKOUT_BRICK_H = 14;
+const BREAKOUT_BRICK_TOP = 25;
+const BREAKOUT_BRICK_GAP = 3;
 
 function generateBreakoutBricks() {
   const bricks = [];
@@ -5675,7 +5675,7 @@ function generateBreakoutBricks() {
 
 let breakoutLoopInterval = null;
 let breakoutIsHost = false;
-let breakoutLocalPaddleX = 140;
+let breakoutLocalPaddleX = 120;
 let breakoutLatestState = null;
 let breakoutMyRole = null; // "A" 或 "B"
 
@@ -5762,12 +5762,14 @@ function breakoutPhysicsTick() {
   }
 
   function hitPaddle(paddleX, paddleY) {
-    if (ball.vy > 0 &&
-        ball.y + BREAKOUT_BALL_R >= paddleY && ball.y + BREAKOUT_BALL_R <= paddleY + BREAKOUT_PADDLE_H + 6 &&
-        ball.x >= paddleX - BREAKOUT_PADDLE_W / 2 && ball.x <= paddleX + BREAKOUT_PADDLE_W / 2) {
+    const withinX = ball.x + BREAKOUT_BALL_R >= paddleX - BREAKOUT_PADDLE_W / 2 && ball.x - BREAKOUT_BALL_R <= paddleX + BREAKOUT_PADDLE_W / 2;
+    const withinY = ball.y + BREAKOUT_BALL_R >= paddleY && ball.y - BREAKOUT_BALL_R <= paddleY + BREAKOUT_PADDLE_H;
+    if (withinX && withinY) {
       const hitPos = (ball.x - paddleX) / (BREAKOUT_PADDLE_W / 2); // -1 ~ 1，決定反彈角度
-      ball.vy = -Math.abs(ball.vy);
+      ball.vy *= -1; // 不管球原本往上還是往下，都要反彈，不能只有單一方向才生效
       ball.vx = hitPos * 3;
+      // 把球推到板子外面，避免下一輪還卡在同個位置重複判定
+      ball.y = ball.vy < 0 ? paddleY - BREAKOUT_BALL_R - 1 : paddleY + BREAKOUT_PADDLE_H + BREAKOUT_BALL_R + 1;
       return true;
     }
     return false;
@@ -5782,7 +5784,7 @@ function breakoutPhysicsTick() {
     if (lives <= 0) {
       status = "gameover";
     } else {
-      ball = { x: BREAKOUT_WIDTH / 2, y: 200, vx: 2.2, vy: 2.6 };
+      ball = { x: BREAKOUT_WIDTH / 2, y: 110, vx: 2.2, vy: 2.6 };
     }
   }
 
@@ -5842,7 +5844,7 @@ function restartBreakout() {
     const state = snap.val();
     if (!state) return;
     db.ref("games/breakout").update({
-      ball: { x: BREAKOUT_WIDTH / 2, y: 200, vx: 2.2, vy: 2.6 },
+      ball: { x: BREAKOUT_WIDTH / 2, y: 110, vx: 2.2, vy: 2.6 },
       bricks: generateBreakoutBricks(),
       score: 0,
       lives: 3,
