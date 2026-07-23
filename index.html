@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.153</title>
+  <title>L⇄V ∞ v21.154</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.153</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.154</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.153";
+const APP_VERSION = "21.154";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.153";
+    document.title = "L⇄V ∞ v21.154";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.153";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.154";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5646,13 +5646,13 @@ function restartWordmatch() {
 }
 
 /* ---------- 合力接磚塊 ---------- */
-const BREAKOUT_WIDTH = 220; // 再縮小一點，留更多安全邊界，避免容器實際可用空間比預估的窄
-const BREAKOUT_HEIGHT = 300;
+const BREAKOUT_WIDTH = 220;
+const BREAKOUT_HEIGHT = 250; // 再縮短，板子間距也一併拉近
 const BREAKOUT_PADDLE_W = 50;
 const BREAKOUT_PADDLE_H = 8;
 const BREAKOUT_BALL_R = 6;
-const BREAKOUT_PADDLE_A_Y = 170; // 上層板子（隊友A）
-const BREAKOUT_PADDLE_B_Y = 250; // 下層板子（隊友B，最底線），跟A之間縮短間距
+const BREAKOUT_PADDLE_A_Y = 150; // 上層板子（隊友A），往下移一點
+const BREAKOUT_PADDLE_B_Y = 210; // 下層板子（隊友B，最底線），往上移一點，跟A更接近
 const BREAKOUT_BRICK_ROWS = 4;
 const BREAKOUT_BRICK_COLS = 6;
 const BREAKOUT_BRICK_W = 33;
@@ -5741,8 +5741,17 @@ function breakoutPhysicsTick() {
   ball.x += ball.vx;
   ball.y += ball.vy;
 
-  if (ball.x - BREAKOUT_BALL_R <= 0 || ball.x + BREAKOUT_BALL_R >= BREAKOUT_WIDTH) ball.vx *= -1;
-  if (ball.y - BREAKOUT_BALL_R <= 0) ball.vy *= -1;
+  if (ball.x - BREAKOUT_BALL_R <= 0) {
+    ball.vx = Math.abs(ball.vx);
+    ball.x = BREAKOUT_BALL_R + 1;
+  } else if (ball.x + BREAKOUT_BALL_R >= BREAKOUT_WIDTH) {
+    ball.vx = -Math.abs(ball.vx);
+    ball.x = BREAKOUT_WIDTH - BREAKOUT_BALL_R - 1;
+  }
+  if (ball.y - BREAKOUT_BALL_R <= 0) {
+    ball.vy = Math.abs(ball.vy);
+    ball.y = BREAKOUT_BALL_R + 1;
+  }
 
   for (let i = 0; i < bricks.length; i++) {
     if (!bricks[i].alive) continue;
