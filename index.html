@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.145</title>
+  <title>L⇄V ∞ v21.146</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2125,7 +2125,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.145</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.146</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2356,7 +2356,7 @@
 
 <script>
 
-const APP_VERSION = "21.145";
+const APP_VERSION = "21.146";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2552,7 +2552,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.145";
+    document.title = "L⇄V ∞ v21.146";
   }
 });
 
@@ -2617,7 +2617,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.145";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.146";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5864,10 +5864,7 @@ function markConfused(index) {
 }
 
 function toggleCorrectionInput(index) {
-  const allCards = document.querySelectorAll(".msg-box");
-  const targetCard = allCards[index] ? allCards[index].querySelector(".ai-card") : null;
-  if (!targetCard) return;
-  const area = targetCard.querySelector("#correctionArea-" + index);
+  const area = document.getElementById("correctionArea-" + index);
   if (!area) return;
   if (area.querySelector(".correction-inline-input")) {
     area.innerHTML = `<button class="btn-correction-fix" onclick="toggleCorrectionInput(${index})">✎ Я не про это</button>`;
@@ -5985,10 +5982,20 @@ function clearCardNeedsCorrection(firebaseKey) {
 
 function scrollToMessage(firebaseKey) {
   if (!firebaseKey) return;
-  const el = document.getElementById("msg-" + firebaseKey);
+  let el = document.getElementById("msg-" + firebaseKey);
+  if (!el) {
+    // 這個firebaseKey可能是被吸收進使用者泡泡的AI訊息，往前找對應的使用者訊息改用那個id定位
+    const idx = chatHistory.findIndex(m => m.firebaseKey === firebaseKey);
+    if (idx !== -1) {
+      for (let i = idx - 1; i >= 0; i--) {
+        if (chatHistory[i] && chatHistory[i].role === "user") {
+          el = document.getElementById("msg-" + chatHistory[i].firebaseKey);
+          break;
+        }
+      }
+    }
+  }
   if (!el) return;
-  const idx = chatHistory.findIndex(m => m.firebaseKey === firebaseKey);
-  if (idx !== -1) expandCard(idx);
   el.scrollIntoView({ behavior: "smooth", block: "center" });
   el.classList.remove("msg-highlight");
   void el.offsetWidth;
