@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.151</title>
+  <title>L⇄V ∞ v21.153</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.151</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.153</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.151";
+const APP_VERSION = "21.153";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.151";
+    document.title = "L⇄V ∞ v21.153";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.151";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.153";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3012,12 +3012,9 @@ let consensusTriggered = false;
 function checkCapacityWarning(messageCount) {
   const warningDiv = document.getElementById("capacityWarning");
   if (warningDiv) {
-    if (messageCount >= CAPACITY_WARNING_THRESHOLD) {
-      warningDiv.style.display = "block";
-      warningDiv.innerText = `⚠️ 目前已累積 ${messageCount} 則訊息`;
-    } else {
-      warningDiv.style.display = "none";
-    }
+    // 計數器本身一直顯示目前累積則數，不受下面「清空提醒」門檻影響，方便管理者隨時掌握
+    warningDiv.style.display = "block";
+    warningDiv.innerText = `📊 目前已累積 ${messageCount} 則訊息`;
   }
 
   if (messageCount >= CAPACITY_WARNING_THRESHOLD && !consensusTriggered) {
@@ -4126,9 +4123,9 @@ function resetGameState(gameId, inviteData) {
       playerA: inviteData.fromEmail,
       playerB: inviteData.toEmail || null,
       hostEmail: inviteData.fromEmail,
-      paddleA: 120,
-      paddleB: 120,
-      ball: { x: 120, y: 110, vx: 2.2, vy: 2.6 },
+      paddleA: 110,
+      paddleB: 110,
+      ball: { x: 110, y: 110, vx: 2.2, vy: 2.6 },
       bricks: generateBreakoutBricks(),
       score: 0,
       lives: 3,
@@ -5649,19 +5646,20 @@ function restartWordmatch() {
 }
 
 /* ---------- 合力接磚塊 ---------- */
-const BREAKOUT_WIDTH = 240; // 容器扣掉左右各16px內距後大約248px可用，這裡留一點餘裕
+const BREAKOUT_WIDTH = 220; // 再縮小一點，留更多安全邊界，避免容器實際可用空間比預估的窄
 const BREAKOUT_HEIGHT = 300;
-const BREAKOUT_PADDLE_W = 55;
+const BREAKOUT_PADDLE_W = 50;
 const BREAKOUT_PADDLE_H = 8;
 const BREAKOUT_BALL_R = 6;
 const BREAKOUT_PADDLE_A_Y = 170; // 上層板子（隊友A）
 const BREAKOUT_PADDLE_B_Y = 250; // 下層板子（隊友B，最底線），跟A之間縮短間距
 const BREAKOUT_BRICK_ROWS = 4;
 const BREAKOUT_BRICK_COLS = 6;
-const BREAKOUT_BRICK_W = 35;
+const BREAKOUT_BRICK_W = 33;
 const BREAKOUT_BRICK_H = 14;
 const BREAKOUT_BRICK_TOP = 25;
 const BREAKOUT_BRICK_GAP = 3;
+const BREAKOUT_BRICK_LEFT_MARGIN = (BREAKOUT_WIDTH - (BREAKOUT_BRICK_COLS * BREAKOUT_BRICK_W + (BREAKOUT_BRICK_COLS - 1) * BREAKOUT_BRICK_GAP)) / 2;
 
 function generateBreakoutBricks() {
   const bricks = [];
@@ -5675,7 +5673,7 @@ function generateBreakoutBricks() {
 
 let breakoutLoopInterval = null;
 let breakoutIsHost = false;
-let breakoutLocalPaddleX = 120;
+let breakoutLocalPaddleX = 110;
 let breakoutLatestState = null;
 let breakoutMyRole = null; // "A" 或 "B"
 
@@ -5750,7 +5748,7 @@ function breakoutPhysicsTick() {
     if (!bricks[i].alive) continue;
     const col = i % BREAKOUT_BRICK_COLS;
     const row = Math.floor(i / BREAKOUT_BRICK_COLS);
-    const bx = col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_GAP;
+    const bx = BREAKOUT_BRICK_LEFT_MARGIN + col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP);
     const by = row * (BREAKOUT_BRICK_H + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_TOP;
     if (ball.x + BREAKOUT_BALL_R > bx && ball.x - BREAKOUT_BALL_R < bx + BREAKOUT_BRICK_W &&
         ball.y + BREAKOUT_BALL_R > by && ball.y - BREAKOUT_BALL_R < by + BREAKOUT_BRICK_H) {
@@ -5777,6 +5775,11 @@ function breakoutPhysicsTick() {
 
   if (!hitPaddle(state.paddleA, BREAKOUT_PADDLE_A_Y)) {
     hitPaddle(state.paddleB, BREAKOUT_PADDLE_B_Y);
+  }
+
+  // 保險：如果球的水平速度變得太接近零，會一直卡在同一條垂直路徑上下彈跳出不去，這裡強制給一點點水平力道
+  if (Math.abs(ball.vx) < 0.5) {
+    ball.vx = ball.vx >= 0 ? 0.8 : -0.8;
   }
 
   if (ball.y - BREAKOUT_BALL_R > BREAKOUT_HEIGHT) {
@@ -5814,7 +5817,7 @@ function renderBreakout(state) {
     if (!b.alive) return;
     const col = i % BREAKOUT_BRICK_COLS;
     const row = Math.floor(i / BREAKOUT_BRICK_COLS);
-    const bx = col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_GAP;
+    const bx = BREAKOUT_BRICK_LEFT_MARGIN + col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP);
     const by = row * (BREAKOUT_BRICK_H + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_TOP;
     ctx.fillStyle = ["#c9a876", "#a8946f", "#8a7355", "#6b5a42"][row % 4];
     ctx.fillRect(bx, by, BREAKOUT_BRICK_W, BREAKOUT_BRICK_H);
