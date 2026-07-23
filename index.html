@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.144</title>
+  <title>L⇄V ∞ v21.145</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -120,6 +120,9 @@
     .msg-box.own { align-items: flex-end; }
     .msg-box.other { align-items: flex-start; }
     .msg-box.own, .msg-box.other { display: flex; flex-direction: column; }
+    /* .chat-text 本身寫死了靠左，這裡要用更高優先權的選擇器蓋過去，own/other的對齊才能真正生效 */
+    .msg-box.own .chat-text { align-self: flex-end; }
+    .msg-box.other .chat-text { align-self: flex-start; }
     .ai-card .original-line, .translation-append {
       font-size: 14px;
       margin-top: 6px;
@@ -2122,7 +2125,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.144</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.145</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2353,7 +2356,7 @@
 
 <script>
 
-const APP_VERSION = "21.144";
+const APP_VERSION = "21.145";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2549,7 +2552,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.144";
+    document.title = "L⇄V ∞ v21.145";
   }
 });
 
@@ -2614,7 +2617,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.144";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.145";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3537,8 +3540,8 @@ function renderChat() {
       const bubbleColor = getBubbleColor(m.senderEmail);
       const isOwnMessage = currentUser && m.senderEmail === currentUser.email;
       const nameHtml = `<strong>${displayName}</strong>`;
-      const bubbleStyle = bubbleColor ? `style="background:${bubbleColor}; border-color:${bubbleColor};"` : "";
-      const textColor = bubbleColor ? `style="color:#1a1810;"` : "";
+      const bubbleStyle = bubbleColor ? `style="border-color:${bubbleColor}; border-width:2px;"` : "";
+      const textColor = "";
       const safeText = m.text.replace(/"/g, '&quot;');
       const safeName = displayName.replace(/"/g, '&quot;');
 
