@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.158</title>
+  <title>L⇄V ∞ v21.159</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.158</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.159</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.158";
+const APP_VERSION = "21.159";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.158";
+    document.title = "L⇄V ∞ v21.159";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.158";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.159";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4125,7 +4125,10 @@ function resetGameState(gameId, inviteData) {
       hostEmail: inviteData.fromEmail,
       paddleA: 110,
       paddleB: 110,
+      balls: [{ x: 110, y: 110, vx: 2.9, vy: 3.3 }],
       ball: { x: 110, y: 110, vx: 2.9, vy: 3.3 },
+      ballCount: 1,
+      baseSpeed: { vx: 2.9, vy: 3.3 },
       bricks: generateBreakoutBricks(),
       score: 0,
       lives: 3,
@@ -5732,71 +5735,85 @@ function setupBreakoutControls() {
 function breakoutPhysicsTick() {
   if (!breakoutIsHost || !breakoutLatestState || breakoutLatestState.status !== "playing") return;
   const state = breakoutLatestState;
-  let ball = { ...state.ball };
+  let balls = (state.balls || [state.ball]).map(b => ({ ...b })); // 相容舊資料格式
   let bricks = state.bricks.map(b => ({ ...b }));
   let score = state.score;
   let lives = state.lives;
   let status = "playing";
 
-  ball.x += ball.vx;
-  ball.y += ball.vy;
-
-  if (ball.x - BREAKOUT_BALL_R <= 0) {
-    ball.vx = Math.abs(ball.vx);
-    ball.x = BREAKOUT_BALL_R + 1;
-  } else if (ball.x + BREAKOUT_BALL_R >= BREAKOUT_WIDTH) {
-    ball.vx = -Math.abs(ball.vx);
-    ball.x = BREAKOUT_WIDTH - BREAKOUT_BALL_R - 1;
-  }
-  if (ball.y - BREAKOUT_BALL_R <= 0) {
-    ball.vy = Math.abs(ball.vy);
-    ball.y = BREAKOUT_BALL_R + 1;
-  }
-
-  for (let i = 0; i < bricks.length; i++) {
-    if (!bricks[i].alive) continue;
-    const col = i % BREAKOUT_BRICK_COLS;
-    const row = Math.floor(i / BREAKOUT_BRICK_COLS);
-    const bx = BREAKOUT_BRICK_LEFT_MARGIN + col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP);
-    const by = row * (BREAKOUT_BRICK_H + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_TOP;
-    if (ball.x + BREAKOUT_BALL_R > bx && ball.x - BREAKOUT_BALL_R < bx + BREAKOUT_BRICK_W &&
-        ball.y + BREAKOUT_BALL_R > by && ball.y - BREAKOUT_BALL_R < by + BREAKOUT_BRICK_H) {
-      bricks[i].alive = false;
-      ball.vy *= -1;
-      score += 10;
-      break;
-    }
-  }
-
-  function hitPaddle(paddleX, paddleY) {
+  function hitPaddle(ball, paddleX, paddleY) {
     const withinX = ball.x + BREAKOUT_BALL_R >= paddleX - BREAKOUT_PADDLE_W / 2 && ball.x - BREAKOUT_BALL_R <= paddleX + BREAKOUT_PADDLE_W / 2;
     const withinY = ball.y + BREAKOUT_BALL_R >= paddleY && ball.y - BREAKOUT_BALL_R <= paddleY + BREAKOUT_PADDLE_H;
     if (withinX && withinY) {
-      const hitPos = (ball.x - paddleX) / (BREAKOUT_PADDLE_W / 2); // -1 ~ 1，決定反彈角度
-      ball.vy *= -1; // 不管球原本往上還是往下，都要反彈，不能只有單一方向才生效
+      const hitPos = (ball.x - paddleX) / (BREAKOUT_PADDLE_W / 2);
+      ball.vy *= -1;
       ball.vx = hitPos * 3;
-      // 把球推到板子外面，避免下一輪還卡在同個位置重複判定
       ball.y = ball.vy < 0 ? paddleY - BREAKOUT_BALL_R - 1 : paddleY + BREAKOUT_PADDLE_H + BREAKOUT_BALL_R + 1;
       return true;
     }
     return false;
   }
 
-  if (!hitPaddle(state.paddleA, BREAKOUT_PADDLE_A_Y)) {
-    hitPaddle(state.paddleB, BREAKOUT_PADDLE_B_Y);
+  const survivingBalls = [];
+  for (const ball of balls) {
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    if (ball.x - BREAKOUT_BALL_R <= 0) {
+      ball.vx = Math.abs(ball.vx);
+      ball.x = BREAKOUT_BALL_R + 1;
+    } else if (ball.x + BREAKOUT_BALL_R >= BREAKOUT_WIDTH) {
+      ball.vx = -Math.abs(ball.vx);
+      ball.x = BREAKOUT_WIDTH - BREAKOUT_BALL_R - 1;
+    }
+    if (ball.y - BREAKOUT_BALL_R <= 0) {
+      ball.vy = Math.abs(ball.vy);
+      ball.y = BREAKOUT_BALL_R + 1;
+    }
+
+    for (let i = 0; i < bricks.length; i++) {
+      if (!bricks[i].alive) continue;
+      const col = i % BREAKOUT_BRICK_COLS;
+      const row = Math.floor(i / BREAKOUT_BRICK_COLS);
+      const bx = BREAKOUT_BRICK_LEFT_MARGIN + col * (BREAKOUT_BRICK_W + BREAKOUT_BRICK_GAP);
+      const by = row * (BREAKOUT_BRICK_H + BREAKOUT_BRICK_GAP) + BREAKOUT_BRICK_TOP;
+      if (ball.x + BREAKOUT_BALL_R > bx && ball.x - BREAKOUT_BALL_R < bx + BREAKOUT_BRICK_W &&
+          ball.y + BREAKOUT_BALL_R > by && ball.y - BREAKOUT_BALL_R < by + BREAKOUT_BRICK_H) {
+        bricks[i].alive = false;
+        ball.vy *= -1;
+        score += 10;
+        break;
+      }
+    }
+
+    if (!hitPaddle(ball, state.paddleA, BREAKOUT_PADDLE_A_Y)) {
+      hitPaddle(ball, state.paddleB, BREAKOUT_PADDLE_B_Y);
+    }
+
+    // 保險：如果球的水平速度變得太接近零，會一直卡在同一條垂直路徑上下彈跳出不去，這裡強制給一點點水平力道
+    if (Math.abs(ball.vx) < 0.5) {
+      ball.vx = ball.vx >= 0 ? 0.8 : -0.8;
+    }
+
+    // 這顆球掉出畫面外，就不放進「還存活」的清單，等於這顆球消失了
+    if (ball.y - BREAKOUT_BALL_R <= BREAKOUT_HEIGHT) {
+      survivingBalls.push(ball);
+    }
   }
 
-  // 保險：如果球的水平速度變得太接近零，會一直卡在同一條垂直路徑上下彈跳出不去，這裡強制給一點點水平力道
-  if (Math.abs(ball.vx) < 0.5) {
-    ball.vx = ball.vx >= 0 ? 0.8 : -0.8;
-  }
+  balls = survivingBalls;
 
-  if (ball.y - BREAKOUT_BALL_R > BREAKOUT_HEIGHT) {
+  // 所有球都掉光了，才真正扣一條命，重新發球（發回原本設定的球數）
+  if (balls.length === 0) {
     lives -= 1;
     if (lives <= 0) {
       status = "gameover";
     } else {
-      ball = { x: BREAKOUT_WIDTH / 2, y: 110, vx: 2.2, vy: 2.6 };
+      const count = state.ballCount || 1;
+      balls = Array.from({ length: count }, () => ({
+        x: BREAKOUT_WIDTH / 2, y: 110,
+        vx: state.baseSpeed?.vx || 2.9, vy: state.baseSpeed?.vy || 3.3
+      }));
     }
   }
 
@@ -5804,7 +5821,7 @@ function breakoutPhysicsTick() {
     status = "win";
   }
 
-  db.ref("games/breakout").update({ ball, bricks, score, lives, status, updatedAt: Date.now() });
+  db.ref("games/breakout").update({ balls, ball: balls[0] || null, bricks, score, lives, status, updatedAt: Date.now() });
 }
 
 function renderBreakout(state) {
@@ -5874,11 +5891,14 @@ function renderBreakout(state) {
   ctx.fillStyle = colorB;
   ctx.fillRect(state.paddleB - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_B_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
 
-  // 球
-  ctx.beginPath();
-  ctx.arc(state.ball.x, state.ball.y, BREAKOUT_BALL_R, 0, Math.PI * 2);
-  ctx.fillStyle = "#e8e6e0";
-  ctx.fill();
+  // 球（可能不只一顆）
+  const ballsToShow = state.balls || (state.ball ? [state.ball] : []);
+  ballsToShow.forEach(b => {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, BREAKOUT_BALL_R, 0, Math.PI * 2);
+    ctx.fillStyle = "#e8e6e0";
+    ctx.fill();
+  });
 
   if (state.status !== "playing") {
     if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
@@ -5886,31 +5906,64 @@ function renderBreakout(state) {
 }
 
 const BREAKOUT_SPEED_PRESETS = {
-  slow: { vx: 2.2, vy: 2.6 },
   normal: { vx: 2.9, vy: 3.3 },
-  fast: { vx: 3.8, vy: 4.2 }
+  fast: { vx: 3.8, vy: 4.2 },
+  challenge: { vx: 4.6, vy: 5.0 }
 };
+const BREAKOUT_SPEED_LABELS = { normal: "🙂 普通", fast: "⚡ 快", challenge: "🔥 挑戰" };
+const BREAKOUT_MAX_BALLS = 3;
+let breakoutPendingSpeed = null;
+let breakoutPendingBalls = 1;
 
 function showBreakoutDifficultyPicker() {
+  breakoutPendingSpeed = null;
+  breakoutPendingBalls = 1;
+  renderBreakoutPicker();
+}
+
+function renderBreakoutPicker() {
   const statusEl = document.getElementById("breakoutStatus");
   if (!statusEl) return;
+  const btnsHtml = Object.keys(BREAKOUT_SPEED_PRESETS).map(key => {
+    const isSelected = breakoutPendingSpeed === key;
+    const ballBadge = isSelected ? ` (${breakoutPendingBalls}顆球)` : "";
+    return `<button class="ttt-restart-btn" onclick="pickBreakoutSpeed('${key}')">${BREAKOUT_SPEED_LABELS[key]}${ballBadge}</button>`;
+  }).join("");
   statusEl.innerHTML = `
-    <div style="font-size:12px;margin-bottom:6px;">選擇球速 / Выберите скорость</div>
-    <div style="display:flex;gap:6px;justify-content:center;">
-      <button class="ttt-restart-btn" onclick="restartBreakout('slow')">🐢 慢</button>
-      <button class="ttt-restart-btn" onclick="restartBreakout('normal')">🙂 普通</button>
-      <button class="ttt-restart-btn" onclick="restartBreakout('fast')">⚡ 快</button>
-    </div>
+    <div style="font-size:11px;margin-bottom:6px;">選一個球速；同一個再按一次可以加一顆球（最多${BREAKOUT_MAX_BALLS}顆）<br>Выберите скорость, нажмите ещё раз для доп. мяча</div>
+    <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">${btnsHtml}</div>
+    ${breakoutPendingSpeed ? `<button class="ttt-restart-btn" onclick="confirmBreakoutStart()">▶️ 開始 / Начать</button>` : ""}
   `;
 }
 
-function restartBreakout(speedKey) {
+function pickBreakoutSpeed(key) {
+  if (breakoutPendingSpeed === key) {
+    breakoutPendingBalls = breakoutPendingBalls >= BREAKOUT_MAX_BALLS ? 1 : breakoutPendingBalls + 1;
+  } else {
+    breakoutPendingSpeed = key;
+    breakoutPendingBalls = 1;
+  }
+  renderBreakoutPicker();
+}
+
+function confirmBreakoutStart() {
+  restartBreakout(breakoutPendingSpeed, breakoutPendingBalls);
+}
+
+function restartBreakout(speedKey, ballCount) {
   const preset = BREAKOUT_SPEED_PRESETS[speedKey] || BREAKOUT_SPEED_PRESETS.normal;
+  const count = Math.min(Math.max(ballCount || 1, 1), BREAKOUT_MAX_BALLS);
   db.ref("games/breakout").once("value").then((snap) => {
     const state = snap.val();
     if (!state) return;
+    const balls = Array.from({ length: count }, () => ({
+      x: BREAKOUT_WIDTH / 2, y: 110, vx: preset.vx, vy: preset.vy
+    }));
     db.ref("games/breakout").update({
-      ball: { x: BREAKOUT_WIDTH / 2, y: 110, vx: preset.vx, vy: preset.vy },
+      balls: balls,
+      ball: balls[0],
+      ballCount: count,
+      baseSpeed: preset,
       bricks: generateBreakoutBricks(),
       score: 0,
       lives: 3,
