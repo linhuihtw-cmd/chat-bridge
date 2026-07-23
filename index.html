@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.154</title>
+  <title>L⇄V ∞ v21.155</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.154</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.155</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.154";
+const APP_VERSION = "21.155";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.154";
+    document.title = "L⇄V ∞ v21.155";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.154";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.155";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4125,7 +4125,7 @@ function resetGameState(gameId, inviteData) {
       hostEmail: inviteData.fromEmail,
       paddleA: 110,
       paddleB: 110,
-      ball: { x: 110, y: 110, vx: 2.2, vy: 2.6 },
+      ball: { x: 110, y: 110, vx: 2.9, vy: 3.3 },
       bricks: generateBreakoutBricks(),
       score: 0,
       lives: 3,
@@ -5812,10 +5812,43 @@ function renderBreakout(state) {
   const statusEl = document.getElementById("breakoutStatus");
   const lightEl = document.getElementById("gameTurnLight");
   if (!canvas || !statusEl) return;
-  if (lightEl) { lightEl.classList.remove("on-turn", "waiting", "offline"); lightEl.title = ""; }
 
-  statusEl.innerHTML = state.status === "win" ? "🎉 完成！所有磚塊都清空了 / Все кирпичи разбиты!" + `<br><button class="ttt-restart-btn" onclick="restartBreakout()">再玩一局 / Ещё раз</button>`
-    : state.status === "gameover" ? "💥 遊戲結束 / Игра окончена" + `<br><button class="ttt-restart-btn" onclick="restartBreakout()">再玩一局 / Ещё раз</button>`
+  const myEmail = currentUser.email;
+  const opponentEmail = breakoutMyRole === "A" ? state.playerB : (breakoutMyRole === "B" ? state.playerA : null);
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+
+  if (opponentOnlineNow) {
+    gameOpponentSeenOnline = true;
+    gameOfflineToastShown = false;
+  }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) {
+      lightEl.classList.add("offline");
+      lightEl.title = "對方已離開遊戲 / Собеседник вышел из игры";
+    } else if (state.status === "playing") {
+      lightEl.classList.add("on-turn");
+      lightEl.title = "對方在線上，一起合作中 / Собеседник онлайн";
+    } else {
+      lightEl.title = "";
+    }
+  }
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+
+  if (showOffline) {
+    statusEl.innerHTML = `對方已離開遊戲，暫停等待中<br>Собеседник вышел из игры`;
+    if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+    return;
+  }
+
+  statusEl.innerHTML = state.status === "win" ? "🎉 完成！所有磚塊都清空了 / Все кирпичи разбиты!" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>`
+    : state.status === "gameover" ? "💥 遊戲結束 / Игра окончена" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>`
     : `分數 ${state.score} ・ 生命 ${"❤️".repeat(Math.max(state.lives, 0))}`;
 
   const ctx = canvas.getContext("2d");
@@ -5851,12 +5884,32 @@ function renderBreakout(state) {
   }
 }
 
-function restartBreakout() {
+const BREAKOUT_SPEED_PRESETS = {
+  slow: { vx: 2.2, vy: 2.6 },
+  normal: { vx: 2.9, vy: 3.3 },
+  fast: { vx: 3.8, vy: 4.2 }
+};
+
+function showBreakoutDifficultyPicker() {
+  const statusEl = document.getElementById("breakoutStatus");
+  if (!statusEl) return;
+  statusEl.innerHTML = `
+    <div style="font-size:12px;margin-bottom:6px;">選擇球速 / Выберите скорость</div>
+    <div style="display:flex;gap:6px;justify-content:center;">
+      <button class="ttt-restart-btn" onclick="restartBreakout('slow')">🐢 慢</button>
+      <button class="ttt-restart-btn" onclick="restartBreakout('normal')">🙂 普通</button>
+      <button class="ttt-restart-btn" onclick="restartBreakout('fast')">⚡ 快</button>
+    </div>
+  `;
+}
+
+function restartBreakout(speedKey) {
+  const preset = BREAKOUT_SPEED_PRESETS[speedKey] || BREAKOUT_SPEED_PRESETS.normal;
   db.ref("games/breakout").once("value").then((snap) => {
     const state = snap.val();
     if (!state) return;
     db.ref("games/breakout").update({
-      ball: { x: BREAKOUT_WIDTH / 2, y: 110, vx: 2.2, vy: 2.6 },
+      ball: { x: BREAKOUT_WIDTH / 2, y: 110, vx: preset.vx, vy: preset.vy },
       bricks: generateBreakoutBricks(),
       score: 0,
       lives: 3,
