@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.156</title>
+  <title>L⇄V ∞ v21.158</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2130,7 +2130,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.156</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.158</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2361,7 +2361,7 @@
 
 <script>
 
-const APP_VERSION = "21.156";
+const APP_VERSION = "21.158";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2557,7 +2557,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.156";
+    document.title = "L⇄V ∞ v21.158";
   }
 });
 
@@ -2622,7 +2622,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.156";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.158";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5838,12 +5838,13 @@ function renderBreakout(state) {
   }
   if (showOffline && !gameOfflineToastShown) {
     gameOfflineToastShown = true;
-    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+    showGameToast("與對方的連線中斷了，請重新發起一局 / Соединение прервано, начните игру заново");
+    if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+    exitGameScreen(true);
+    return;
   }
 
   if (showOffline) {
-    statusEl.innerHTML = `對方已離開遊戲，暫停等待中<br>Собеседник вышел из игры`;
-    if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
     return;
   }
 
