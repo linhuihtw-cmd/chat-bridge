@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.161</title>
+  <title>L⇄V ∞ v21.162</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1228,6 +1228,22 @@
     }
     .bulls-history-row .bulls-ab { color: var(--gold-bright); font-weight: 500; }
     .bulls-hint { color: var(--text-tertiary); font-size: 11px; text-align: center; }
+    .gw-turn-banner {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
+      margin: 4px 0;
+      background: var(--bg-panel);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+    .gw-turn-banner.my-turn {
+      background: rgba(201, 168, 118, 0.15);
+      color: var(--gold);
+      border: 1px solid var(--gold-dim);
+    }
     .bulls-turn-row { display: flex; width: 100%; }
     .bulls-turn-row.mine { justify-content: flex-end; }
     .bulls-turn-row.theirs { justify-content: flex-start; }
@@ -2136,7 +2152,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.161</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.162</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2367,7 +2383,7 @@
 
 <script>
 
-const APP_VERSION = "21.161";
+const APP_VERSION = "21.162";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2563,7 +2579,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.161";
+    document.title = "L⇄V ∞ v21.162";
   }
 });
 
@@ -2628,7 +2644,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.161";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.162";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4707,7 +4723,9 @@ function renderGuessWho(state) {
           (m.from !== myEmail ? `<div class="gw-quick-reply"><button class="gw-quick-btn" onclick="gwAnswerQuestion('${key}','yes')">Да/是</button><button class="gw-quick-btn" onclick="gwAnswerQuestion('${key}','no')">Нет/否</button><button class="gw-quick-btn" onclick="gwAnswerQuestion('${key}','invalid')" title="無法定義，請對方重新發問 / Нельзя определить, задайте вопрос иначе">🤷</button></div>` : '')}
       </div>`;
       }).join('')
-    : `<div class="bulls-hint">在下面輸入問題，AI會直接翻給對方看 / Введите вопрос ниже, ИИ переведёт его для соперника</div>`;
+    : `<div class="bulls-hint">${turnIsMe ? '請發問 / Задайте вопрос' : '換對方發問 / Ход соперника'}</div>`;
+
+  const turnBannerHtml = `<div class="gw-turn-banner ${turnIsMe ? 'my-turn' : ''}">${turnIsMe ? '🟢 輪到你發問 / Твой ход' : '⏳ 換對方發問 / Ход соперника'}</div>`;
 
   body.innerHTML = `
     <div class="gw-my-secret"><span class="gw-secret-emoji">${themeChars[mySecretIdx]}</span><span>👈🏻 我的 / Моё</span></div>
@@ -4717,6 +4735,7 @@ function renderGuessWho(state) {
       <button class="bulls-submit-btn" onclick="submitGuessWhoGuess()" ${turnIsMe ? '' : 'disabled'}>猜這個 / Угадать</button>
     </div>
     ${historyHtml ? `<div class="gw-history">${historyHtml}</div>` : ''}
+    ${turnBannerHtml}
     <div class="gw-chat" id="gwChatLog">${chatHtml}</div>
     <div class="gw-chat-input-row">
       <textarea rows="2" id="gwChatInput" class="gw-chat-input ${turnIsMe ? 'my-turn' : ''}" placeholder="${turnIsMe ? (state.lastInvalidBy === myEmail ? 'Вопрос не засчитан, задайте другой / 無效問題，換個問法再問' : 'Твой ход, задай вопрос / 換你發問') : 'Дождитесь своего хода / 等對方發問'}" ${turnIsMe ? '' : 'disabled'} onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();gwSendQuestion();}"></textarea>
