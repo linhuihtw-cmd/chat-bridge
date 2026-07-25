@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.162</title>
+  <title>L⇄V ∞ v21.163</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2152,7 +2152,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.162</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.163</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2383,7 +2383,7 @@
 
 <script>
 
-const APP_VERSION = "21.162";
+const APP_VERSION = "21.163";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2579,7 +2579,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.162";
+    document.title = "L⇄V ∞ v21.163";
   }
 });
 
@@ -2644,7 +2644,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.162";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.163";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3699,6 +3699,12 @@ async function callDeepSeek(mode, text) {
     }
 
     const data = await res.json();
+
+    // 如果Worker那邊有標記「切換了備援模型」，只提醒管理者（妳自己），使用者（V）看到的畫面完全正常不受影響
+    if ((data?._usedFallback || data?._adminAlert) && currentUser?.email === ADMIN_EMAIL) {
+      showGameToast("⚠️ 主要AI模型出狀況，已自動切換備援，請盡快檢查 / Основная модель ИИ недоступна, включён резерв");
+    }
+
     if (data && data.choices && data.choices[0] && data.choices[0].message) {
       return data.choices[0].message.content || "（沒有回應 / Нет ответа）";
     } else {
