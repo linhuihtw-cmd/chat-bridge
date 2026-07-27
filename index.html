@@ -1,14 +1,16 @@
 <!DOCTYPE html>
+<!-- ⚠️⚠️⚠️ 這是【聊天橋 We are L⇄V ∞】的前端（網頁）——只能貼到 GitHub 的 index.html，絕對不能貼到 Cloudflare Worker ⚠️⚠️⚠️ -->
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.163</title>
+  <title>L⇄V ∞ v21.164</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
   <style>
     :root {
@@ -91,6 +93,27 @@
     .chat-text strong {
       font-weight: 700;
     }
+    .chat-image {
+      padding: 4px;
+      max-width: 240px;
+      background: var(--bg-elevated);
+      border: 0.5px solid var(--border-subtle);
+    }
+    .chat-image img {
+      display: block;
+      width: 100%;
+      max-height: 320px;
+      object-fit: cover;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .chat-image-caption {
+      font-size: 14px;
+      padding: 6px 4px 2px;
+      color: var(--text-primary);
+    }
+    .msg-box.own .chat-image { align-self: flex-end; border-top-right-radius: 4px; }
+    .msg-box.other .chat-image { align-self: flex-start; border-top-left-radius: 4px; }
     .msg-edit-btn {
       background: none;
       border: none;
@@ -2152,7 +2175,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.163</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.164</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2363,7 +2386,8 @@
 </div>
 
 <div class="input-area">
-  <button class="btn-clear-db" onclick="alert('圖片功能即將推出 / Функция изображений скоро появится')" title="傳送圖片 / Изображение">📷</button>
+  <button id="imageBtn" class="btn-clear-db" onclick="triggerImageUpload()" title="傳送圖片 / Изображение">📷</button>
+  <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelected(event)">
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)" oninput="autoGrowTextarea(this)"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
@@ -2383,7 +2407,7 @@
 
 <script>
 
-const APP_VERSION = "21.163";
+const APP_VERSION = "21.164";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2419,6 +2443,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
+const storage = firebase.storage();
 let currentUser = null;
 
 function loginWithGoogle() {
@@ -2579,7 +2604,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.163";
+    document.title = "L⇄V ∞ v21.164";
   }
 });
 
@@ -2644,7 +2669,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.163";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.164";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3560,6 +3585,18 @@ function renderChat() {
 
         return `${dateSeparator}<div class="msg-box" id="msg-${m.firebaseKey || ''}"><div style="color:var(--text-tertiary);font-size:12px;font-style:italic;padding:4px 8px;">↩ 此訊息已收回 / Сообщение отозвано</div>${timeLabel}</div>`;
       }
+
+      // 圖片訊息：不套用翻譯卡片邏輯，直接顯示圖片本身
+      if (m.type === "image") {
+        const isOwnImg = currentUser && m.senderEmail === currentUser.email;
+        const bubbleColorImg = getBubbleColor(m.senderEmail);
+        const bubbleStyleImg = bubbleColorImg ? `style="border-color:${bubbleColorImg}; border-width:2px;"` : "";
+        const safeUrlImg = (m.imageUrl || "").replace(/"/g, '&quot;');
+        const safeNameImg = getDisplayName(m.senderEmail).replace(/"/g, '&quot;');
+        const captionHtml = m.text && m.text !== "[圖片]" ? `<div class="chat-image-caption">${escapeHtmlText(m.text)}</div>` : "";
+        return `${dateSeparator}<div class="msg-box ${isOwnImg ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}" data-text="[圖片]" data-name="${safeNameImg}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-image" ${bubbleStyleImg}><img src="${safeUrlImg}" alt="圖片" loading="lazy" onclick="window.open('${safeUrlImg}','_blank')">${captionHtml}</div>${timeLabel}</div>`;
+      }
+
       const displayName = getDisplayName(m.senderEmail);
       const bubbleColor = getBubbleColor(m.senderEmail);
       const isOwnMessage = currentUser && m.senderEmail === currentUser.email;
@@ -3812,6 +3849,83 @@ async function sendMsg() {
   isSending = false;
   sendBtn.disabled = false;
   sendBtn.innerHTML = "<span class=\"send-arrow\">➤</span>";
+}
+
+/* ============================================================
+   傳送圖片功能：選圖 → 前端壓縮 → 上傳 Firebase Storage → 存訊息
+   ============================================================ */
+function triggerImageUpload() {
+  const inputEl = document.getElementById("imageInput");
+  if (inputEl) inputEl.click();
+}
+
+function compressImageFile(file, maxDim = 1600, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("讀取圖片失敗"));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("圖片格式無法讀取"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob); else reject(new Error("圖片壓縮失敗"));
+        }, "image/jpeg", quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+let isSendingImage = false;
+async function handleImageSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  if (!file) return;
+  if (!file.type || !file.type.startsWith("image/")) {
+    alert("請選擇圖片檔案 / Пожалуйста, выберите файл изображения");
+    return;
+  }
+  if (isSendingImage) return;
+  isSendingImage = true;
+  const imageBtn = document.getElementById("imageBtn");
+  const originalBtnHtml = imageBtn ? imageBtn.innerHTML : "";
+  if (imageBtn) { imageBtn.disabled = true; imageBtn.innerText = "⏳"; }
+
+  try {
+    const compressedBlob = await compressImageFile(file);
+    const senderTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const safeUid = (currentUser.uid || emailToKey(currentUser.email) || "user").replace(/[^a-zA-Z0-9_-]/g, "");
+    const fileName = "images/" + safeUid + "_" + Date.now() + ".jpg";
+    const storageRef = storage.ref(fileName);
+    await storageRef.put(compressedBlob, { contentType: "image/jpeg" });
+    const downloadUrl = await storageRef.getDownloadURL();
+    const msgData = {
+      role: "user",
+      type: "image",
+      imageUrl: downloadUrl,
+      text: "[圖片]",
+      timestamp: Date.now(),
+      tz: senderTimeZone,
+      senderEmail: currentUser.email
+    };
+    await db.ref("messages").push(msgData);
+  } catch (e) {
+    alert("⚠️ 圖片傳送失敗，請稍後再試一次。\n\n錯誤詳情：" + e.message);
+  } finally {
+    isSendingImage = false;
+    if (imageBtn) { imageBtn.disabled = false; imageBtn.innerHTML = originalBtnHtml || "📷"; }
+  }
 }
 
 /* ============================================================
