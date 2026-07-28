@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.166</title>
+  <title>L⇄V ∞ v21.167</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -135,7 +135,6 @@
       padding: 2px 4px;
     }
     .image-ocr-card { margin-top: 6px; }
-    .image-ocr-card .card-body { display: block; }
     .msg-edit-btn {
       background: none;
       border: none;
@@ -2197,7 +2196,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.166</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.167</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2429,7 +2428,7 @@
 
 <script>
 
-const APP_VERSION = "21.166";
+const APP_VERSION = "21.167";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2626,7 +2625,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.166";
+    document.title = "L⇄V ∞ v21.167";
   }
 });
 
@@ -2691,7 +2690,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.166";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.167";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3619,7 +3618,8 @@ function renderChat() {
 
         let ocrHtml = "";
         if (m.ocrStatus === "done" && m.ocrTranslation) {
-          ocrHtml = `<div class="ai-card image-ocr-card"><div class="card-body">${buildImageOcrCardHtml(m.ocrTranslation)}</div></div>`;
+          const ocrCard = buildImageOcrCardHtml(m.ocrTranslation);
+          ocrHtml = `<div class="ai-card image-ocr-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByButton(this)">▾</button>${ocrCard.preview}<div class="card-body" style="display:none;">${ocrCard.bodyHtml}</div></div>`;
         } else if (m.ocrStatus === "none") {
           ocrHtml = `<div class="chat-image-ocr-note">（未偵測到文字 / Текст не обнаружен）</div>`;
         } else {
@@ -3964,27 +3964,35 @@ async function handleImageSelected(event) {
    圖片文字懶翻譯：點擊展開鍵才辨識+翻譯，結果存回該則圖片訊息
    ============================================================ */
 function buildImageOcrCardHtml(rawText) {
-  if (!rawText) return "";
+  if (!rawText) return { preview: "", bodyHtml: "" };
   if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
-    return `<div class="card-line">🤖 DeepSeek 系統回報 / Отчет системы<br>${escapeHtmlText(rawText)}</div>`;
+    return { preview: "🤖 DeepSeek 系統回報 / Отчет системы", bodyHtml: `<div class="card-line">${escapeHtmlText(rawText)}</div>` };
   }
   const tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
   const blocks = rawText.replace(/\[pinyin_audio\]/gi, '').trim().match(tagRegex) || [];
   let hasExplanation = false;
-  const lines = blocks.map(block => {
+  let previewText = "";
+  const lineHtmls = [];
+  blocks.forEach(block => {
     const trimmed = block.replace(/^\s*\*\s*/, "").trim();
-    if (!trimmed) return "";
+    if (!trimmed) return;
     const contentMatch = trimmed.match(/^【[^】]+】([\s\S]*)$/);
     const content = contentMatch ? contentMatch[1].trim() : "";
-    if (!content) return "";
+    if (!content) return;
+    if (!previewText) previewText = content;
     if (trimmed.startsWith("【語意解釋")) {
       hasExplanation = true;
-      return `<div class="card-line collapsible-explanation" style="display:none;">${escapeHtmlText(trimmed)}</div>`;
+      lineHtmls.push(`<div class="card-line collapsible-explanation" style="display:none;">${escapeHtmlText(trimmed)}</div>`);
+    } else {
+      lineHtmls.push(`<div class="card-line">${escapeHtmlText(trimmed)}</div>`);
     }
-    return `<div class="card-line">${escapeHtmlText(trimmed)}</div>`;
-  }).filter(Boolean);
+  });
+  if (lineHtmls.length === 0) {
+    return { preview: escapeHtmlText(rawText.slice(0, 60)), bodyHtml: "" };
+  }
   const toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByButton(this)">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
-  return (lines.join("") + toggleBtn) || `<div class="card-line">${escapeHtmlText(rawText)}</div>`;
+  // 第一行內容當作收合狀態下的預覽，展開後的完整內容（含其餘欄位＋解釋）放進card-body
+  return { preview: escapeHtmlText(previewText), bodyHtml: lineHtmls.slice(1).join("") + toggleBtn };
 }
 
 async function requestImageOcrTranslate(key, imageUrl, btnEl) {
