@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.167</title>
+  <title>L⇄V ∞ v21.168</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -95,7 +95,7 @@
     }
     .chat-image {
       padding: 4px;
-      max-width: 240px;
+      max-width: 280px;
       background: var(--bg-elevated);
       border: 0.5px solid var(--border-subtle);
     }
@@ -135,6 +135,22 @@
       padding: 2px 4px;
     }
     .image-ocr-card { margin-top: 6px; }
+    .ocr-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      margin-bottom: 4px;
+      table-layout: fixed;
+    }
+    .ocr-table td {
+      padding: 5px 6px;
+      border: 0.5px solid var(--border-subtle);
+      vertical-align: top;
+      word-break: break-word;
+      width: 50%;
+    }
+    .ocr-table-original { color: var(--text-tertiary); }
+    .ocr-table-translated { color: var(--text-primary); font-weight: 500; }
     .msg-edit-btn {
       background: none;
       border: none;
@@ -2196,7 +2212,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.167</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.168</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2428,7 +2444,7 @@
 
 <script>
 
-const APP_VERSION = "21.167";
+const APP_VERSION = "21.168";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2625,7 +2641,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.167";
+    document.title = "L⇄V ∞ v21.168";
   }
 });
 
@@ -2690,7 +2706,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.167";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.168";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3968,31 +3984,37 @@ function buildImageOcrCardHtml(rawText) {
   if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
     return { preview: "🤖 DeepSeek 系統回報 / Отчет системы", bodyHtml: `<div class="card-line">${escapeHtmlText(rawText)}</div>` };
   }
-  const tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
-  const blocks = rawText.replace(/\[pinyin_audio\]/gi, '').trim().match(tagRegex) || [];
-  let hasExplanation = false;
-  let previewText = "";
-  const lineHtmls = [];
-  blocks.forEach(block => {
-    const trimmed = block.replace(/^\s*\*\s*/, "").trim();
-    if (!trimmed) return;
-    const contentMatch = trimmed.match(/^【[^】]+】([\s\S]*)$/);
-    const content = contentMatch ? contentMatch[1].trim() : "";
-    if (!content) return;
-    if (!previewText) previewText = content;
-    if (trimmed.startsWith("【語意解釋")) {
-      hasExplanation = true;
-      lineHtmls.push(`<div class="card-line collapsible-explanation" style="display:none;">${escapeHtmlText(trimmed)}</div>`);
-    } else {
-      lineHtmls.push(`<div class="card-line">${escapeHtmlText(trimmed)}</div>`);
-    }
-  });
-  if (lineHtmls.length === 0) {
-    return { preview: escapeHtmlText(rawText.slice(0, 60)), bodyHtml: "" };
+
+  let parsed = null;
+  try {
+    const cleaned = rawText.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "");
+    parsed = JSON.parse(cleaned);
+  } catch (e) {
+    parsed = null;
   }
-  const toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByButton(this)">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
-  // 第一行內容當作收合狀態下的預覽，展開後的完整內容（含其餘欄位＋解釋）放進card-body
-  return { preview: escapeHtmlText(previewText), bodyHtml: lineHtmls.slice(1).join("") + toggleBtn };
+
+  if (!parsed || !Array.isArray(parsed.rows) || parsed.rows.length === 0) {
+    // 解析失敗時的備援：直接顯示AI原始回覆內容，至少不會讓使用者什麼都看不到
+    return { preview: "⚠️ 對照表產生失敗，顯示原始結果 / Не удалось создать таблицу", bodyHtml: `<div class="card-line">${escapeHtmlText(rawText)}</div>` };
+  }
+
+  const rowsHtml = parsed.rows.map(r => {
+    const orig = escapeHtmlText(String((r && r.original) || ""));
+    const trans = escapeHtmlText(String((r && r.translated) || ""));
+    return `<tr><td class="ocr-table-original">${orig}</td><td class="ocr-table-translated">${trans}</td></tr>`;
+  }).join("");
+  const tableHtml = `<table class="ocr-table"><tbody>${rowsHtml}</tbody></table>`;
+
+  const explanationText = String(parsed.explanation || "").trim();
+  const explanationHtml = explanationText
+    ? `<div class="card-line collapsible-explanation" style="display:none;">【語意解釋 / Смысловое пояснение】${escapeHtmlText(explanationText)}</div>`
+    : "";
+  const toggleBtn = explanationText
+    ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByButton(this)">📖 顯示詳細解釋 / Показать пояснение</button></div>`
+    : "";
+
+  const preview = `📋 對照表已產生（共 ${parsed.rows.length} 行）/ Таблица готова`;
+  return { preview, bodyHtml: tableHtml + explanationHtml + toggleBtn };
 }
 
 async function requestImageOcrTranslate(key, imageUrl, btnEl) {
@@ -4012,7 +4034,7 @@ async function requestImageOcrTranslate(key, imageUrl, btnEl) {
       await db.ref("messages/" + key).update({ ocrStatus: "none" });
       return;
     }
-    const translatedText = await callDeepSeek("full", recognizedText);
+    const translatedText = await callDeepSeek("imageTable", recognizedText);
     await db.ref("messages/" + key).update({
       ocrStatus: "done",
       ocrOriginalText: recognizedText,
