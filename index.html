@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.164</title>
+  <title>L⇄V ∞ v21.165</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -114,6 +114,28 @@
     }
     .msg-box.own .chat-image { align-self: flex-end; border-top-right-radius: 4px; }
     .msg-box.other .chat-image { align-self: flex-start; border-top-left-radius: 4px; }
+    .chat-image-ocr-btn {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px 8px;
+      font-size: 12px;
+      border-radius: 8px;
+      border: 0.5px solid var(--border-subtle);
+      background: var(--bg-panel);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .chat-image-ocr-btn:disabled { opacity: 0.6; cursor: default; }
+    .chat-image-ocr-note {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-style: italic;
+      margin-top: 6px;
+      padding: 2px 4px;
+    }
+    .image-ocr-card { margin-top: 6px; }
+    .image-ocr-card .card-body { display: block; }
     .msg-edit-btn {
       background: none;
       border: none;
@@ -2175,7 +2197,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.164</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.165</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2407,7 +2429,7 @@
 
 <script>
 
-const APP_VERSION = "21.164";
+const APP_VERSION = "21.165";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2604,7 +2626,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.164";
+    document.title = "L⇄V ∞ v21.165";
   }
 });
 
@@ -2669,7 +2691,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.164";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.165";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3594,7 +3616,17 @@ function renderChat() {
         const safeUrlImg = (m.imageUrl || "").replace(/"/g, '&quot;');
         const safeNameImg = getDisplayName(m.senderEmail).replace(/"/g, '&quot;');
         const captionHtml = m.text && m.text !== "[圖片]" ? `<div class="chat-image-caption">${escapeHtmlText(m.text)}</div>` : "";
-        return `${dateSeparator}<div class="msg-box ${isOwnImg ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}" data-text="[圖片]" data-name="${safeNameImg}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-image" ${bubbleStyleImg}><img src="${safeUrlImg}" alt="圖片" loading="lazy" onclick="window.open('${safeUrlImg}','_blank')">${captionHtml}</div>${timeLabel}</div>`;
+
+        let ocrHtml = "";
+        if (m.ocrStatus === "done" && m.ocrTranslation) {
+          ocrHtml = `<div class="ai-card image-ocr-card"><div class="card-body">${buildImageOcrCardHtml(m.ocrTranslation)}</div></div>`;
+        } else if (m.ocrStatus === "none") {
+          ocrHtml = `<div class="chat-image-ocr-note">（未偵測到文字 / Текст не обнаружен）</div>`;
+        } else {
+          ocrHtml = `<button class="chat-image-ocr-btn" id="ocrBtn-${m.firebaseKey}" onclick="requestImageOcrTranslate('${m.firebaseKey}','${safeUrlImg}', this)">🔍 翻譯圖片文字 / Перевести текст</button>`;
+        }
+
+        return `${dateSeparator}<div class="msg-box ${isOwnImg ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}" data-text="[圖片]" data-name="${safeNameImg}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-image" ${bubbleStyleImg}><img src="${safeUrlImg}" alt="圖片" loading="lazy" onclick="window.open('${safeUrlImg}','_blank')">${captionHtml}${ocrHtml}</div>${timeLabel}</div>`;
       }
 
       const displayName = getDisplayName(m.senderEmail);
@@ -3925,6 +3957,56 @@ async function handleImageSelected(event) {
   } finally {
     isSendingImage = false;
     if (imageBtn) { imageBtn.disabled = false; imageBtn.innerHTML = originalBtnHtml || "📷"; }
+  }
+}
+
+/* ============================================================
+   圖片文字懶翻譯：點擊展開鍵才辨識+翻譯，結果存回該則圖片訊息
+   ============================================================ */
+function buildImageOcrCardHtml(rawText) {
+  if (!rawText) return "";
+  if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
+    return `<div class="card-line">🤖 DeepSeek 系統回報 / Отчет системы<br>${escapeHtmlText(rawText)}</div>`;
+  }
+  const tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
+  const blocks = rawText.replace(/\[pinyin_audio\]/gi, '').trim().match(tagRegex) || [];
+  const lines = blocks.map(block => {
+    const trimmed = block.replace(/^\s*\*\s*/, "").trim();
+    if (!trimmed) return "";
+    const contentMatch = trimmed.match(/^【[^】]+】([\s\S]*)$/);
+    const content = contentMatch ? contentMatch[1].trim() : "";
+    if (!content) return "";
+    return `<div class="card-line">${escapeHtmlText(trimmed)}</div>`;
+  }).filter(Boolean);
+  return lines.join("") || `<div class="card-line">${escapeHtmlText(rawText)}</div>`;
+}
+
+async function requestImageOcrTranslate(key, imageUrl, btnEl) {
+  if (btnEl) { btnEl.disabled = true; btnEl.innerText = "🔍 辨識中… / Распознаём…"; }
+  try {
+    const ocrRes = await fetch(`https://${API_KEY.trim()}/ocr`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl })
+    });
+    const ocrData = await ocrRes.json();
+    if (ocrData.error) {
+      throw new Error(ocrData.error.message || "OCR 辨識失敗");
+    }
+    const recognizedText = (ocrData.text || "").trim();
+    if (!recognizedText) {
+      await db.ref("messages/" + key).update({ ocrStatus: "none" });
+      return;
+    }
+    const translatedText = await callDeepSeek("full", recognizedText);
+    await db.ref("messages/" + key).update({
+      ocrStatus: "done",
+      ocrOriginalText: recognizedText,
+      ocrTranslation: translatedText
+    });
+  } catch (e) {
+    alert("⚠️ 圖片文字翻譯失敗，請稍後再試一次。\n\n錯誤詳情：" + e.message);
+    if (btnEl) { btnEl.disabled = false; btnEl.innerText = "🔍 翻譯圖片文字 / Перевести текст"; }
   }
 }
 
