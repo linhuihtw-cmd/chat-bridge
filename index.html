@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.165</title>
+  <title>L⇄V ∞ v21.166</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2197,7 +2197,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.165</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.166</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2429,7 +2429,7 @@
 
 <script>
 
-const APP_VERSION = "21.165";
+const APP_VERSION = "21.166";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2626,7 +2626,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.165";
+    document.title = "L⇄V ∞ v21.166";
   }
 });
 
@@ -2691,7 +2691,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.165";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.166";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3970,15 +3970,21 @@ function buildImageOcrCardHtml(rawText) {
   }
   const tagRegex = /【[^】]+】[\s\S]*?(?=【|$)/g;
   const blocks = rawText.replace(/\[pinyin_audio\]/gi, '').trim().match(tagRegex) || [];
+  let hasExplanation = false;
   const lines = blocks.map(block => {
     const trimmed = block.replace(/^\s*\*\s*/, "").trim();
     if (!trimmed) return "";
     const contentMatch = trimmed.match(/^【[^】]+】([\s\S]*)$/);
     const content = contentMatch ? contentMatch[1].trim() : "";
     if (!content) return "";
+    if (trimmed.startsWith("【語意解釋")) {
+      hasExplanation = true;
+      return `<div class="card-line collapsible-explanation" style="display:none;">${escapeHtmlText(trimmed)}</div>`;
+    }
     return `<div class="card-line">${escapeHtmlText(trimmed)}</div>`;
   }).filter(Boolean);
-  return lines.join("") || `<div class="card-line">${escapeHtmlText(rawText)}</div>`;
+  const toggleBtn = hasExplanation ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByButton(this)">📖 顯示詳細解釋 / Показать пояснение</button></div>` : "";
+  return (lines.join("") + toggleBtn) || `<div class="card-line">${escapeHtmlText(rawText)}</div>`;
 }
 
 async function requestImageOcrTranslate(key, imageUrl, btnEl) {
