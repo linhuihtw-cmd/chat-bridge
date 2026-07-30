@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.172</title>
+  <title>L⇄V ∞ v21.173</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -684,15 +684,21 @@
     }
     .ocr-detail-close-btn:hover { color: var(--text-primary); }
     .ocr-popout-btn {
-      background: none;
-      border: none;
-      color: var(--text-tertiary);
-      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+      color: var(--gold);
+      border: 0.5px solid var(--gold-dim);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
-      padding: 0 4px;
-      vertical-align: middle;
+      white-space: nowrap;
+      margin-left: 4px;
     }
-    .ocr-popout-btn:hover { color: var(--gold); }
+    .ocr-popout-btn:hover { background: rgba(212, 175, 106, 0.1); }
     #profileSetupBox, #settingsBox {
       background: var(--bg-elevated);
       border: 1px solid var(--gold-dim);
@@ -2258,7 +2264,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.172</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.173</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2498,7 +2504,7 @@
 
 <script>
 
-const APP_VERSION = "21.172";
+const APP_VERSION = "21.173";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2695,7 +2701,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.172";
+    document.title = "L⇄V ∞ v21.173";
   }
 });
 
@@ -2760,7 +2766,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.172";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.173";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3689,7 +3695,7 @@ function renderChat() {
         let ocrHtml = "";
         if (m.ocrStatus === "done" && m.ocrTranslation) {
           const ocrCard = buildImageOcrCardHtml(m.ocrTranslation);
-          ocrHtml = `<div class="ai-card image-ocr-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByButton(this)">▾</button>${ocrCard.preview}<button class="ocr-popout-btn" onclick="openOcrDetail('${m.firebaseKey}')" title="用大視窗查看 / Открыть в окне">⛶</button><div class="card-body" style="display:none;">${ocrCard.bodyHtml}</div></div>`;
+          ocrHtml = `<div class="ai-card image-ocr-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByButton(this)">▾</button>${ocrCard.preview}<div style="margin-top:6px;"><button class="ocr-popout-btn" onclick="openOcrDetail('${m.firebaseKey}')">⛶ 大視窗查看 / Открыть в окне</button></div><div class="card-body" style="display:none;">${ocrCard.bodyHtml}</div></div>`;
         } else if (m.ocrStatus === "none") {
           ocrHtml = `<div class="chat-image-ocr-note">（未偵測到文字 / Текст не обнаружен）</div>`;
         } else {
