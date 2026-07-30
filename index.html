@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.175</title>
+  <title>L⇄V ∞ v21.176</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1678,6 +1678,43 @@
     }
     .gomoku-cell:hover { background: var(--bg-elevated); }
     .gomoku-cell.filled { cursor: default; }
+    /* 雙人踩地雷 */
+    .ms-board {
+      display: grid;
+      grid-template-columns: repeat(8, 28px);
+      grid-template-rows: repeat(8, 28px);
+      gap: 1px;
+      background: var(--border-subtle);
+      padding: 3px;
+      border-radius: 4px;
+      width: max-content;
+    }
+    .ms-cell {
+      width: 28px;
+      height: 28px;
+      background: var(--bg-panel);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      user-select: none;
+      border-radius: 2px;
+    }
+    .ms-cell:hover:not(.revealed) { background: var(--bg-elevated); }
+    .ms-cell.revealed { background: var(--bg-deep); cursor: default; }
+    .ms-cell.mine { background: var(--error-red); cursor: default; }
+    .ms-cell.mine-fatal { background: #d9534f; }
+    .ms-cell.mine-revealed-end { opacity: 0.65; }
+    .ms-cell.num-1 { color: #6b9bd6; }
+    .ms-cell.num-2 { color: #6fae6f; }
+    .ms-cell.num-3 { color: #c96b6b; }
+    .ms-cell.num-4 { color: #8b7bc9; }
+    .ms-cell.num-5 { color: #b58a4f; }
+    .ms-cell.num-6 { color: #5fb8b8; }
+    .ms-cell.num-7 { color: var(--text-primary); }
+    .ms-cell.num-8 { color: var(--text-tertiary); }
     .gomoku-stone {
       width: 14px;
       height: 14px;
@@ -2274,7 +2311,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.175</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.176</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2514,7 +2551,7 @@
 
 <script>
 
-const APP_VERSION = "21.175";
+const APP_VERSION = "21.176";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2711,7 +2748,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.175";
+    document.title = "L⇄V ∞ v21.176";
   }
 });
 
@@ -2776,7 +2813,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.175";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.176";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4166,7 +4203,8 @@ const GAME_CATALOG = [
   { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: true },
   { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true },
   { id: "wordmatch", icon: "🔊", name: "聽音連連看", nameRu: "Слушай и соедини", available: true },
-  { id: "breakout",  icon: "🧱", name: "合力接磚塊", nameRu: "Вместе разбиваем кирпичи", available: true }
+  { id: "breakout",  icon: "🧱", name: "合力接磚塊", nameRu: "Вместе разбиваем кирпичи", available: true },
+  { id: "minesweeper", icon: "💣", name: "雙人踩地雷", nameRu: "Сапёр на двоих", available: true }
 ];
 
 let selectedGameMenuIds = [];
@@ -4503,6 +4541,17 @@ function resetGameState(gameId, inviteData) {
       status: "playing",
       updatedAt: Date.now()
     });
+  } else if (gameId === "minesweeper") {
+    db.ref("games/minesweeper").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      mines: generateMinesweeperMines(MS_TOTAL, MS_MINES),
+      revealed: Array(MS_TOTAL).fill(false),
+      turn: "A",
+      winner: null,
+      loserCell: null,
+      updatedAt: Date.now()
+    });
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
@@ -4566,6 +4615,8 @@ function enterGameScreen(gameId, inviteData) {
     initWordmatchScreen();
   } else if (gameId === "breakout") {
     initBreakoutScreen();
+  } else if (gameId === "minesweeper") {
+    initMinesweeperScreen();
   } else {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
@@ -5737,6 +5788,215 @@ function restartGomoku() {
     turn: "A",
     winner: null,
     updatedAt: Date.now()
+  });
+}
+
+/* ---------- 雙人踩地雷 ---------- */
+const MS_COLS = 8, MS_ROWS = 8, MS_TOTAL = MS_COLS * MS_ROWS, MS_MINES = 8;
+
+function generateMinesweeperMines(total, mineCount) {
+  const mines = Array(total).fill(false);
+  let placed = 0;
+  while (placed < mineCount) {
+    const idx = Math.floor(Math.random() * total);
+    if (!mines[idx]) { mines[idx] = true; placed++; }
+  }
+  return mines;
+}
+function msComputeAdjacent(mines, idx, cols, rows) {
+  const r = Math.floor(idx / cols), c = idx % cols;
+  let count = 0;
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+        if (mines[nr * cols + nc]) count++;
+      }
+    }
+  }
+  return count;
+}
+function msFloodReveal(mines, revealed, startIdx, cols, rows) {
+  const newRevealed = revealed.slice();
+  const stack = [startIdx];
+  const visited = new Set();
+  while (stack.length) {
+    const idx = stack.pop();
+    if (visited.has(idx)) continue;
+    visited.add(idx);
+    if (newRevealed[idx]) continue;
+    newRevealed[idx] = true;
+    if (msComputeAdjacent(mines, idx, cols, rows) === 0) {
+      const r = Math.floor(idx / cols), c = idx % cols;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+            const nIdx = nr * cols + nc;
+            if (!mines[nIdx] && !newRevealed[nIdx]) stack.push(nIdx);
+          }
+        }
+      }
+    }
+  }
+  return newRevealed;
+}
+function initMinesweeperScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `
+    <div class="ttt-status" id="msStatus">載入中... / Загрузка...</div>
+    <div class="gomoku-board-wrap"><div class="ms-board" id="msBoard"></div></div>
+  `;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/minesweeper");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderMinesweeper(state);
+  });
+  registerGamePresence("minesweeper");
+}
+function renderMinesweeper(state) {
+  const boardEl = document.getElementById("msBoard");
+  const statusEl = document.getElementById("msStatus");
+  const lightEl = document.getElementById("gameTurnLight");
+  if (!boardEl || !statusEl) return;
+  const myEmail = currentUser.email;
+  const myRole = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+  const opponentEmail = myRole === "A" ? state.playerB : (myRole === "B" ? state.playerA : null);
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+
+  if (opponentOnlineNow) {
+    gameOpponentSeenOnline = true;
+    gameOfflineToastShown = false;
+  }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) {
+      lightEl.classList.add("offline");
+      lightEl.title = "對方已離開遊戲 / Собеседник вышел из игры";
+    } else if (!state.winner) {
+      if (state.turn === myRole) {
+        lightEl.classList.add("on-turn");
+        lightEl.title = "輪到你 / Ваш ход";
+      } else {
+        lightEl.classList.add("waiting");
+        lightEl.title = "等待對方 / Ход соперника";
+      }
+    } else {
+      lightEl.title = "";
+    }
+  }
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (titleEl) {
+    titleEl.textContent = showOffline ? "Конец игры / 結束" : currentGameTitleText;
+  }
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+
+  const mines = state.mines || [];
+  const revealed = state.revealed || [];
+  const gameOver = !!state.winner;
+
+  boardEl.innerHTML = Array.from({ length: MS_TOTAL }, (_, i) => {
+    const isRevealed = !!revealed[i];
+    const isMineCell = !!mines[i];
+    let cls = "ms-cell";
+    let content = "";
+    if (isRevealed) {
+      cls += " revealed";
+      if (isMineCell) {
+        cls += " mine" + (state.loserCell === i ? " mine-fatal" : "");
+        content = "💣";
+      } else {
+        const adj = msComputeAdjacent(mines, i, MS_COLS, MS_ROWS);
+        if (adj > 0) { content = String(adj); cls += " num-" + adj; }
+      }
+    } else if (gameOver && isMineCell) {
+      // 遊戲結束時把剩下沒踩到的地雷也顯示出來，讓雙方看清楚整個盤面
+      cls += " mine mine-revealed-end";
+      content = "💣";
+    }
+    const clickable = !gameOver && !isRevealed && myRole && state.turn === myRole;
+    return `<div class="${cls}" ${clickable ? `onclick="msMove(${i})"` : ""}>${content}</div>`;
+  }).join("");
+
+  if (showOffline) {
+    statusEl.innerHTML = `對方已離開遊戲<br>Собеседник вышел из игры`;
+  } else if (state.winner) {
+    if (state.winner === "draw") {
+      statusEl.innerHTML = `太厲害了，兩人一起把安全格都踩完了！🎉 / Все безопасные клетки открыты!<br><button class="ttt-restart-btn" onclick="restartMinesweeper()">再玩一局 / Ещё раз</button>`;
+    } else {
+      const winnerIsMe = state.winner === myRole;
+      statusEl.innerHTML = (winnerIsMe ? "💥 對方踩到地雷了，你贏了！🎉 / Соперник подорвался, вы выиграли!" : "💥 你踩到地雷了 / Вы подорвались")
+        + `<br><button class="ttt-restart-btn" onclick="restartMinesweeper()">再玩一局 / Ещё раз</button>`;
+    }
+  } else {
+    const turnIsMe = state.turn === myRole;
+    statusEl.textContent = turnIsMe ? "輪到你，小心踩雷～ / Ваш ход" : "Ход соперника / 等對方";
+  }
+}
+function msMove(i) {
+  db.ref("games/minesweeper").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.winner) return;
+    const myRole = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!myRole || state.turn !== myRole) return;
+    const mines = state.mines || [];
+    const revealed = state.revealed || [];
+    if (revealed[i]) return;
+
+    if (mines[i]) {
+      const newRevealed = revealed.slice();
+      newRevealed[i] = true;
+      db.ref("games/minesweeper").update({
+        revealed: newRevealed,
+        winner: myRole === "A" ? "B" : "A",
+        loserCell: i,
+        updatedAt: Date.now()
+      });
+      return;
+    }
+
+    const newRevealed = msFloodReveal(mines, revealed, i, MS_COLS, MS_ROWS);
+    const safeTotal = MS_TOTAL - mines.filter(Boolean).length;
+    const revealedSafeCount = newRevealed.reduce((sum, v, idx) => sum + (v && !mines[idx] ? 1 : 0), 0);
+    const cleared = revealedSafeCount >= safeTotal;
+
+    db.ref("games/minesweeper").update({
+      revealed: newRevealed,
+      turn: myRole === "A" ? "B" : "A",
+      winner: cleared ? "draw" : null,
+      updatedAt: Date.now()
+    });
+  });
+}
+function restartMinesweeper() {
+  db.ref("games/minesweeper").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state) return;
+    db.ref("games/minesweeper").update({
+      mines: generateMinesweeperMines(MS_TOTAL, MS_MINES),
+      revealed: Array(MS_TOTAL).fill(false),
+      turn: "A",
+      winner: null,
+      loserCell: null,
+      updatedAt: Date.now()
+    });
   });
 }
 
