@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.169</title>
+  <title>L⇄V ∞ v21.170</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -644,7 +644,7 @@
     .reply-quote-name { color: var(--gold-bright); font-weight: 500; margin-right: 4px; }
     .reply-quote-text { color: rgba(255,255,255,0.85); }
     .reply-quote:hover { background: rgba(0,0,0,0.35); }
-    #profileSetupOverlay, #settingsOverlay {
+    #profileSetupOverlay, #settingsOverlay, #ocrDetailOverlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.7);
@@ -654,6 +654,45 @@
       justify-content: center;
       backdrop-filter: blur(3px);
     }
+    #ocrDetailBox {
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      max-width: 640px;
+      width: 92%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+      position: relative;
+    }
+    #ocrDetailBox .ocr-table { font-size: 14.5px; }
+    #ocrDetailBox .ocr-table td { padding: 8px 10px; }
+    #ocrDetailBox .card-line { margin-bottom: 6px; }
+    .ocr-detail-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .ocr-detail-close-btn:hover { color: var(--text-primary); }
+    .ocr-popout-btn {
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0 4px;
+      vertical-align: middle;
+    }
+    .ocr-popout-btn:hover { color: var(--gold); }
     #profileSetupBox, #settingsBox {
       background: var(--bg-elevated);
       border: 1px solid var(--gold-dim);
@@ -2217,7 +2256,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.169</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.170</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2408,6 +2447,14 @@
   </div>
 </div>
 
+<div id="ocrDetailOverlay" style="display:none;" onclick="if(event.target===this) closeOcrDetail()">
+  <div id="ocrDetailBox">
+    <button type="button" class="ocr-detail-close-btn" onclick="closeOcrDetail()">✕</button>
+    <div class="profile-setup-title">📋 對照表 / Таблица</div>
+    <div id="ocrDetailBody"></div>
+  </div>
+</div>
+
 <div id="consensusPanel" class="consensus-panel" style="display:none;"></div>
 
 <div id="chat"></div>
@@ -2449,7 +2496,7 @@
 
 <script>
 
-const APP_VERSION = "21.169";
+const APP_VERSION = "21.170";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2646,7 +2693,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.169";
+    document.title = "L⇄V ∞ v21.170";
   }
 });
 
@@ -2711,7 +2758,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.169";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.170";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3640,7 +3687,7 @@ function renderChat() {
         let ocrHtml = "";
         if (m.ocrStatus === "done" && m.ocrTranslation) {
           const ocrCard = buildImageOcrCardHtml(m.ocrTranslation);
-          ocrHtml = `<div class="ai-card image-ocr-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByButton(this)">▾</button>${ocrCard.preview}<div class="card-body" style="display:none;">${ocrCard.bodyHtml}</div></div>`;
+          ocrHtml = `<div class="ai-card image-ocr-card"><span class="card-status-icon"></span><button class="card-collapse-arrow" onclick="toggleCardByButton(this)">▾</button>${ocrCard.preview}<button class="ocr-popout-btn" onclick="openOcrDetail('${m.firebaseKey}')" title="用大視窗查看 / Открыть в окне">⛶</button><div class="card-body" style="display:none;">${ocrCard.bodyHtml}</div></div>`;
         } else if (m.ocrStatus === "none") {
           ocrHtml = `<div class="chat-image-ocr-note">（未偵測到文字 / Текст не обнаружен）</div>`;
         } else {
@@ -3984,7 +4031,7 @@ async function handleImageSelected(event) {
 /* ============================================================
    圖片文字懶翻譯：點擊展開鍵才辨識+翻譯，結果存回該則圖片訊息
    ============================================================ */
-function buildImageOcrCardHtml(rawText) {
+function buildImageOcrCardHtml(rawText, expanded) {
   if (!rawText) return { preview: "", bodyHtml: "" };
   if (rawText.startsWith("【連線失敗原因】") || rawText.startsWith("錯誤：") || rawText.startsWith("【除錯資訊】")) {
     return { preview: "🤖 DeepSeek 系統回報 / Отчет системы", bodyHtml: `<div class="card-line">${escapeHtmlText(rawText)}</div>` };
@@ -4014,15 +4061,32 @@ function buildImageOcrCardHtml(rawText) {
   const imageTypeHtml = imageType ? `<div class="card-line ocr-image-type">🏷️ 判斷類型：${escapeHtmlText(imageType)}</div>` : "";
 
   const explanationText = String(parsed.explanation || "").trim();
-  const explanationHtml = explanationText
-    ? `<div class="card-line collapsible-explanation" style="display:none;">【語意解釋 / Смысловое пояснение】${escapeHtmlText(explanationText)}</div>`
-    : "";
-  const toggleBtn = explanationText
-    ? `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByButton(this)">📖 顯示詳細解釋 / Показать пояснение</button></div>`
-    : "";
+  let explanationHtml = "";
+  let toggleBtn = "";
+  if (explanationText) {
+    if (expanded) {
+      // 展開視窗模式：空間夠大，解釋直接顯示，不用再收合一次
+      explanationHtml = `<div class="card-line">【語意解釋 / Смысловое пояснение】${escapeHtmlText(explanationText)}</div>`;
+    } else {
+      explanationHtml = `<div class="card-line collapsible-explanation" style="display:none;">【語意解釋 / Смысловое пояснение】${escapeHtmlText(explanationText)}</div>`;
+      toggleBtn = `<div class="card-line"><button class="toggle-explain-btn" onclick="toggleExplanationByButton(this)">📖 顯示詳細解釋 / Показать пояснение</button></div>`;
+    }
+  }
 
   const preview = `📋 對照表已產生（共 ${parsed.rows.length} 行）/ Таблица готова`;
   return { preview, bodyHtml: imageTypeHtml + tableHtml + explanationHtml + toggleBtn };
+}
+
+function openOcrDetail(key) {
+  const m = chatHistory.find(x => x.firebaseKey === key);
+  if (!m || m.ocrStatus !== "done" || !m.ocrTranslation) return;
+  const card = buildImageOcrCardHtml(m.ocrTranslation, true);
+  document.getElementById("ocrDetailBody").innerHTML = card.bodyHtml;
+  document.getElementById("ocrDetailOverlay").style.display = "flex";
+}
+
+function closeOcrDetail() {
+  document.getElementById("ocrDetailOverlay").style.display = "none";
 }
 
 async function requestImageOcrTranslate(key, imageUrl, btnEl) {
