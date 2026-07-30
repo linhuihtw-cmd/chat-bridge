@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.168</title>
+  <title>L⇄V ∞ v21.169</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -151,6 +151,11 @@
     }
     .ocr-table-original { color: var(--text-tertiary); }
     .ocr-table-translated { color: var(--text-primary); font-weight: 500; }
+    .ocr-image-type {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
     .msg-edit-btn {
       background: none;
       border: none;
@@ -2212,7 +2217,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.168</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.169</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2444,7 +2449,7 @@
 
 <script>
 
-const APP_VERSION = "21.168";
+const APP_VERSION = "21.169";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2641,7 +2646,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.168";
+    document.title = "L⇄V ∞ v21.169";
   }
 });
 
@@ -2706,7 +2711,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.168";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.169";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4005,6 +4010,9 @@ function buildImageOcrCardHtml(rawText) {
   }).join("");
   const tableHtml = `<table class="ocr-table"><tbody>${rowsHtml}</tbody></table>`;
 
+  const imageType = String(parsed.imageType || "").trim();
+  const imageTypeHtml = imageType ? `<div class="card-line ocr-image-type">🏷️ 判斷類型：${escapeHtmlText(imageType)}</div>` : "";
+
   const explanationText = String(parsed.explanation || "").trim();
   const explanationHtml = explanationText
     ? `<div class="card-line collapsible-explanation" style="display:none;">【語意解釋 / Смысловое пояснение】${escapeHtmlText(explanationText)}</div>`
@@ -4014,7 +4022,7 @@ function buildImageOcrCardHtml(rawText) {
     : "";
 
   const preview = `📋 對照表已產生（共 ${parsed.rows.length} 行）/ Таблица готова`;
-  return { preview, bodyHtml: tableHtml + explanationHtml + toggleBtn };
+  return { preview, bodyHtml: imageTypeHtml + tableHtml + explanationHtml + toggleBtn };
 }
 
 async function requestImageOcrTranslate(key, imageUrl, btnEl) {
