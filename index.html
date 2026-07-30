@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.173</title>
+  <title>L⇄V ∞ v21.174</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -151,6 +151,16 @@
     }
     .ocr-table-original { color: var(--text-tertiary); }
     .ocr-table-translated { color: var(--text-primary); font-weight: 500; }
+    .ocr-speak-btn {
+      background: none;
+      border: none;
+      color: var(--gold);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0 4px 0 0;
+      vertical-align: middle;
+    }
+    .ocr-speak-btn:hover { opacity: 0.7; }
     .ocr-image-type {
       font-size: 12px;
       color: var(--text-tertiary);
@@ -2264,7 +2274,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.173</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.174</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2504,7 +2514,7 @@
 
 <script>
 
-const APP_VERSION = "21.173";
+const APP_VERSION = "21.174";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2701,7 +2711,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.173";
+    document.title = "L⇄V ∞ v21.174";
   }
 });
 
@@ -2766,7 +2776,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.173";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.174";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3013,6 +3023,10 @@ function exportToggleExplain(idx, btn) {
 
 function escapeHtmlText(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeHtmlAttr(text) {
+  return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 function downloadBlob(blob, filename) {
@@ -4059,9 +4073,12 @@ function buildImageOcrCardHtml(rawText, expanded) {
   }
 
   const rowsHtml = parsed.rows.map(r => {
-    const orig = escapeHtmlText(String((r && r.original) || ""));
+    const origRaw = String((r && r.original) || "");
+    const orig = escapeHtmlText(origRaw);
     const trans = escapeHtmlText(String((r && r.translated) || ""));
-    return `<tr><td class="ocr-table-original">${orig}</td><td class="ocr-table-translated">${trans}</td></tr>`;
+    const langCode = (r && r.lang === "ru") ? "ru-RU" : "zh-TW";
+    const speakBtn = origRaw ? `<button class="ocr-speak-btn" data-text="${escapeHtmlAttr(origRaw)}" data-lang="${langCode}" onclick="speakOcrRow(this)">🔊</button>` : "";
+    return `<tr><td class="ocr-table-original">${speakBtn}<span>${orig}</span></td><td class="ocr-table-translated">${trans}</td></tr>`;
   }).join("");
   const tableHtml = `<table class="ocr-table"><tbody>${rowsHtml}</tbody></table>`;
 
@@ -4095,6 +4112,17 @@ function openOcrDetail(key) {
 
 function closeOcrDetail() {
   document.getElementById("ocrDetailOverlay").style.display = "none";
+}
+
+function speakOcrRow(btn) {
+  const text = btn.dataset.text;
+  const lang = btn.dataset.lang || "zh-TW";
+  if (!text) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = 0.95 * getMySpeechRateMultiplier();
+  speechSynthesis.speak(u);
 }
 
 async function requestImageOcrTranslate(key, imageUrl, btnEl) {
