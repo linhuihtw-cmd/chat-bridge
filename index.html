@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.177</title>
+  <title>L⇄V ∞ v21.178</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2311,7 +2311,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.177</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.178</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2551,7 +2551,7 @@
 
 <script>
 
-const APP_VERSION = "21.177";
+const APP_VERSION = "21.178";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2748,7 +2748,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.177";
+    document.title = "L⇄V ∞ v21.178";
   }
 });
 
@@ -2813,7 +2813,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.177";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.178";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3547,7 +3547,7 @@ async function confirmEditMessage(key) {
       const idxForContext = chatHistory.findIndex(m => m.firebaseKey === key);
       const priorUserMsgs = (idxForContext >= 0 ? chatHistory.slice(0, idxForContext) : [])
         .filter(m => m.role === "user" && !m.deleted && m.type !== "image" && typeof m.text === "string" && m.text.trim())
-        .slice(-6);
+        .slice(-3);
       const editContextLines = priorUserMsgs.map(m => {
         const who = (currentUser && m.senderEmail === currentUser.email) ? "我" : "對方";
         return `${who}：${m.text}`;
@@ -3990,7 +3990,7 @@ async function sendMsg() {
   inputObj.focus();
 
   const senderTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const contextLines = buildRecentContextLines(6);
+  const contextLines = buildRecentContextLines(3);
   const msgData = { role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone, senderEmail: currentUser.email };
   if (currentReplyData) {
     msgData.replyTo = currentReplyData;
