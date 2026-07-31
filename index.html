@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.176</title>
+  <title>L⇄V ∞ v21.177</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2311,7 +2311,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.176</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.177</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2551,7 +2551,7 @@
 
 <script>
 
-const APP_VERSION = "21.176";
+const APP_VERSION = "21.177";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2748,7 +2748,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.176";
+    document.title = "L⇄V ∞ v21.177";
   }
 });
 
@@ -2813,7 +2813,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.176";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.177";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -3544,7 +3544,15 @@ async function confirmEditMessage(key) {
     await db.ref("messages/" + key).update({ text: newText, edited: true, editedAt: Date.now() });
 
     if (!isSkippableContent(newText)) {
-      const translatedText = await callDeepSeek("full", newText);
+      const idxForContext = chatHistory.findIndex(m => m.firebaseKey === key);
+      const priorUserMsgs = (idxForContext >= 0 ? chatHistory.slice(0, idxForContext) : [])
+        .filter(m => m.role === "user" && !m.deleted && m.type !== "image" && typeof m.text === "string" && m.text.trim())
+        .slice(-6);
+      const editContextLines = priorUserMsgs.map(m => {
+        const who = (currentUser && m.senderEmail === currentUser.email) ? "我" : "對方";
+        return `${who}：${m.text}`;
+      });
+      const translatedText = await callDeepSeek("full", newText, editContextLines);
       const idx = chatHistory.findIndex(m => m.firebaseKey === key);
       let aiMsg = chatHistory.find(m => m.role === "ai" && m.forUserKey === key);
       if (!aiMsg && idx >= 0) {
@@ -3873,14 +3881,14 @@ function renderChat() {
   }
 }
 
-async function callDeepSeek(mode, text) {
+async function callDeepSeek(mode, text, context) {
   try {
     const res = await fetch(`https://${API_KEY.trim()}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ mode, text })
+      body: JSON.stringify({ mode, text, context })
     });
     
     if (!res.ok) {
@@ -3940,6 +3948,15 @@ function handleMsgKeydown(event) {
   }
 }
 
+function buildRecentContextLines(maxCount) {
+  const userMsgs = chatHistory.filter(m => m.role === "user" && !m.deleted && m.type !== "image" && typeof m.text === "string" && m.text.trim());
+  const recent = userMsgs.slice(-maxCount);
+  return recent.map(m => {
+    const who = (currentUser && m.senderEmail === currentUser.email) ? "我" : "對方";
+    return `${who}：${m.text}`;
+  });
+}
+
 async function sendMsg() {
   if (isSending) return; 
 
@@ -3973,6 +3990,7 @@ async function sendMsg() {
   inputObj.focus();
 
   const senderTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const contextLines = buildRecentContextLines(6);
   const msgData = { role: "user", text: input, timestamp: Date.now(), tz: senderTimeZone, senderEmail: currentUser.email };
   if (currentReplyData) {
     msgData.replyTo = currentReplyData;
@@ -3997,7 +4015,7 @@ async function sendMsg() {
     return;
   }
 
-  const translatedText = await callDeepSeek("full", input);
+  const translatedText = await callDeepSeek("full", input, contextLines);
   
   try {
     await db.ref("messages").push({ role: "ai", text: translatedText, timestamp: Date.now(), forUserKey: userMsgKey });
