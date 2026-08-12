@@ -1724,6 +1724,20 @@
     .gomoku-stone-a { background: var(--gold-bright); box-shadow: 0 0 2px rgba(0,0,0,0.4); }
     .gomoku-stone-b { background: var(--accent-blue); box-shadow: 0 0 2px rgba(0,0,0,0.4); }
 
+    /* 象棋 */
+    .xq-board-wrap { display: flex; justify-content: center; padding: 6px 0 10px; }
+    .xq-board { display: grid; grid-template-columns: repeat(9, 33px); grid-template-rows: repeat(10, 33px); background: #dcbf8a; border: 3px solid #7a5a30; border-radius: 4px; }
+    .xq-cell { position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(122,90,48,0.4); cursor: pointer; }
+    .xq-cell.xq-river-edge { border-top: 3px solid rgba(122,90,48,0.75); }
+    .xq-cell.xq-palace { background: rgba(122,90,48,0.08); }
+    .xq-cell.xq-selected { background: rgba(255,215,0,0.4); }
+    .xq-cell.xq-legal::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: rgba(76,175,80,0.8); }
+    .xq-cell.xq-legal.xq-has-piece::after { width: 100%; height: 100%; border-radius: 0; background: transparent; border: 3px solid rgba(220,60,60,0.75); box-sizing: border-box; }
+    .xq-piece { width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.4); background: #f5e6c8; }
+    .xq-piece-R { color: #b3261e; border: 1.5px solid #b3261e; }
+    .xq-piece-B { color: #222; border: 1.5px solid #222; }
+    .xq-piece.xq-checked { box-shadow: 0 0 0 3px rgba(255,60,60,0.85); }
+
     .wordmatch-layout { display: flex; gap: 24px; justify-content: center; width: 100%; }
     .wordmatch-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .wordmatch-btn {
@@ -4237,7 +4251,8 @@ const GAME_CATALOG = [
   { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true },
   { id: "wordmatch", icon: "🔊", name: "聽音連連看", nameRu: "Слушай и соедини", available: true },
   { id: "breakout",  icon: "🧱", name: "合力接磚塊", nameRu: "Вместе разбиваем кирпичи", available: true },
-  { id: "minesweeper", icon: "💣", name: "雙人踩地雷", nameRu: "Сапёр на двоих", available: true }
+  { id: "minesweeper", icon: "💣", name: "雙人踩地雷", nameRu: "Сапёр на двоих", available: true },
+  { id: "xiangqi",    icon: "♟️", name: "象棋",      nameRu: "Китайские шахматы", available: true }
 ];
 
 let selectedGameMenuIds = [];
@@ -4585,6 +4600,17 @@ function resetGameState(gameId, inviteData) {
       loserCell: null,
       updatedAt: Date.now()
     });
+  } else if (gameId === "xiangqi") {
+    db.ref("games/xiangqi").update({
+      playerA: inviteData.fromEmail,
+      playerB: inviteData.toEmail || null,
+      board: xqInitialBoard(),
+      turn: "A",
+      winner: null,
+      check: null,
+      lastMove: null,
+      updatedAt: Date.now()
+    });
   }
 }
 let gamePanelPos = null; // 記住這次連線期間玩家拖曳過的位置 {left, top}
@@ -4650,6 +4676,8 @@ function enterGameScreen(gameId, inviteData) {
     initBreakoutScreen();
   } else if (gameId === "minesweeper") {
     initMinesweeperScreen();
+  } else if (gameId === "xiangqi") {
+    initXiangqiScreen();
   } else {
     document.getElementById("gameScreenBody").innerHTML =
       `<div class="ttt-status">這個遊戲還在開發中，敬請期待～<br>Эта игра ещё разрабатывается</div>`;
@@ -5820,6 +5848,289 @@ function restartGomoku() {
     board: Array(GOMOKU_COLS * GOMOKU_ROWS).fill(""),
     turn: "A",
     winner: null,
+    updatedAt: Date.now()
+  });
+}
+
+/* ---------- 象棋 ---------- */
+const XQ_COLS = 9, XQ_ROWS = 10;
+function xqIdx(r, c) { return r * XQ_COLS + c; }
+function xqInBounds(r, c) { return r >= 0 && r < XQ_ROWS && c >= 0 && c < XQ_COLS; }
+const XQ_CHARS = {
+  R: { g: "帥", a: "仕", e: "相", r: "俥", h: "傌", c: "炮", p: "兵" },
+  B: { g: "將", a: "士", e: "象", r: "車", h: "馬", c: "砲", p: "卒" }
+};
+function xqInitialBoard() {
+  const b = Array(90).fill("");
+  const backRow = ["r", "h", "e", "a", "g", "a", "e", "h", "r"];
+  backRow.forEach((t, c) => { b[xqIdx(0, c)] = "B" + t; b[xqIdx(9, c)] = "R" + t; });
+  b[xqIdx(2, 1)] = "Bc"; b[xqIdx(2, 7)] = "Bc";
+  b[xqIdx(7, 1)] = "Rc"; b[xqIdx(7, 7)] = "Rc";
+  [0, 2, 4, 6, 8].forEach(c => { b[xqIdx(3, c)] = "Bp"; b[xqIdx(6, c)] = "Rp"; });
+  return b;
+}
+function xqInPalace(r, c, color) {
+  if (c < 3 || c > 5) return false;
+  return color === "R" ? (r >= 7 && r <= 9) : (r >= 0 && r <= 2);
+}
+function xqOwnSide(r, color) { return color === "R" ? r >= 5 : r <= 4; }
+function xqCrossedRiver(r, color) { return color === "R" ? r <= 4 : r >= 5; }
+function xqPieceMoves(board, r, c) {
+  const piece = board[xqIdx(r, c)];
+  if (!piece) return [];
+  const color = piece[0], type = piece[1];
+  const forward = color === "R" ? -1 : 1;
+  const moves = [];
+  const addStep = (nr, nc, restrictFn) => {
+    if (!xqInBounds(nr, nc)) return;
+    if (restrictFn && !restrictFn(nr, nc)) return;
+    const target = board[xqIdx(nr, nc)];
+    if (target && target[0] === color) return;
+    moves.push({ row: nr, col: nc });
+  };
+  if (type === "g") {
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc]) => addStep(r+dr, c+dc, (nr,nc)=>xqInPalace(nr,nc,color)));
+  } else if (type === "a") {
+    [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr,dc]) => addStep(r+dr, c+dc, (nr,nc)=>xqInPalace(nr,nc,color)));
+  } else if (type === "e") {
+    [[2,2],[2,-2],[-2,2],[-2,-2]].forEach(([dr,dc]) => {
+      const nr=r+dr, nc=c+dc;
+      if (!xqInBounds(nr,nc) || !xqOwnSide(nr,color)) return;
+      const eyeR=r+dr/2, eyeC=c+dc/2;
+      if (board[xqIdx(eyeR,eyeC)]) return;
+      addStep(nr, nc);
+    });
+  } else if (type === "h") {
+    [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]].forEach(([dr,dc]) => {
+      const nr=r+dr, nc=c+dc;
+      if (!xqInBounds(nr,nc)) return;
+      const legR = Math.abs(dr)===2 ? r+dr/2 : r;
+      const legC = Math.abs(dr)===2 ? c : c+dc/2;
+      if (board[xqIdx(legR,legC)]) return;
+      addStep(nr, nc);
+    });
+  } else if (type === "r") {
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc]) => {
+      let nr=r+dr, nc=c+dc;
+      while (xqInBounds(nr,nc)) {
+        const target = board[xqIdx(nr,nc)];
+        if (!target) { moves.push({row:nr,col:nc}); }
+        else { if (target[0] !== color) moves.push({row:nr,col:nc}); break; }
+        nr+=dr; nc+=dc;
+      }
+    });
+  } else if (type === "c") {
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc]) => {
+      let nr=r+dr, nc=c+dc, screened=false;
+      while (xqInBounds(nr,nc)) {
+        const target = board[xqIdx(nr,nc)];
+        if (!screened) {
+          if (!target) moves.push({row:nr,col:nc});
+          else screened = true;
+        } else if (target) {
+          if (target[0] !== color) moves.push({row:nr,col:nc});
+          break;
+        }
+        nr+=dr; nc+=dc;
+      }
+    });
+  } else if (type === "p") {
+    const dirs = [[forward,0]];
+    if (xqCrossedRiver(r,color)) { dirs.push([0,1]); dirs.push([0,-1]); }
+    dirs.forEach(([dr,dc]) => addStep(r+dr, c+dc));
+  }
+  return moves;
+}
+function xqFindGeneral(board, color) {
+  for (let i = 0; i < 90; i++) { if (board[i] === color + "g") return { row: Math.floor(i/XQ_COLS), col: i%XQ_COLS }; }
+  return null;
+}
+function xqInCheck(board, color) {
+  const gen = xqFindGeneral(board, color);
+  if (!gen) return false;
+  const enemy = color === "R" ? "B" : "R";
+  for (let r = 0; r < XQ_ROWS; r++) {
+    for (let c = 0; c < XQ_COLS; c++) {
+      const p = board[xqIdx(r,c)];
+      if (p && p[0] === enemy) {
+        if (xqPieceMoves(board, r, c).some(m => m.row===gen.row && m.col===gen.col)) return true;
+      }
+    }
+  }
+  return false;
+}
+function xqGeneralsFacing(board) {
+  const rg = xqFindGeneral(board, "R"), bg = xqFindGeneral(board, "B");
+  if (!rg || !bg || rg.col !== bg.col) return false;
+  const col = rg.col, r1 = Math.min(rg.row,bg.row), r2 = Math.max(rg.row,bg.row);
+  for (let r = r1+1; r < r2; r++) { if (board[xqIdx(r,col)]) return false; }
+  return true;
+}
+function xqSimulateMove(board, from, to) {
+  const b2 = board.slice();
+  b2[xqIdx(to.row,to.col)] = b2[xqIdx(from.row,from.col)];
+  b2[xqIdx(from.row,from.col)] = "";
+  return b2;
+}
+function xqLegalMoves(board, r, c, color) {
+  const piece = board[xqIdx(r,c)];
+  if (!piece || piece[0] !== color) return [];
+  return xqPieceMoves(board, r, c).filter(m => {
+    const b2 = xqSimulateMove(board, {row:r,col:c}, m);
+    return !xqInCheck(b2, color) && !xqGeneralsFacing(b2);
+  });
+}
+function xqHasAnyLegalMove(board, color) {
+  for (let r = 0; r < XQ_ROWS; r++) {
+    for (let c = 0; c < XQ_COLS; c++) {
+      const p = board[xqIdx(r,c)];
+      if (p && p[0] === color && xqLegalMoves(board, r, c, color).length > 0) return true;
+    }
+  }
+  return false;
+}
+let xqSelected = null;
+function initXiangqiScreen() {
+  const body = document.getElementById("gameScreenBody");
+  body.innerHTML = `<div class="ttt-status" id="xiangqiStatus">載入中... / Загрузка...</div>`;
+  xqSelected = null;
+  if (activeGameListenerRef) activeGameListenerRef.off();
+  activeGameListenerRef = db.ref("games/xiangqi");
+  activeGameListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) {
+      if (gameStateSeenOnce && gameScreenOpen) {
+        showGameToast("對方已離開遊戲 / Собеседник вышел из игры");
+        exitGameScreen(true);
+      }
+      return;
+    }
+    gameStateSeenOnce = true;
+    renderXiangqi(state);
+  });
+  registerGamePresence("xiangqi");
+}
+function renderXiangqi(state) {
+  const body = document.getElementById("gameScreenBody");
+  const lightEl = document.getElementById("gameTurnLight");
+  const titleEl = document.getElementById("gameScreenTitle");
+  if (!body) return;
+  const myEmail = currentUser.email;
+  const mySide = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
+  const myColor = mySide === "A" ? "R" : "B";
+  const opponentEmail = mySide === "A" ? state.playerB : state.playerA;
+  const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
+  const opponentOnlineNow = !!(opponentKey && state.presence && state.presence[opponentKey]);
+  if (opponentOnlineNow) { gameOpponentSeenOnline = true; gameOfflineToastShown = false; }
+  const showOffline = gameOpponentSeenOnline && !opponentOnlineNow;
+
+  if (titleEl) titleEl.textContent = showOffline ? "Конец игры / 結束" : currentGameTitleText;
+  if (showOffline && !gameOfflineToastShown) {
+    gameOfflineToastShown = true;
+    showGameToast("對方已離開遊戲，你可以繼續等待或按✕離開 / Собеседник вышел из игры");
+  }
+  const turnIsMe = state.turn === mySide;
+  if (lightEl) {
+    lightEl.classList.remove("on-turn", "waiting", "offline");
+    if (showOffline) lightEl.classList.add("offline");
+    else if (!state.winner) lightEl.classList.add(turnIsMe ? "on-turn" : "waiting");
+  }
+  if (showOffline) {
+    body.innerHTML = `<div class="ttt-status">對方已離開遊戲<br>Собеседник вышел из игры</div>`;
+    return;
+  }
+
+  const board = state.board || xqInitialBoard();
+  const legalTargets = (xqSelected && turnIsMe) ? xqLegalMoves(board, xqSelected.row, xqSelected.col, myColor) : [];
+  const flip = mySide === "B";
+  let cellsHtml = "";
+  for (let dr = 0; dr < XQ_ROWS; dr++) {
+    for (let dc = 0; dc < XQ_COLS; dc++) {
+      const row = flip ? (9 - dr) : dr;
+      const col = flip ? (8 - dc) : dc;
+      const piece = board[xqIdx(row,col)];
+      const isSelected = xqSelected && xqSelected.row === row && xqSelected.col === col;
+      const isLegal = legalTargets.some(m => m.row === row && m.col === col);
+      const isPalace = xqInPalace(row, col, "R") || xqInPalace(row, col, "B");
+      const isRiverEdge = row === 5;
+      let pieceHtml = "";
+      if (piece) {
+        const pColor = piece[0], pType = piece[1];
+        const checked = state.check && ((pColor === "R" && state.check === "A") || (pColor === "B" && state.check === "B")) && pType === "g";
+        pieceHtml = `<div class="xq-piece xq-piece-${pColor} ${checked ? 'xq-checked' : ''}">${XQ_CHARS[pColor][pType]}</div>`;
+      }
+      cellsHtml += `<div class="xq-cell ${isPalace ? 'xq-palace' : ''} ${isRiverEdge ? 'xq-river-edge' : ''} ${isSelected ? 'xq-selected' : ''} ${isLegal ? 'xq-legal' : ''} ${isLegal && piece ? 'xq-has-piece' : ''}" onclick="xqCellClick(${row},${col})">${pieceHtml}</div>`;
+    }
+  }
+
+  let statusHtml, extraHtml = "";
+  if (state.winner) {
+    const winnerIsMe = state.winner === mySide;
+    statusHtml = winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл";
+    extraHtml = `<button class="ttt-restart-btn" onclick="restartXiangqi()">再玩一局 / Ещё раз</button>`;
+  } else {
+    const checkText = state.check ? (state.check === mySide ? "⚠️ 你被將軍了！ / Вам шах! " : "⚠️ 對方被將軍 / Шах сопернику ") : "";
+    statusHtml = checkText + (turnIsMe ? "輪到你 / Ваш ход" : "等對方 / Ход соперника");
+  }
+
+  body.innerHTML = `
+    <div class="ttt-status" id="xiangqiStatus">${statusHtml}</div>
+    <div class="xq-board-wrap"><div class="xq-board">${cellsHtml}</div></div>
+    ${extraHtml}
+  `;
+}
+function xqCellClick(row, col) {
+  db.ref("games/xiangqi").once("value").then((snap) => {
+    const state = snap.val();
+    if (!state || state.winner) return;
+    const mySide = state.playerA === currentUser.email ? "A" : (state.playerB === currentUser.email ? "B" : null);
+    if (!mySide || state.turn !== mySide) return;
+    const myColor = mySide === "A" ? "R" : "B";
+    const board = state.board || xqInitialBoard();
+    const piece = board[xqIdx(row,col)];
+
+    if (xqSelected) {
+      if (xqSelected.row === row && xqSelected.col === col) { xqSelected = null; renderXiangqi(state); return; }
+      const legal = xqLegalMoves(board, xqSelected.row, xqSelected.col, myColor);
+      const isLegal = legal.some(m => m.row === row && m.col === col);
+      if (isLegal) {
+        const from = xqSelected;
+        const newBoard = xqSimulateMove(board, from, { row, col });
+        const oppColor = myColor === "R" ? "B" : "R";
+        const oppSide = mySide === "A" ? "B" : "A";
+        const oppHasMove = xqHasAnyLegalMove(newBoard, oppColor);
+        const winner = oppHasMove ? null : mySide;
+        const oppInCheck = !winner && xqInCheck(newBoard, oppColor);
+        xqSelected = null;
+        db.ref("games/xiangqi").update({
+          board: newBoard,
+          turn: oppSide,
+          winner: winner,
+          check: oppInCheck ? oppSide : null,
+          lastMove: { from, to: { row, col } },
+          updatedAt: Date.now()
+        });
+      } else if (piece && piece[0] === myColor) {
+        xqSelected = { row, col };
+        renderXiangqi(state);
+      } else {
+        xqSelected = null;
+        renderXiangqi(state);
+      }
+    } else if (piece && piece[0] === myColor) {
+      xqSelected = { row, col };
+      renderXiangqi(state);
+    }
+  });
+}
+function restartXiangqi() {
+  xqSelected = null;
+  db.ref("games/xiangqi").update({
+    board: xqInitialBoard(),
+    turn: "A",
+    winner: null,
+    check: null,
+    lastMove: null,
     updatedAt: Date.now()
   });
 }
