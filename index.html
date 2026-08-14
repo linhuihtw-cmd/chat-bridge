@@ -1183,6 +1183,9 @@
       right: 10px;
       width: min(280px, 88vw);
       max-height: 72vh;
+      min-width: 240px;
+      min-height: 180px;
+      max-width: 96vw;
       background: var(--bg-elevated);
       border: 1px solid var(--gold-dim);
       border-radius: 16px;
@@ -1191,6 +1194,7 @@
       display: none;
       flex-direction: column;
       overflow: hidden;
+      resize: both;
     }
     .game-screen-header {
       display: flex;
@@ -1255,8 +1259,10 @@
       padding: 16px;
       gap: 14px;
       overflow-y: auto;
-      overflow-x: hidden;
+      overflow-x: auto;
       box-sizing: border-box;
+      flex: 1 1 auto;
+      min-height: 0;
     }
     #gameScreenOverlay.gs-collapsed .game-screen-body { display: none; }
     .ttt-board {
@@ -1726,14 +1732,14 @@
 
     /* 象棋 */
     .xq-board-wrap { display: flex; justify-content: center; padding: 6px 0 10px; }
-    .xq-board { display: grid; grid-template-columns: repeat(9, 33px); grid-template-rows: repeat(10, 33px); background: #dcbf8a; border: 3px solid #7a5a30; border-radius: 4px; }
+    .xq-board { display: grid; grid-template-columns: repeat(9, 25px); grid-template-rows: repeat(5, 25px) 20px repeat(5, 25px); background: #dcbf8a; border: 3px solid #7a5a30; border-radius: 4px; }
     .xq-cell { position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(122,90,48,0.4); cursor: pointer; }
-    .xq-cell.xq-river-edge { border-top: 3px solid rgba(122,90,48,0.75); }
+    .xq-river-label { grid-column: 1 / span 9; display: flex; align-items: center; justify-content: space-evenly; font-size: 11px; color: #7a5a30; font-weight: 600; letter-spacing: 2px; border-top: 2px solid rgba(122,90,48,0.6); border-bottom: 2px solid rgba(122,90,48,0.6); background: rgba(122,90,48,0.06); }
     .xq-cell.xq-palace { background: rgba(122,90,48,0.08); }
     .xq-cell.xq-selected { background: rgba(255,215,0,0.4); }
-    .xq-cell.xq-legal::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: rgba(76,175,80,0.8); }
+    .xq-cell.xq-legal::after { content: ""; position: absolute; width: 8px; height: 8px; border-radius: 50%; background: rgba(76,175,80,0.8); }
     .xq-cell.xq-legal.xq-has-piece::after { width: 100%; height: 100%; border-radius: 0; background: transparent; border: 3px solid rgba(220,60,60,0.75); box-sizing: border-box; }
-    .xq-piece { width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.4); background: #f5e6c8; }
+    .xq-piece { width: 21px; height: 21px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.4); background: #f5e6c8; }
     .xq-piece-R { color: #b3261e; border: 1.5px solid #b3261e; }
     .xq-piece-B { color: #222; border: 1.5px solid #222; }
     .xq-piece.xq-checked { box-shadow: 0 0 0 3px rgba(255,60,60,0.85); }
@@ -6045,6 +6051,7 @@ function renderXiangqi(state) {
   const flip = mySide === "B";
   let cellsHtml = "";
   for (let dr = 0; dr < XQ_ROWS; dr++) {
+    const gridRow = dr < 5 ? dr + 1 : dr + 2;
     for (let dc = 0; dc < XQ_COLS; dc++) {
       const row = flip ? (9 - dr) : dr;
       const col = flip ? (8 - dc) : dc;
@@ -6052,16 +6059,16 @@ function renderXiangqi(state) {
       const isSelected = xqSelected && xqSelected.row === row && xqSelected.col === col;
       const isLegal = legalTargets.some(m => m.row === row && m.col === col);
       const isPalace = xqInPalace(row, col, "R") || xqInPalace(row, col, "B");
-      const isRiverEdge = row === 5;
       let pieceHtml = "";
       if (piece) {
         const pColor = piece[0], pType = piece[1];
         const checked = state.check && ((pColor === "R" && state.check === "A") || (pColor === "B" && state.check === "B")) && pType === "g";
         pieceHtml = `<div class="xq-piece xq-piece-${pColor} ${checked ? 'xq-checked' : ''}">${XQ_CHARS[pColor][pType]}</div>`;
       }
-      cellsHtml += `<div class="xq-cell ${isPalace ? 'xq-palace' : ''} ${isRiverEdge ? 'xq-river-edge' : ''} ${isSelected ? 'xq-selected' : ''} ${isLegal ? 'xq-legal' : ''} ${isLegal && piece ? 'xq-has-piece' : ''}" onclick="xqCellClick(${row},${col})">${pieceHtml}</div>`;
+      cellsHtml += `<div class="xq-cell ${isPalace ? 'xq-palace' : ''} ${isSelected ? 'xq-selected' : ''} ${isLegal ? 'xq-legal' : ''} ${isLegal && piece ? 'xq-has-piece' : ''}" style="grid-row:${gridRow};grid-column:${dc+1};" onclick="xqCellClick(${row},${col})">${pieceHtml}</div>`;
     }
   }
+  cellsHtml += `<div class="xq-river-label" style="grid-row:6;"><span>楚 河</span><span>漢 界</span></div>`;
 
   let statusHtml, extraHtml = "";
   if (state.winner) {
