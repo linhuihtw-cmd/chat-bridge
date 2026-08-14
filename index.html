@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.189</title>
+  <title>L⇄V ∞ v21.190</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2455,7 +2455,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.189</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.190</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.189";
+const APP_VERSION = "21.190";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2926,7 +2926,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.189";
+    document.title = "L⇄V ∞ v21.190";
   }
 });
 
@@ -2991,7 +2991,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.189";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.190";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4489,39 +4489,47 @@ async function startVideoCall() {
     alert("無法取得鏡頭/麥克風權限 / Нет доступа к камере или микрофону：" + e.message);
     return;
   }
-  vcLocalStream = stream;
-  vcRole = "caller";
-  vcRemoteDescSet = false;
-  vcPendingCandidates = [];
-  document.getElementById("vcLocalVideo").srcObject = vcLocalStream;
+  try {
+    vcLocalStream = stream;
+    vcRole = "caller";
+    vcRemoteDescSet = false;
+    vcPendingCandidates = [];
+    document.getElementById("vcLocalVideo").srcObject = vcLocalStream;
 
-  await db.ref("videoCall").remove();
-  await db.ref("videoCallCandidates").remove();
+    await db.ref("videoCall").remove();
+    await db.ref("videoCallCandidates").remove();
 
-  vcPC = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
-  vcLocalStream.getTracks().forEach((track) => vcPC.addTrack(track, vcLocalStream));
-  vcPC.onicecandidate = (e) => {
-    if (e.candidate) db.ref("videoCallCandidates/caller").push(e.candidate.toJSON());
-  };
-  vcPC.ontrack = (e) => {
-    document.getElementById("vcRemoteVideo").srcObject = e.streams[0];
-  };
-  listenVideoCallCandidates("callee");
+    vcPC = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
+    vcLocalStream.getTracks().forEach((track) => vcPC.addTrack(track, vcLocalStream));
+    vcPC.onicecandidate = (e) => {
+      if (e.candidate) db.ref("videoCallCandidates/caller").push(e.candidate.toJSON());
+    };
+    vcPC.ontrack = (e) => {
+      document.getElementById("vcRemoteVideo").srcObject = e.streams[0];
+    };
+    listenVideoCallCandidates("callee");
 
-  const offer = await vcPC.createOffer();
-  await vcPC.setLocalDescription(offer);
+    const offer = await vcPC.createOffer();
+    await vcPC.setLocalDescription(offer);
 
-  await db.ref("videoCall").set({
-    status: "ringing",
-    callerEmail: currentUser.email,
-    callerKey: emailToKey(currentUser.email),
-    offer: { type: offer.type, sdp: offer.sdp },
-    createdAt: Date.now()
-  });
+    await db.ref("videoCall").set({
+      status: "ringing",
+      callerEmail: currentUser.email,
+      callerKey: emailToKey(currentUser.email),
+      offer: { type: offer.type, sdp: offer.sdp },
+      createdAt: Date.now()
+    });
 
-  registerVideoCallPresence();
-  document.getElementById("videoCallOverlay").style.display = "flex";
-  initVideoPanelDrag();
+    registerVideoCallPresence();
+    document.getElementById("videoCallOverlay").style.display = "flex";
+    initVideoPanelDrag();
+  } catch (e) {
+    console.error("視訊通話發起失敗", e);
+    alert("視訊通話發起失敗，鏡頭已關閉 / Не удалось начать звонок：" + e.message);
+    cleanupVideoCall();
+    document.getElementById("videoCallOverlay").style.display = "none";
+    db.ref("videoCall").remove();
+  }
 }
 
 async function acceptVideoCall() {
@@ -4538,39 +4546,47 @@ async function acceptVideoCall() {
     declineVideoCall();
     return;
   }
-  vcLocalStream = stream;
-  vcRole = "callee";
-  vcRemoteDescSet = false;
-  vcPendingCandidates = [];
-  document.getElementById("vcLocalVideo").srcObject = vcLocalStream;
+  try {
+    vcLocalStream = stream;
+    vcRole = "callee";
+    vcRemoteDescSet = false;
+    vcPendingCandidates = [];
+    document.getElementById("vcLocalVideo").srcObject = vcLocalStream;
 
-  vcPC = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
-  vcLocalStream.getTracks().forEach((track) => vcPC.addTrack(track, vcLocalStream));
-  vcPC.onicecandidate = (e) => {
-    if (e.candidate) db.ref("videoCallCandidates/callee").push(e.candidate.toJSON());
-  };
-  vcPC.ontrack = (e) => {
-    document.getElementById("vcRemoteVideo").srcObject = e.streams[0];
-  };
+    vcPC = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
+    vcLocalStream.getTracks().forEach((track) => vcPC.addTrack(track, vcLocalStream));
+    vcPC.onicecandidate = (e) => {
+      if (e.candidate) db.ref("videoCallCandidates/callee").push(e.candidate.toJSON());
+    };
+    vcPC.ontrack = (e) => {
+      document.getElementById("vcRemoteVideo").srcObject = e.streams[0];
+    };
 
-  await vcPC.setRemoteDescription(new RTCSessionDescription(data.offer));
-  vcRemoteDescSet = true;
-  listenVideoCallCandidates("caller");
-  flushPendingVideoCandidates();
+    await vcPC.setRemoteDescription(new RTCSessionDescription(data.offer));
+    vcRemoteDescSet = true;
+    listenVideoCallCandidates("caller");
+    flushPendingVideoCandidates();
 
-  const answer = await vcPC.createAnswer();
-  await vcPC.setLocalDescription(answer);
+    const answer = await vcPC.createAnswer();
+    await vcPC.setLocalDescription(answer);
 
-  await db.ref("videoCall").update({
-    status: "active",
-    calleeEmail: currentUser.email,
-    calleeKey: emailToKey(currentUser.email),
-    answer: { type: answer.type, sdp: answer.sdp }
-  });
+    await db.ref("videoCall").update({
+      status: "active",
+      calleeEmail: currentUser.email,
+      calleeKey: emailToKey(currentUser.email),
+      answer: { type: answer.type, sdp: answer.sdp }
+    });
 
-  registerVideoCallPresence();
-  document.getElementById("videoCallOverlay").style.display = "flex";
-  initVideoPanelDrag();
+    registerVideoCallPresence();
+    document.getElementById("videoCallOverlay").style.display = "flex";
+    initVideoPanelDrag();
+  } catch (e) {
+    console.error("接聽視訊通話失敗", e);
+    alert("接聽視訊通話失敗，鏡頭已關閉 / Не удалось принять звонок：" + e.message);
+    cleanupVideoCall();
+    document.getElementById("videoCallOverlay").style.display = "none";
+    db.ref("videoCall").update({ status: "ended", endedBy: currentUser.email });
+  }
 }
 
 function listenVideoCallCandidates(fromRole) {
