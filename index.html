@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.185</title>
+  <title>L⇄V ∞ v21.186</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1269,7 +1269,7 @@
     }
     #gameScreenOverlay.gs-collapsed .game-screen-body { display: none; }
     .ttt-board {
-      --cell: clamp(50px, calc((var(--avail-w) - 12px) / 3), 100px);
+      --cell: clamp(50px, calc((var(--avail-w) - 12px) / 3), 170px);
       display: grid;
       grid-template-columns: repeat(3, var(--cell));
       grid-template-rows: repeat(3, var(--cell));
@@ -1527,7 +1527,7 @@
 
     /* 接水管 */
     .pipes-board {
-      --cell: clamp(28px, calc((var(--avail-w) - 18px) / 6), 54px);
+      --cell: clamp(28px, calc((var(--avail-w) - 18px) / 6), 110px);
       display: grid;
       grid-template-columns: repeat(6, var(--cell));
       grid-template-rows: repeat(5, var(--cell));
@@ -1669,7 +1669,7 @@
       justify-content: center;
     }
     .gomoku-board {
-      --cell: clamp(13px, calc((var(--avail-w) - 14px) / 15), 30px);
+      --cell: clamp(13px, calc((var(--avail-w) - 14px) / 15), 60px);
       display: grid;
       grid-template-columns: repeat(15, var(--cell));
       grid-template-rows: repeat(15, var(--cell));
@@ -1690,7 +1690,7 @@
     .gomoku-cell.filled { cursor: default; }
     /* 雙人踩地雷 */
     .ms-board {
-      --cell: clamp(20px, calc((var(--avail-w) - 8px) / 8), 44px);
+      --cell: clamp(20px, calc((var(--avail-w) - 8px) / 8), 90px);
       display: grid;
       grid-template-columns: repeat(8, var(--cell));
       grid-template-rows: repeat(8, var(--cell));
@@ -1735,7 +1735,7 @@
 
     /* 象棋 */
     .xq-board-wrap { display: flex; justify-content: center; align-items: center; padding: 6px 0 10px; width: 100%; flex: 1 1 auto; min-height: 0; }
-    .xq-board { --xq-cell: clamp(16px, min(calc(var(--avail-w) / 9), calc(var(--avail-h) / 10.75)), 46px); display: grid; grid-template-columns: repeat(9, var(--xq-cell)); grid-template-rows: repeat(5, var(--xq-cell)) calc(var(--xq-cell) * 0.85) repeat(5, var(--xq-cell)); background: #dcbf8a; border: 3px solid #7a5a30; border-radius: 4px; flex-shrink: 0; }
+    .xq-board { --xq-cell: clamp(16px, min(calc(var(--avail-w) / 9), calc(var(--avail-h) / 10.75)), 90px); display: grid; grid-template-columns: repeat(9, var(--xq-cell)); grid-template-rows: repeat(5, var(--xq-cell)) calc(var(--xq-cell) * 0.85) repeat(5, var(--xq-cell)); background: #dcbf8a; border: 3px solid #7a5a30; border-radius: 4px; flex-shrink: 0; }
     .xq-cell { position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(122,90,48,0.4); cursor: pointer; }
     .xq-river-label { grid-column: 1 / span 9; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; box-sizing: border-box; font-size: calc(var(--xq-cell) * 0.34); color: #7a5a30; font-weight: 600; letter-spacing: 1px; border-top: 2px solid rgba(122,90,48,0.6); border-bottom: 2px solid rgba(122,90,48,0.6); background: rgba(122,90,48,0.06); }
     .xq-river-label .xq-turn-mid { font-size: calc(var(--xq-cell) * 0.3); font-weight: 700; color: #5a3f1e; white-space: nowrap; }
@@ -2335,7 +2335,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.185</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.186</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2575,7 +2575,7 @@
 
 <script>
 
-const APP_VERSION = "21.185";
+const APP_VERSION = "21.186";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2772,7 +2772,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.185";
+    document.title = "L⇄V ∞ v21.186";
   }
 });
 
@@ -2837,7 +2837,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.185";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.186";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
