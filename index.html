@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.186</title>
+  <title>L⇄V ∞ v21.187</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1254,6 +1254,125 @@
       font-family: inherit;
     }
     .game-screen-exit:hover { color: var(--error-red); border-color: var(--error-red); }
+
+    /* 視訊通話 */
+    #videoCallOverlay {
+      position: fixed;
+      top: 64px;
+      right: 10px;
+      width: min(360px, 92vw);
+      height: min(64vh, 460px);
+      max-height: 92vh;
+      min-width: 220px;
+      min-height: 180px;
+      max-width: 98vw;
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+      z-index: 460;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      resize: both;
+    }
+    #videoCallOverlay.vc-collapsed .vc-body { display: none; }
+    .vc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 0.5px solid var(--border-subtle);
+      gap: 8px;
+      flex-shrink: 0;
+      cursor: move;
+      touch-action: none;
+      user-select: none;
+    }
+    .vc-title { color: var(--gold); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .vc-header-btns { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .vc-min-btn, .vc-exit {
+      background: none;
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-tertiary);
+      border-radius: 7px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .vc-min-btn { width: 24px; height: 24px; line-height: 1; }
+    .vc-exit { padding: 4px 9px; }
+    .vc-min-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+    .vc-exit:hover { color: var(--error-red); border-color: var(--error-red); }
+    .vc-body { position: relative; flex: 1 1 auto; min-height: 0; background: #000; border-radius: 0 0 16px 16px; overflow: hidden; }
+    #vcRemoteVideo { width: 100%; height: 100%; object-fit: cover; background: #111; display: block; }
+    #vcLocalVideo {
+      position: absolute;
+      right: 10px;
+      bottom: 54px;
+      width: 26%;
+      max-width: 120px;
+      min-width: 60px;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1.5px solid rgba(255,255,255,0.6);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      background: #222;
+    }
+    .vc-controls {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+    }
+    .vc-controls button {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+      font-size: 17px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .vc-controls button:hover { background: rgba(255,255,255,0.28); }
+    .vc-hangup-btn { background: var(--error-red) !important; width: auto !important; border-radius: 22px !important; padding: 0 18px !important; font-size: 13px !important; gap: 6px; }
+    .vc-hangup-btn:hover { background: #c0392b !important; }
+    #vcIncomingBanner, #vcCallingBanner {
+      position: fixed;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 470;
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      max-width: 92vw;
+    }
+    .vc-incoming-btns { display: flex; gap: 8px; flex-shrink: 0; }
+    .vc-accept-btn, .vc-decline-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 7px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .vc-accept-btn { background: #6a9a52; color: #fff; }
+    .vc-decline-btn { background: var(--error-red); color: #fff; }
+    #vcCallingBanner button { border: none; border-radius: 10px; padding: 6px 12px; font-size: 12px; cursor: pointer; background: var(--error-red); color: #fff; font-family: inherit; }
     .game-screen-body {
       display: flex;
       flex-direction: column;
@@ -2335,7 +2454,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.186</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.187</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2453,6 +2572,38 @@
     </div>
   </div>
   <div class="game-screen-body" id="gameScreenBody"></div>
+</div>
+
+<div id="videoCallOverlay">
+  <div class="vc-header">
+    <span class="vc-title">📹 視訊通話 / Видеозвонок</span>
+    <div class="vc-header-btns">
+      <button class="vc-min-btn" onclick="toggleVideoCallMinimize()">▾</button>
+      <button class="vc-exit" onclick="hangupVideoCall()">✕</button>
+    </div>
+  </div>
+  <div class="vc-body" id="vcBody">
+    <video id="vcRemoteVideo" autoplay playsinline></video>
+    <video id="vcLocalVideo" autoplay playsinline muted></video>
+    <div class="vc-controls">
+      <button id="vcMicBtn" onclick="toggleVideoCallMic()" title="靜音/取消靜音">🎤</button>
+      <button id="vcCamBtn" onclick="toggleVideoCallCam()" title="鏡頭開/關">📷</button>
+      <button class="vc-hangup-btn" onclick="hangupVideoCall()">📞 掛斷 / Завершить</button>
+    </div>
+  </div>
+</div>
+
+<div id="vcIncomingBanner" style="display:none;">
+  <span>📹 對方邀請視訊通話<br><span style="color:var(--text-tertiary);font-size:11px;">Входящий видеозвонок</span></span>
+  <div class="vc-incoming-btns">
+    <button class="vc-accept-btn" onclick="acceptVideoCall()">接聽 / Принять</button>
+    <button class="vc-decline-btn" onclick="declineVideoCall()">拒絕 / Отклонить</button>
+  </div>
+</div>
+
+<div id="vcCallingBanner" style="display:none;">
+  <span>📞 撥打中... / Звоним...</span>
+  <button onclick="cancelVideoCall()">取消 / Отмена</button>
 </div>
 
 <div id="profileSetupOverlay" style="display:none;">
@@ -2575,7 +2726,7 @@
 
 <script>
 
-const APP_VERSION = "21.186";
+const APP_VERSION = "21.187";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2686,6 +2837,7 @@ auth.onAuthStateChanged((user) => {
   setupConnectionBanner();
   setupConsensusListener();
   setupGameInviteListener();
+  setupVideoCallListener();
 
   if (user.email === ADMIN_EMAIL) {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
@@ -2772,7 +2924,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.186";
+    document.title = "L⇄V ∞ v21.187";
   }
 });
 
@@ -2837,7 +2989,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.186";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.187";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4012,6 +4164,12 @@ async function sendMsg() {
     openGameMenu();
     return;
   }
+  if (input === VC_TRIGGER_PHRASE) {
+    inputObj.value = "";
+    inputObj.style.height = "auto";
+    startVideoCall();
+    return;
+  }
 
   const now = Date.now();
   if (input === lastSentText && (now - lastSentTime) < COOLDOWN_MS) {
@@ -4252,6 +4410,298 @@ async function requestImageOcrTranslate(key, imageUrl, btnEl) {
    遊戲邀請系統 (v1 骨架：邀請流程 + 井字遊戲)
    ============================================================ */
 const GAME_TRIGGER_PHRASE = "⚽⚽⚽⚽⚽";
+
+/* ---------- 視訊通話 ---------- */
+const VC_TRIGGER_PHRASE = "📹📹📹📹📹";
+const VC_ICE_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+];
+let vcPC = null;
+let vcLocalStream = null;
+let vcRole = null;
+let vcRemoteDescSet = false;
+let vcPendingCandidates = [];
+let vcCandListenerRef = null;
+let vcCallListenerRef = null;
+let vcPresenceListenerRef = null;
+let vcMicOn = true;
+let vcCamOn = true;
+let vcPanelPos = null;
+
+function setupVideoCallListener() {
+  vcCallListenerRef = db.ref("videoCall");
+  vcCallListenerRef.on("value", (snap) => {
+    renderVideoCallState(snap.val());
+  });
+}
+
+function renderVideoCallState(data) {
+  if (!currentUser) return;
+  const incomingBanner = document.getElementById("vcIncomingBanner");
+  const callingBanner = document.getElementById("vcCallingBanner");
+  const overlay = document.getElementById("videoCallOverlay");
+  const myEmail = currentUser.email;
+
+  if (!data || data.status === "ended") {
+    if (incomingBanner) incomingBanner.style.display = "none";
+    if (callingBanner) callingBanner.style.display = "none";
+    if (vcPC) cleanupVideoCall();
+    if (overlay) overlay.style.display = "none";
+    return;
+  }
+
+  if (data.status === "ringing") {
+    if (data.callerEmail === myEmail) {
+      callingBanner.style.display = "flex";
+      incomingBanner.style.display = "none";
+    } else if (!vcPC) {
+      incomingBanner.style.display = "flex";
+      callingBanner.style.display = "none";
+    }
+    return;
+  }
+
+  if (data.status === "active") {
+    incomingBanner.style.display = "none";
+    callingBanner.style.display = "none";
+    overlay.style.display = "flex";
+    initVideoPanelDrag();
+    if (vcRole === "caller" && data.answer && !vcRemoteDescSet) {
+      vcPC.setRemoteDescription(new RTCSessionDescription(data.answer)).then(() => {
+        vcRemoteDescSet = true;
+        flushPendingVideoCandidates();
+      }).catch((err) => console.error("設定遠端描述失敗", err));
+    }
+  }
+}
+
+async function startVideoCall() {
+  if (vcPC) { showGameToast("已經在通話中 / Уже в звонке"); return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  } catch (e) {
+    alert("無法取得鏡頭/麥克風權限 / Нет доступа к камере или микрофону：" + e.message);
+    return;
+  }
+  vcLocalStream = stream;
+  vcRole = "caller";
+  vcRemoteDescSet = false;
+  vcPendingCandidates = [];
+  document.getElementById("vcLocalVideo").srcObject = vcLocalStream;
+
+  await db.ref("videoCall").remove();
+  await db.ref("videoCallCandidates").remove();
+
+  vcPC = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
+  vcLocalStream.getTracks().forEach((track) => vcPC.addTrack(track, vcLocalStream));
+  vcPC.onicecandidate = (e) => {
+    if (e.candidate) db.ref("videoCallCandidates/caller").push(e.candidate.toJSON());
+  };
+  vcPC.ontrack = (e) => {
+    document.getElementById("vcRemoteVideo").srcObject = e.streams[0];
+  };
+  listenVideoCallCandidates("callee");
+
+  const offer = await vcPC.createOffer();
+  await vcPC.setLocalDescription(offer);
+
+  await db.ref("videoCall").set({
+    status: "ringing",
+    callerEmail: currentUser.email,
+    callerKey: emailToKey(currentUser.email),
+    offer: { type: offer.type, sdp: offer.sdp },
+    createdAt: Date.now()
+  });
+
+  registerVideoCallPresence();
+  document.getElementById("videoCallOverlay").style.display = "flex";
+  initVideoPanelDrag();
+}
+
+async function acceptVideoCall() {
+  document.getElementById("vcIncomingBanner").style.display = "none";
+  const snap = await db.ref("videoCall").once("value");
+  const data = snap.val();
+  if (!data || data.status !== "ringing" || !data.offer) return;
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  } catch (e) {
+    alert("無法取得鏡頭/麥克風權限 / Нет доступа к камере или микрофону：" + e.message);
+    declineVideoCall();
+    return;
+  }
+  vcLocalStream = stream;
+  vcRole = "callee";
+  vcRemoteDescSet = false;
+  vcPendingCandidates = [];
+  document.getElementById("vcLocalVideo").srcObject = vcLocalStream;
+
+  vcPC = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
+  vcLocalStream.getTracks().forEach((track) => vcPC.addTrack(track, vcLocalStream));
+  vcPC.onicecandidate = (e) => {
+    if (e.candidate) db.ref("videoCallCandidates/callee").push(e.candidate.toJSON());
+  };
+  vcPC.ontrack = (e) => {
+    document.getElementById("vcRemoteVideo").srcObject = e.streams[0];
+  };
+
+  await vcPC.setRemoteDescription(new RTCSessionDescription(data.offer));
+  vcRemoteDescSet = true;
+  listenVideoCallCandidates("caller");
+  flushPendingVideoCandidates();
+
+  const answer = await vcPC.createAnswer();
+  await vcPC.setLocalDescription(answer);
+
+  await db.ref("videoCall").update({
+    status: "active",
+    calleeEmail: currentUser.email,
+    calleeKey: emailToKey(currentUser.email),
+    answer: { type: answer.type, sdp: answer.sdp }
+  });
+
+  registerVideoCallPresence();
+  document.getElementById("videoCallOverlay").style.display = "flex";
+  initVideoPanelDrag();
+}
+
+function listenVideoCallCandidates(fromRole) {
+  if (vcCandListenerRef) vcCandListenerRef.off();
+  vcCandListenerRef = db.ref("videoCallCandidates/" + fromRole);
+  vcCandListenerRef.on("child_added", (snap) => {
+    const cand = snap.val();
+    if (!cand) return;
+    if (!vcRemoteDescSet) {
+      vcPendingCandidates.push(cand);
+    } else if (vcPC) {
+      vcPC.addIceCandidate(new RTCIceCandidate(cand)).catch((err) => console.warn("加入ICE候選失敗", err));
+    }
+  });
+}
+function flushPendingVideoCandidates() {
+  vcPendingCandidates.forEach((cand) => {
+    if (vcPC) vcPC.addIceCandidate(new RTCIceCandidate(cand)).catch((err) => console.warn("加入ICE候選失敗", err));
+  });
+  vcPendingCandidates = [];
+}
+
+function declineVideoCall() {
+  db.ref("videoCall").update({ status: "ended", endedBy: currentUser.email });
+}
+function cancelVideoCall() {
+  db.ref("videoCall").update({ status: "ended", endedBy: currentUser.email });
+}
+function hangupVideoCall() {
+  db.ref("videoCall").update({ status: "ended", endedBy: currentUser.email }).then(() => {
+    setTimeout(() => {
+      db.ref("videoCall").remove();
+      db.ref("videoCallCandidates").remove();
+    }, 1200);
+  });
+}
+
+function cleanupVideoCall() {
+  if (vcPC) { vcPC.close(); vcPC = null; }
+  if (vcLocalStream) { vcLocalStream.getTracks().forEach((t) => t.stop()); vcLocalStream = null; }
+  if (vcCandListenerRef) { vcCandListenerRef.off(); vcCandListenerRef = null; }
+  if (vcPresenceListenerRef) { vcPresenceListenerRef.off(); vcPresenceListenerRef = null; }
+  const remoteVideo = document.getElementById("vcRemoteVideo");
+  const localVideo = document.getElementById("vcLocalVideo");
+  if (remoteVideo) remoteVideo.srcObject = null;
+  if (localVideo) localVideo.srcObject = null;
+  vcRole = null;
+  vcRemoteDescSet = false;
+  vcPendingCandidates = [];
+  vcMicOn = true;
+  vcCamOn = true;
+  if (currentUser) db.ref("videoCall/presence/" + emailToKey(currentUser.email)).remove();
+}
+
+function registerVideoCallPresence() {
+  if (!currentUser) return;
+  const myKey = emailToKey(currentUser.email);
+  const presenceRef = db.ref("videoCall/presence/" + myKey);
+  presenceRef.set(true);
+  presenceRef.onDisconnect().remove();
+  if (vcPresenceListenerRef) vcPresenceListenerRef.off();
+  vcPresenceListenerRef = db.ref("videoCall/presence");
+  vcPresenceListenerRef.on("value", (snap) => {
+    if (!vcPC) return;
+    const presence = snap.val() || {};
+    const otherKeys = Object.keys(presence).filter((k) => k !== myKey);
+    if (otherKeys.length === 0) hangupVideoCall();
+  });
+}
+
+function toggleVideoCallMic() {
+  if (!vcLocalStream) return;
+  vcMicOn = !vcMicOn;
+  vcLocalStream.getAudioTracks().forEach((t) => { t.enabled = vcMicOn; });
+  document.getElementById("vcMicBtn").textContent = vcMicOn ? "🎤" : "🔇";
+}
+function toggleVideoCallCam() {
+  if (!vcLocalStream) return;
+  vcCamOn = !vcCamOn;
+  vcLocalStream.getVideoTracks().forEach((t) => { t.enabled = vcCamOn; });
+  document.getElementById("vcCamBtn").textContent = vcCamOn ? "📷" : "🚫";
+}
+
+function toggleVideoCallMinimize() {
+  const overlay = document.getElementById("videoCallOverlay");
+  overlay.classList.toggle("vc-collapsed");
+}
+
+function initVideoPanelDrag() {
+  const overlay = document.getElementById("videoCallOverlay");
+  const header = overlay.querySelector(".vc-header");
+  if (!header || header._dragBound) return;
+  header._dragBound = true;
+  let dragging = null;
+  function getPoint(e) {
+    if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+  function onDown(e) {
+    if (e.target.closest("button")) return;
+    const pt = getPoint(e);
+    const rect = overlay.getBoundingClientRect();
+    dragging = { startX: pt.x, startY: pt.y, startLeft: rect.left, startTop: rect.top };
+    overlay.style.right = "auto";
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onUp);
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const pt = getPoint(e);
+    let newLeft = dragging.startLeft + (pt.x - dragging.startX);
+    let newTop = dragging.startTop + (pt.y - dragging.startY);
+    const maxLeft = window.innerWidth - overlay.offsetWidth - 4;
+    const maxTop = window.innerHeight - 44;
+    newLeft = Math.max(4, Math.min(newLeft, maxLeft));
+    newTop = Math.max(4, Math.min(newTop, maxTop));
+    overlay.style.left = newLeft + "px";
+    overlay.style.top = newTop + "px";
+    vcPanelPos = { left: newLeft, top: newTop };
+  }
+  function onUp() {
+    dragging = null;
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("touchend", onUp);
+  }
+  header.addEventListener("mousedown", onDown);
+  header.addEventListener("touchstart", onDown, { passive: true });
+}
 const GAME_CATALOG = [
   { id: "tictactoe", icon: "⭕", name: "井字遊戲", nameRu: "Крестики-нолики", available: true },
   { id: "bulls",     icon: "🔢", name: "公牛母牛",  nameRu: "Быки и коровы", available: true },
