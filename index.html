@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.187</title>
+  <title>L⇄V ∞ v21.188</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1275,6 +1275,7 @@
       flex-direction: column;
       overflow: hidden;
       resize: both;
+      --vc-scale: clamp(0.6, calc(min(360px, 92vw) / 360), 2.5);
     }
     #videoCallOverlay.vc-collapsed .vc-body { display: none; }
     .vc-header {
@@ -1308,8 +1309,8 @@
     #vcRemoteVideo { width: 100%; height: 100%; object-fit: cover; background: #111; display: block; }
     #vcLocalVideo {
       position: absolute;
-      right: 10px;
-      bottom: 54px;
+      right: calc(10px * var(--vc-scale));
+      bottom: calc(54px * var(--vc-scale));
       width: 26%;
       max-width: 120px;
       min-width: 60px;
@@ -1326,22 +1327,22 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      padding: 10px;
+      gap: calc(12px * var(--vc-scale));
+      padding: calc(10px * var(--vc-scale));
       background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
     }
     .vc-controls button {
-      width: 40px; height: 40px;
+      width: calc(40px * var(--vc-scale)); height: calc(40px * var(--vc-scale));
       border-radius: 50%;
       border: none;
       background: rgba(255,255,255,0.16);
       color: #fff;
-      font-size: 17px;
+      font-size: calc(17px * var(--vc-scale));
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
     }
     .vc-controls button:hover { background: rgba(255,255,255,0.28); }
-    .vc-hangup-btn { background: var(--error-red) !important; width: auto !important; border-radius: 22px !important; padding: 0 18px !important; font-size: 13px !important; gap: 6px; }
+    .vc-hangup-btn { background: var(--error-red) !important; width: auto !important; border-radius: 22px !important; padding: 0 calc(18px * var(--vc-scale)) !important; font-size: calc(13px * var(--vc-scale)) !important; gap: 6px; }
     .vc-hangup-btn:hover { background: #c0392b !important; }
     #vcIncomingBanner, #vcCallingBanner {
       position: fixed;
@@ -2454,7 +2455,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.187</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.188</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2726,7 +2727,7 @@
 
 <script>
 
-const APP_VERSION = "21.187";
+const APP_VERSION = "21.188";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2924,7 +2925,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.187";
+    document.title = "L⇄V ∞ v21.188";
   }
 });
 
@@ -2989,7 +2990,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.187";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.188";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4657,8 +4658,22 @@ function toggleVideoCallMinimize() {
   overlay.classList.toggle("vc-collapsed");
 }
 
+let vcScaleObserverBound = false;
+function bindVideoScaleObserver(overlay) {
+  if (vcScaleObserverBound || !window.ResizeObserver) return;
+  vcScaleObserverBound = true;
+  const body = document.getElementById("vcBody");
+  if (!body) return;
+  new ResizeObserver((entries) => {
+    const entry = entries[0];
+    const w = entry.contentRect.width;
+    const scale = Math.max(0.6, Math.min(w / 360, 2.5));
+    overlay.style.setProperty("--vc-scale", scale);
+  }).observe(body);
+}
 function initVideoPanelDrag() {
   const overlay = document.getElementById("videoCallOverlay");
+  bindVideoScaleObserver(overlay);
   const header = overlay.querySelector(".vc-header");
   if (!header || header._dragBound) return;
   header._dragBound = true;
