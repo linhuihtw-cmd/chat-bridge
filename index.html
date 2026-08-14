@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.182</title>
+  <title>L⇄V ∞ v21.183</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1733,7 +1733,7 @@
 
     /* 象棋 */
     .xq-board-wrap { display: flex; justify-content: center; align-items: center; padding: 6px 0 10px; width: 100%; flex: 1 1 auto; min-height: 0; }
-    .xq-board { --xq-cell: 25px; display: grid; grid-template-columns: repeat(9, var(--xq-cell)); grid-template-rows: repeat(5, var(--xq-cell)) calc(var(--xq-cell) * 0.75) repeat(5, var(--xq-cell)); background: #dcbf8a; border: 3px solid #7a5a30; border-radius: 4px; flex-shrink: 0; }
+    .xq-board { --xq-cell: clamp(16px, min(calc((min(280px, 88vw) - 40px) / 9), calc((min(60vh, 420px) - 150px) / 10.75)), 42px); display: grid; grid-template-columns: repeat(9, var(--xq-cell)); grid-template-rows: repeat(5, var(--xq-cell)) calc(var(--xq-cell) * 0.75) repeat(5, var(--xq-cell)); background: #dcbf8a; border: 3px solid #7a5a30; border-radius: 4px; flex-shrink: 0; }
     .xq-cell { position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(122,90,48,0.4); cursor: pointer; }
     .xq-river-label { grid-column: 1 / span 9; display: flex; align-items: center; justify-content: space-evenly; font-size: calc(var(--xq-cell) * 0.4); color: #7a5a30; font-weight: 600; letter-spacing: 2px; border-top: 2px solid rgba(122,90,48,0.6); border-bottom: 2px solid rgba(122,90,48,0.6); background: rgba(122,90,48,0.06); }
     .xq-cell.xq-palace { background: rgba(122,90,48,0.08); }
@@ -2332,7 +2332,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.182</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.183</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2572,7 +2572,7 @@
 
 <script>
 
-const APP_VERSION = "21.182";
+const APP_VERSION = "21.183";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2769,7 +2769,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.182";
+    document.title = "L⇄V ∞ v21.183";
   }
 });
 
@@ -2834,7 +2834,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.182";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.183";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5999,14 +5999,13 @@ function xqHasAnyLegalMove(board, color) {
 let xqSelected = null;
 let xqLastState = null;
 let xqResizeObserverBound = false;
-function xqComputeCellSize() {
-  const bodyEl = document.getElementById("gameScreenBody");
-  const availW = bodyEl ? bodyEl.clientWidth : 280;
-  const availH = bodyEl ? bodyEl.clientHeight : 340;
-  const cellFromW = (availW - 32) / 9;
-  const cellFromH = (availH - 118) / 10.75;
-  let size = Math.floor(Math.min(cellFromW, cellFromH));
-  return Math.max(16, Math.min(size, 48));
+function xqApplyCellSize(width, height) {
+  const boardEl = document.querySelector(".xq-board");
+  if (!boardEl) return;
+  const cellFromW = (width - 32) / 9;
+  const cellFromH = (height - 118) / 10.75;
+  const size = Math.max(16, Math.min(cellFromW, cellFromH, 42));
+  boardEl.style.setProperty("--xq-cell", size + "px");
 }
 function initXiangqiScreen() {
   const body = document.getElementById("gameScreenBody");
@@ -6029,11 +6028,15 @@ function initXiangqiScreen() {
   registerGamePresence("xiangqi");
   if (!xqResizeObserverBound && window.ResizeObserver) {
     xqResizeObserverBound = true;
-    const overlay = document.getElementById("gameScreenOverlay");
-    if (overlay) {
-      new ResizeObserver(() => {
-        if (activeGameId === "xiangqi" && xqLastState) renderXiangqi(xqLastState);
-      }).observe(overlay);
+    const observeTarget = document.getElementById("gameScreenBody");
+    if (observeTarget) {
+      new ResizeObserver((entries) => {
+        if (activeGameId !== "xiangqi") return;
+        const entry = entries[0];
+        const w = entry.contentRect.width;
+        const h = entry.contentRect.height;
+        xqApplyCellSize(w, h);
+      }).observe(observeTarget);
     }
   }
 }
@@ -6103,7 +6106,7 @@ function renderXiangqi(state) {
 
   body.innerHTML = `
     <div class="ttt-status" id="xiangqiStatus">${statusHtml}</div>
-    <div class="xq-board-wrap"><div class="xq-board" style="--xq-cell:${xqComputeCellSize()}px">${cellsHtml}</div></div>
+    <div class="xq-board-wrap"><div class="xq-board">${cellsHtml}</div></div>
     ${extraHtml}
   `;
 }
