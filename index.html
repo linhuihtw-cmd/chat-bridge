@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.191</title>
+  <title>L⇄V ∞ v21.192</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2455,7 +2455,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.191</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.192</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2729,7 +2729,7 @@
 
 <script>
 
-const APP_VERSION = "21.191";
+const APP_VERSION = "21.192";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2932,7 +2932,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.191";
+    document.title = "L⇄V ∞ v21.192";
   }
 });
 
@@ -2997,7 +2997,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.191";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.192";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4437,6 +4437,7 @@ let vcCallListenerRef = null;
 let vcPresenceListenerRef = null;
 let vcMicOn = true;
 let vcCamOn = true;
+let vcOtherPartySeen = false;
 let vcPanelPos = null;
 
 function setupVideoCallListener() {
@@ -4644,6 +4645,7 @@ function cleanupVideoCall() {
   vcPendingCandidates = [];
   vcMicOn = true;
   vcCamOn = true;
+  vcOtherPartySeen = false;
   if (currentUser) db.ref("videoCall/presence/" + emailToKey(currentUser.email)).remove();
 }
 
@@ -4659,7 +4661,11 @@ function registerVideoCallPresence() {
     if (!vcPC) return;
     const presence = snap.val() || {};
     const otherKeys = Object.keys(presence).filter((k) => k !== myKey);
-    if (otherKeys.length === 0) hangupVideoCall();
+    if (otherKeys.length > 0) {
+      vcOtherPartySeen = true;
+    } else if (vcOtherPartySeen) {
+      hangupVideoCall();
+    }
   });
 }
 
