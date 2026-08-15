@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.193</title>
+  <title>L⇄V ∞ v21.194</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2449,7 +2449,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.193</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.194</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2457,6 +2457,10 @@
     <p class="auth-title">請先登入才能使用聊天室</p>
     <p class="auth-subtitle">Войдите, чтобы продолжить</p>
     <button id="googleLoginBtn" class="btn-google-login" onclick="loginWithGoogle()">使用 Google 帳號登入 / Войти через Google</button>
+    <div style="margin-top:14px;display:flex;justify-content:center;" id="telegramLoginWidget">
+      <!-- ⚠️ 建立好Telegram Bot後，把下面 data-telegram-login 的值換成你的 bot 帳號名稱(不用@符號) -->
+      <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="YOUR_BOT_USERNAME" data-size="large" data-radius="10" data-onauth="onTelegramAuth(user)" data-request-access="write"></script>
+    </div>
   </div>
 </div>
 
@@ -2723,7 +2727,7 @@
 
 <script>
 
-const APP_VERSION = "21.193";
+const APP_VERSION = "21.194";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2767,6 +2771,25 @@ function loginWithGoogle() {
   auth.signInWithPopup(provider).catch((err) => {
     alert("登入失敗：" + err.message);
   });
+}
+
+function onTelegramAuth(user) {
+  fetch(`https://${API_KEY}/telegram-auth`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user)
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.error) {
+        alert("Telegram 登入失敗 / Ошибка входа через Telegram：" + data.error.message);
+        return;
+      }
+      return auth.signInWithCustomToken(data.customToken);
+    })
+    .catch((err) => {
+      alert("Telegram 登入失敗 / Ошибка входа через Telegram：" + err.message);
+    });
 }
 
 function logoutUser() {
@@ -2926,7 +2949,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.193";
+    document.title = "L⇄V ∞ v21.194";
   }
 });
 
@@ -2991,7 +3014,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.193";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.194";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
