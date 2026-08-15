@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.190</title>
+  <title>L⇄V ∞ v21.191</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2455,7 +2455,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.190</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.191</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2675,6 +2675,7 @@
     </div>
     <button id="settingsConfirm" onclick="saveSettings()" style="margin-top:16px;">儲存 / Сохранить</button>
     <button id="settingsClose" onclick="closeSettings()">取消 / Отмена</button>
+    <button id="settingsLogoutBtn" onclick="confirmLogout()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--error-red);color:var(--error-red);border-radius:10px;padding:10px;font-size:13px;font-family:inherit;cursor:pointer;">登出 / Выйти</button>
   </div>
 </div>
 
@@ -2728,7 +2729,7 @@
 
 <script>
 
-const APP_VERSION = "21.190";
+const APP_VERSION = "21.191";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2776,6 +2777,11 @@ function loginWithGoogle() {
 
 function logoutUser() {
   auth.signOut();
+}
+function confirmLogout() {
+  if (confirm("確定要登出嗎？ / Вы уверены, что хотите выйти?")) {
+    logoutUser();
+  }
 }
 
 function showScreen(screenId) {
@@ -2926,7 +2932,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.190";
+    document.title = "L⇄V ∞ v21.191";
   }
 });
 
@@ -2991,7 +2997,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.190";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.191";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
