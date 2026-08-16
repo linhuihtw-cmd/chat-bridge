@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.205</title>
+  <title>L⇄V ∞ v21.206</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.205</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.206</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.205";
+const APP_VERSION = "21.206";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.205";
+    document.title = "L⇄V ∞ v21.206";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.205";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.206";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5428,11 +5428,8 @@ function tttMove(i) {
   });
 }
 function restartTicTacToe() {
-  db.ref("games/tictactoe").once("value").then((snap) => {
-    const state = snap.val();
-    if (!state) return;
-    db.ref("games/tictactoe").update({ board: Array(9).fill(""), turn: "X", winner: null, updatedAt: Date.now() });
-  });
+  db.ref("games/tictactoe").update({ board: Array(9).fill(""), turn: "X", winner: null, updatedAt: Date.now() })
+    .catch((e) => { console.error("重新開局失敗", e); alert("重新開局失敗，請再試一次 / Не удалось начать заново：" + e.message); });
 }
 function checkTttWinner(board) {
   const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
@@ -5610,16 +5607,12 @@ function bullsGuess() {
   });
 }
 function restartBulls() {
-  db.ref("games/bulls").once("value").then((snap) => {
-    const state = snap.val();
-    if (!state) return;
-    db.ref("games/bulls").update({
-      numberA: null, numberB: null,
-      guessesA: [], guessesB: [],
-      turn: "A", phase: "setup", winner: null,
-      updatedAt: Date.now()
-    });
-  });
+  db.ref("games/bulls").update({
+    numberA: null, numberB: null,
+    guessesA: [], guessesB: [],
+    turn: "A", phase: "setup", winner: null,
+    updatedAt: Date.now()
+  }).catch((e) => { console.error("重新開局失敗", e); alert("重新開局失敗，請再試一次 / Не удалось начать заново：" + e.message); });
 }
 
 /* ---------- 猜猜我是誰 (第三款遊戲) ---------- */
@@ -6884,18 +6877,14 @@ function msMove(i) {
   });
 }
 function restartMinesweeper() {
-  db.ref("games/minesweeper").once("value").then((snap) => {
-    const state = snap.val();
-    if (!state) return;
-    db.ref("games/minesweeper").update({
-      mines: generateMinesweeperMines(MS_TOTAL, MS_MINES),
-      revealed: Array(MS_TOTAL).fill(false),
-      turn: "A",
-      winner: null,
-      loserCell: null,
-      updatedAt: Date.now()
-    });
-  });
+  db.ref("games/minesweeper").update({
+    mines: generateMinesweeperMines(MS_TOTAL, MS_MINES),
+    revealed: Array(MS_TOTAL).fill(false),
+    turn: "A",
+    winner: null,
+    loserCell: null,
+    updatedAt: Date.now()
+  }).catch((e) => { console.error("重新開局失敗", e); alert("重新開局失敗，請再試一次 / Не удалось начать заново：" + e.message); });
 }
 
 /* ---------- 聽音連連看（語言學習：純聽音配對，不顯示任何中文字，避免簡繁體問題） ---------- */
@@ -7565,24 +7554,23 @@ function restartBreakout(speedKey, ballCount) {
   const preset = BREAKOUT_SPEED_PRESETS[speedKey] || BREAKOUT_SPEED_PRESETS.normal;
   const count = Math.min(Math.max(ballCount || 1, 1), BREAKOUT_MAX_BALLS);
   breakoutStateHistory = [];
-  db.ref("games/breakout").once("value").then((snap) => {
-    const state = snap.val();
-    if (!state) return;
-    const balls = Array.from({ length: count }, () => ({
-      x: BREAKOUT_WIDTH / 2, y: 110, vx: preset.vx, vy: preset.vy
-    }));
-    db.ref("games/breakout").update({
-      balls: balls,
-      ball: balls[0],
-      ballCount: count,
-      baseSpeed: preset,
-      bricks: generateBreakoutBricks(),
-      score: 0,
-      lives: 3,
-      status: "playing"
-    });
-    if (!breakoutLoopInterval) breakoutLoopInterval = setInterval(breakoutPhysicsTick, 40);
+  const balls = Array.from({ length: count }, () => ({
+    x: BREAKOUT_WIDTH / 2, y: 110, vx: preset.vx, vy: preset.vy
+  }));
+  db.ref("games/breakout").update({
+    balls: balls,
+    ball: balls[0],
+    ballCount: count,
+    baseSpeed: preset,
+    bricks: generateBreakoutBricks(),
+    score: 0,
+    lives: 3,
+    status: "playing"
+  }).catch((e) => {
+    console.error("重新開局寫入失敗", e);
+    alert("重新開局失敗，請再試一次 / Не удалось начать заново：" + e.message);
   });
+  if (!breakoutLoopInterval) breakoutLoopInterval = setInterval(breakoutPhysicsTick, 40);
 }
 
 function speakThisText(index) {
