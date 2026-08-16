@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.196</title>
+  <title>L⇄V ∞ v21.197</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1528,7 +1528,7 @@
       width: 100%;
       box-sizing: border-box;
     }
-    .gw-my-secret .gw-secret-emoji { font-size: 26px; }
+    .gw-my-secret .gw-secret-emoji { font-size: clamp(18px, calc(var(--avail-w) * 0.065), 36px); }
     .gw-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -1539,7 +1539,7 @@
       background: var(--bg-panel);
       border: 1px solid var(--border-strong);
       border-radius: 10px;
-      font-size: 24px;
+      font-size: clamp(16px, calc(var(--avail-w) * 0.06), 32px);
       padding: 8px 0;
       text-align: center;
       cursor: pointer;
@@ -1866,12 +1866,12 @@
     .wordmatch-layout { display: flex; gap: 24px; justify-content: center; width: 100%; }
     .wordmatch-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .wordmatch-btn {
-      width: 54px;
-      height: 44px;
+      width: clamp(44px, calc(var(--avail-w) * 0.16), 90px);
+      height: clamp(36px, calc(var(--avail-w) * 0.13), 74px);
       background: var(--bg-panel);
       border: 1.5px solid var(--border-strong);
       border-radius: 10px;
-      font-size: 20px;
+      font-size: clamp(16px, calc(var(--avail-w) * 0.06), 32px);
       cursor: pointer;
       font-family: inherit;
       color: var(--text-primary);
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.196</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.197</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.196";
+const APP_VERSION = "21.197";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.196";
+    document.title = "L⇄V ∞ v21.197";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.196";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.197";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7196,7 +7196,7 @@ function initBreakoutScreen() {
   const body = document.getElementById("gameScreenBody");
   body.innerHTML = `
     <div class="ttt-status" id="breakoutStatus">載入中... / Загрузка...</div>
-    <canvas id="breakoutCanvas" width="${BREAKOUT_WIDTH}" height="${BREAKOUT_HEIGHT}" style="background:var(--bg-deep); border-radius:8px; touch-action:none; display:block; margin:0 auto;"></canvas>
+    <canvas id="breakoutCanvas" width="${BREAKOUT_WIDTH}" height="${BREAKOUT_HEIGHT}" style="background:var(--bg-deep); border-radius:8px; touch-action:none; display:block; margin:0 auto; width:min(var(--avail-w), calc(var(--avail-h) * 0.9167)); max-width:100%; height:auto; aspect-ratio:${BREAKOUT_WIDTH}/${BREAKOUT_HEIGHT};"></canvas>
     <div style="text-align:center; font-size:11px; color:var(--text-tertiary); margin-top:6px;">左右拖曳畫面來移動你的板子 / Двигайте пальцем влево-вправо</div>
   `;
   if (activeGameListenerRef) activeGameListenerRef.off();
