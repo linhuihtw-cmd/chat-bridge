@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.207</title>
+  <title>L⇄V ∞ v21.208</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.207</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.208</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.207";
+const APP_VERSION = "21.208";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.207";
+    document.title = "L⇄V ∞ v21.208";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.207";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.208";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7490,10 +7490,9 @@ function drawBreakoutFrame() {
         drawX = b.x; drawY = b.y;
       }
     } else if (bb) {
-      // 沒有更晚的資料點了(還沒收到)，用最後已知速度往前推算頂著畫
-      const extra = Math.min((renderTime - before.time) / 40, 1.5);
-      drawX = bb.x + bb.vx * extra;
-      drawY = bb.y + bb.vy * extra;
+      // 沒有更晚的資料點了(還沒收到)，先停在最後已知的確定位置，不用猜的往前推，避免猜錯之後畫面往回修正
+      drawX = bb.x;
+      drawY = bb.y;
     } else {
       drawX = b.x; drawY = b.y;
     }
