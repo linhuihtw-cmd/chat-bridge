@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.202</title>
+  <title>L⇄V ∞ v21.203</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.202</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.203</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.202";
+const APP_VERSION = "21.203";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.202";
+    document.title = "L⇄V ∞ v21.203";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.202";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.203";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7205,8 +7205,7 @@ function generateBreakoutBricks() {
 let breakoutLoopInterval = null;
 let breakoutRenderLoopId = null;
 let breakoutStateReceivedAt = 0;
-let breakoutPrevState = null;
-let breakoutPrevReceivedAt = 0;
+let breakoutStateHistory = []; // [{state, time}]，保留最近一段時間的所有狀態，不管收到得快或慢都能在裡面找到內插用的兩點
 const BREAKOUT_RENDER_DELAY = 180; // 畫面故意晚現實一點點，換取不受跨國網路延遲/抖動影響的平滑動作
 let breakoutIsHost = false;
 let breakoutLocalPaddleX = 110;
@@ -7222,6 +7221,7 @@ function initBreakoutScreen() {
   `;
   if (activeGameListenerRef) activeGameListenerRef.off();
   if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+  breakoutStateHistory = [];
   stopBreakoutRenderLoop();
   startBreakoutRenderLoop();
   activeGameListenerRef = db.ref("games/breakout");
@@ -7235,9 +7235,10 @@ function initBreakoutScreen() {
       return;
     }
     gameStateSeenOnce = true;
-    if (breakoutLatestState) {
-      breakoutPrevState = breakoutLatestState;
-      breakoutPrevReceivedAt = breakoutStateReceivedAt;
+    const now = performance.now();
+    breakoutStateHistory.push({ state, time: now });
+    while (breakoutStateHistory.length > 2 && breakoutStateHistory[0].time < now - (BREAKOUT_RENDER_DELAY + 200)) {
+      breakoutStateHistory.shift();
     }
     breakoutLatestState = state;
     const myEmail = currentUser.email;
@@ -7468,26 +7469,39 @@ function drawBreakoutFrame() {
   ctx.fillStyle = colorB;
   ctx.fillRect(paddleBX - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_B_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
 
-  // 球（可能不只一顆）：優先在「前一筆」跟「這一筆」兩個已確定的資料點之間做內插（不受網路抖動影響），
-  // 只有真的還沒收到下一筆新資料時，才用速度暫時往前推算頂著畫
+  // 球（可能不只一顆）：從歷史紀錄裡找出「剛好包住目標時間點」的兩筆資料做內插，
+  // 不管收到資料的頻率快或慢都能對上，只有真的還沒收到足夠新資料時，才用速度暫時往前推算頂著畫
   const ballsToShow = state.balls || (state.ball ? [state.ball] : []);
-  const prevBalls = breakoutPrevState ? (breakoutPrevState.balls || (breakoutPrevState.ball ? [breakoutPrevState.ball] : [])) : null;
   const renderTime = performance.now() - BREAKOUT_RENDER_DELAY;
+  const hist = breakoutStateHistory;
+  let before = null, after = null;
+  for (let i = hist.length - 1; i >= 0; i--) {
+    if (hist[i].time <= renderTime) { before = hist[i]; after = hist[i + 1] || null; break; }
+  }
+  if (!before) { before = hist[0] || { state, time: renderTime }; after = hist[1] || null; }
+
   ballsToShow.forEach((b, idx) => {
     let drawX, drawY;
-    const pb = prevBalls && prevBalls[idx];
-    if (pb && breakoutPrevReceivedAt && renderTime >= breakoutPrevReceivedAt && renderTime <= breakoutStateReceivedAt) {
-      const span = breakoutStateReceivedAt - breakoutPrevReceivedAt || 1;
-      const t = Math.min(1, Math.max(0, (renderTime - breakoutPrevReceivedAt) / span));
-      drawX = pb.x + (b.x - pb.x) * t;
-      drawY = pb.y + (b.y - pb.y) * t;
-    } else if (renderTime > breakoutStateReceivedAt) {
-      const extra = Math.min((renderTime - breakoutStateReceivedAt) / 40, 1.5);
-      drawX = b.x + b.vx * extra;
-      drawY = b.y + b.vy * extra;
+    const beforeBalls = before.state.balls || (before.state.ball ? [before.state.ball] : []);
+    const bb = beforeBalls[idx];
+    if (after) {
+      const afterBalls = after.state.balls || (after.state.ball ? [after.state.ball] : []);
+      const ab = afterBalls[idx];
+      if (bb && ab) {
+        const span = after.time - before.time || 1;
+        const t = Math.min(1, Math.max(0, (renderTime - before.time) / span));
+        drawX = bb.x + (ab.x - bb.x) * t;
+        drawY = bb.y + (ab.y - bb.y) * t;
+      } else {
+        drawX = b.x; drawY = b.y;
+      }
+    } else if (bb) {
+      // 沒有更晚的資料點了(還沒收到)，用最後已知速度往前推算頂著畫
+      const extra = Math.min((renderTime - before.time) / 40, 1.5);
+      drawX = bb.x + bb.vx * extra;
+      drawY = bb.y + bb.vy * extra;
     } else {
-      drawX = b.x;
-      drawY = b.y;
+      drawX = b.x; drawY = b.y;
     }
     drawX = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_WIDTH - BREAKOUT_BALL_R, drawX));
     drawY = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_HEIGHT, drawY));
