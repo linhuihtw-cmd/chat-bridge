@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.200</title>
+  <title>L⇄V ∞ v21.201</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.200</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.201</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.200";
+const APP_VERSION = "21.201";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.200";
+    document.title = "L⇄V ∞ v21.201";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.200";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.201";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7205,6 +7205,9 @@ function generateBreakoutBricks() {
 let breakoutLoopInterval = null;
 let breakoutRenderLoopId = null;
 let breakoutStateReceivedAt = 0;
+let breakoutPrevState = null;
+let breakoutPrevReceivedAt = 0;
+const BREAKOUT_RENDER_DELAY = 60; // 畫面故意晚現實一點點，換取不受網路波動影響的平滑動作
 let breakoutIsHost = false;
 let breakoutLocalPaddleX = 110;
 let breakoutLatestState = null;
@@ -7232,6 +7235,10 @@ function initBreakoutScreen() {
       return;
     }
     gameStateSeenOnce = true;
+    if (breakoutLatestState) {
+      breakoutPrevState = breakoutLatestState;
+      breakoutPrevReceivedAt = breakoutStateReceivedAt;
+    }
     breakoutLatestState = state;
     const myEmail = currentUser.email;
     breakoutMyRole = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
@@ -7421,12 +7428,23 @@ function stopBreakoutRenderLoop() {
   if (breakoutRenderLoopId) { cancelAnimationFrame(breakoutRenderLoopId); breakoutRenderLoopId = null; }
 }
 
+let breakoutCanvasCssW = 0, breakoutCanvasCssH = 0;
 function drawBreakoutFrame() {
   const state = breakoutLatestState;
   const canvas = document.getElementById("breakoutCanvas");
   if (!state || !canvas || !state.bricks) return;
 
+  // 讓畫布的實際解析度跟著顯示大小一起放大，避免放大後糊掉（跟高解析度螢幕的處理方式一樣）
+  const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+  if (cssW > 0 && cssH > 0 && (cssW !== breakoutCanvasCssW || cssH !== breakoutCanvasCssH)) {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    breakoutCanvasCssW = cssW;
+    breakoutCanvasCssH = cssH;
+  }
   const ctx = canvas.getContext("2d");
+  ctx.setTransform(canvas.width / BREAKOUT_WIDTH, 0, 0, canvas.height / BREAKOUT_HEIGHT, 0, 0);
   ctx.clearRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
 
   // 磚塊
@@ -7450,12 +7468,29 @@ function drawBreakoutFrame() {
   ctx.fillStyle = colorB;
   ctx.fillRect(paddleBX - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_B_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
 
-  // 球（可能不只一顆）：畫的時候用速度往前推算，讓球在兩次資料庫更新之間的移動看起來是平滑的、不是一格一格跳
+  // 球（可能不只一顆）：優先在「前一筆」跟「這一筆」兩個已確定的資料點之間做內插（不受網路抖動影響），
+  // 只有真的還沒收到下一筆新資料時，才用速度暫時往前推算頂著畫
   const ballsToShow = state.balls || (state.ball ? [state.ball] : []);
-  const elapsedTicks = Math.min((performance.now() - breakoutStateReceivedAt) / 40, 1.5);
-  ballsToShow.forEach(b => {
-    const drawX = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_WIDTH - BREAKOUT_BALL_R, b.x + b.vx * elapsedTicks));
-    const drawY = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_HEIGHT, b.y + b.vy * elapsedTicks));
+  const prevBalls = breakoutPrevState ? (breakoutPrevState.balls || (breakoutPrevState.ball ? [breakoutPrevState.ball] : [])) : null;
+  const renderTime = performance.now() - BREAKOUT_RENDER_DELAY;
+  ballsToShow.forEach((b, idx) => {
+    let drawX, drawY;
+    const pb = prevBalls && prevBalls[idx];
+    if (pb && breakoutPrevReceivedAt && renderTime >= breakoutPrevReceivedAt && renderTime <= breakoutStateReceivedAt) {
+      const span = breakoutStateReceivedAt - breakoutPrevReceivedAt || 1;
+      const t = Math.min(1, Math.max(0, (renderTime - breakoutPrevReceivedAt) / span));
+      drawX = pb.x + (b.x - pb.x) * t;
+      drawY = pb.y + (b.y - pb.y) * t;
+    } else if (renderTime > breakoutStateReceivedAt) {
+      const extra = Math.min((renderTime - breakoutStateReceivedAt) / 40, 1.5);
+      drawX = b.x + b.vx * extra;
+      drawY = b.y + b.vy * extra;
+    } else {
+      drawX = b.x;
+      drawY = b.y;
+    }
+    drawX = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_WIDTH - BREAKOUT_BALL_R, drawX));
+    drawY = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_HEIGHT, drawY));
     ctx.beginPath();
     ctx.arc(drawX, drawY, BREAKOUT_BALL_R, 0, Math.PI * 2);
     ctx.fillStyle = "#e8e6e0";
