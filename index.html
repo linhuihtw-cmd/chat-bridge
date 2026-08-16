@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.201</title>
+  <title>L⇄V ∞ v21.202</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.201</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.202</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.201";
+const APP_VERSION = "21.202";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.201";
+    document.title = "L⇄V ∞ v21.202";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.201";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.202";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7207,7 +7207,7 @@ let breakoutRenderLoopId = null;
 let breakoutStateReceivedAt = 0;
 let breakoutPrevState = null;
 let breakoutPrevReceivedAt = 0;
-const BREAKOUT_RENDER_DELAY = 60; // 畫面故意晚現實一點點，換取不受網路波動影響的平滑動作
+const BREAKOUT_RENDER_DELAY = 180; // 畫面故意晚現實一點點，換取不受跨國網路延遲/抖動影響的平滑動作
 let breakoutIsHost = false;
 let breakoutLocalPaddleX = 110;
 let breakoutLatestState = null;
