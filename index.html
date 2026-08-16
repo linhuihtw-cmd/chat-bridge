@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.197</title>
+  <title>L⇄V ∞ v21.200</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1384,7 +1384,7 @@
     }
     #gameScreenOverlay.gs-collapsed .game-screen-body { display: none; }
     .ttt-board {
-      --cell: clamp(50px, calc((var(--avail-w) - 12px) / 3), 170px);
+      --cell: clamp(50px, min(calc((var(--avail-w) - 12px) / 3), calc(var(--avail-h) / 3)), 170px);
       display: grid;
       grid-template-columns: repeat(3, var(--cell));
       grid-template-rows: repeat(3, var(--cell));
@@ -1642,7 +1642,7 @@
 
     /* 接水管 */
     .pipes-board {
-      --cell: clamp(28px, calc((var(--avail-w) - 18px) / 6), 110px);
+      --cell: clamp(28px, min(calc((var(--avail-w) - 18px) / 6), calc(var(--avail-h) / 5)), 110px);
       display: grid;
       grid-template-columns: repeat(6, var(--cell));
       grid-template-rows: repeat(5, var(--cell));
@@ -1784,7 +1784,7 @@
       justify-content: center;
     }
     .gomoku-board {
-      --cell: clamp(13px, calc((var(--avail-w) - 14px) / 15), 60px);
+      --cell: clamp(13px, min(calc((var(--avail-w) - 14px) / 15), calc(var(--avail-h) / 15)), 60px);
       display: grid;
       grid-template-columns: repeat(15, var(--cell));
       grid-template-rows: repeat(15, var(--cell));
@@ -1805,7 +1805,7 @@
     .gomoku-cell.filled { cursor: default; }
     /* 雙人踩地雷 */
     .ms-board {
-      --cell: clamp(20px, calc((var(--avail-w) - 8px) / 8), 90px);
+      --cell: clamp(20px, min(calc((var(--avail-w) - 8px) / 8), calc(var(--avail-h) / 8)), 90px);
       display: grid;
       grid-template-columns: repeat(8, var(--cell));
       grid-template-rows: repeat(8, var(--cell));
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.197</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.200</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.197";
+const APP_VERSION = "21.200";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.197";
+    document.title = "L⇄V ∞ v21.200";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.197";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.200";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4772,7 +4772,7 @@ const GAME_CATALOG = [
   { id: "gomoku",    icon: "⚫", name: "五子棋",    nameRu: "Гомоку", available: true },
   { id: "pipes",     icon: "🚰", name: "接水管",    nameRu: "Трубы", available: true },
   { id: "wordmatch", icon: "🔊", name: "聽音連連看", nameRu: "Слушай и соедини", available: true },
-  { id: "breakout",  icon: "🧱", name: "合力接磚塊", nameRu: "Вместе разбиваем кирпичи", available: true },
+  { id: "breakout",  icon: "🧱", name: "合力打磚塊", nameRu: "Вместе разбиваем кирпичи", available: true },
   { id: "minesweeper", icon: "💣", name: "雙人踩地雷", nameRu: "Сапёр на двоих", available: true },
   { id: "xiangqi",    icon: "♟️", name: "象棋",      nameRu: "Китайские шахматы", available: true }
 ];
@@ -5153,11 +5153,26 @@ function bindGameBoardResizeObserver(overlay) {
     overlay.style.setProperty("--avail-h", h + "px");
   }).observe(observeTarget);
 }
+const GAME_MIN_SIZES = {
+  tictactoe: { w: 250, h: 300 },
+  bulls: { w: 260, h: 320 },
+  rps: { w: 250, h: 300 },
+  guesswho: { w: 300, h: 480 },
+  gomoku: { w: 320, h: 360 },
+  pipes: { w: 280, h: 320 },
+  wordmatch: { w: 280, h: 360 },
+  breakout: { w: 250, h: 320 },
+  minesweeper: { w: 300, h: 340 },
+  xiangqi: { w: 280, h: 380 }
+};
 function enterGameScreen(gameId, inviteData) {
   gameScreenOpen = true;
   activeGameId = gameId;
   const overlay = document.getElementById("gameScreenOverlay");
   bindGameBoardResizeObserver(overlay);
+  const minSize = GAME_MIN_SIZES[gameId] || { w: 240, h: 180 };
+  overlay.style.minWidth = minSize.w + "px";
+  overlay.style.minHeight = minSize.h + "px";
   overlay.classList.remove("gs-collapsed");
   const minBtn = document.getElementById("gameScreenMinBtn");
   if (minBtn) minBtn.textContent = "▾";
@@ -5274,6 +5289,7 @@ function toggleGameScreenMinimize() {
 function exitGameScreen(silent) {
   clearTimeout(gameLoadWatchdogTimer);
   if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+  stopBreakoutRenderLoop();
   gameScreenOpen = false;
   gameScreenActiveFor = null;
   document.getElementById("gameScreenOverlay").style.display = "none";
@@ -7160,7 +7176,7 @@ function restartWordmatch() {
   });
 }
 
-/* ---------- 合力接磚塊 ---------- */
+/* ---------- 合力打磚塊 ---------- */
 const BREAKOUT_WIDTH = 220;
 const BREAKOUT_HEIGHT = 240; // 板子更靠近了，畫面高度可以再縮短
 const BREAKOUT_PADDLE_W = 50;
@@ -7187,6 +7203,8 @@ function generateBreakoutBricks() {
 }
 
 let breakoutLoopInterval = null;
+let breakoutRenderLoopId = null;
+let breakoutStateReceivedAt = 0;
 let breakoutIsHost = false;
 let breakoutLocalPaddleX = 110;
 let breakoutLatestState = null;
@@ -7201,6 +7219,8 @@ function initBreakoutScreen() {
   `;
   if (activeGameListenerRef) activeGameListenerRef.off();
   if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+  stopBreakoutRenderLoop();
+  startBreakoutRenderLoop();
   activeGameListenerRef = db.ref("games/breakout");
   activeGameListenerRef.on("value", (snap) => {
     const state = snap.val();
@@ -7342,6 +7362,8 @@ function renderBreakout(state) {
   const lightEl = document.getElementById("gameTurnLight");
   if (!canvas || !statusEl) return;
 
+  breakoutStateReceivedAt = performance.now();
+
   const myEmail = currentUser.email;
   const opponentEmail = breakoutMyRole === "A" ? state.playerB : (breakoutMyRole === "B" ? state.playerA : null);
   const opponentKey = opponentEmail ? emailToKey(opponentEmail) : null;
@@ -7369,6 +7391,7 @@ function renderBreakout(state) {
     gameOfflineToastShown = true;
     showGameToast("與對方的連線中斷了，請重新發起一局 / Соединение прервано, начните игру заново");
     if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+    stopBreakoutRenderLoop();
     exitGameScreen(true);
     return;
   }
@@ -7380,6 +7403,28 @@ function renderBreakout(state) {
   statusEl.innerHTML = state.status === "win" ? "🎉 完成！所有磚塊都清空了 / Все кирпичи разбиты!" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>`
     : state.status === "gameover" ? "💥 遊戲結束 / Игра окончена" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>`
     : `分數 ${state.score} ・ 生命 ${"❤️".repeat(Math.max(state.lives, 0))}`;
+
+  if (state.status !== "playing") {
+    if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
+  }
+}
+
+function startBreakoutRenderLoop() {
+  if (breakoutRenderLoopId) return;
+  function frame() {
+    drawBreakoutFrame();
+    breakoutRenderLoopId = requestAnimationFrame(frame);
+  }
+  breakoutRenderLoopId = requestAnimationFrame(frame);
+}
+function stopBreakoutRenderLoop() {
+  if (breakoutRenderLoopId) { cancelAnimationFrame(breakoutRenderLoopId); breakoutRenderLoopId = null; }
+}
+
+function drawBreakoutFrame() {
+  const state = breakoutLatestState;
+  const canvas = document.getElementById("breakoutCanvas");
+  if (!state || !canvas || !state.bricks) return;
 
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
@@ -7395,26 +7440,27 @@ function renderBreakout(state) {
     ctx.fillRect(bx, by, BREAKOUT_BRICK_W, BREAKOUT_BRICK_H);
   });
 
-  // 兩塊板子，各自用該玩家的泡泡顏色標示
+  // 兩塊板子：自己的那塊直接用本地座標畫（零延遲），對方的板子才用從資料庫收到的位置
   const colorA = getBubbleColor(state.playerA) || "#c9a876";
   const colorB = getBubbleColor(state.playerB) || "#a8946f";
+  const paddleAX = breakoutMyRole === "A" ? breakoutLocalPaddleX : state.paddleA;
+  const paddleBX = breakoutMyRole === "B" ? breakoutLocalPaddleX : state.paddleB;
   ctx.fillStyle = colorA;
-  ctx.fillRect(state.paddleA - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_A_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
+  ctx.fillRect(paddleAX - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_A_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
   ctx.fillStyle = colorB;
-  ctx.fillRect(state.paddleB - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_B_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
+  ctx.fillRect(paddleBX - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_B_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
 
-  // 球（可能不只一顆）
+  // 球（可能不只一顆）：畫的時候用速度往前推算，讓球在兩次資料庫更新之間的移動看起來是平滑的、不是一格一格跳
   const ballsToShow = state.balls || (state.ball ? [state.ball] : []);
+  const elapsedTicks = Math.min((performance.now() - breakoutStateReceivedAt) / 40, 1.5);
   ballsToShow.forEach(b => {
+    const drawX = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_WIDTH - BREAKOUT_BALL_R, b.x + b.vx * elapsedTicks));
+    const drawY = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_HEIGHT, b.y + b.vy * elapsedTicks));
     ctx.beginPath();
-    ctx.arc(b.x, b.y, BREAKOUT_BALL_R, 0, Math.PI * 2);
+    ctx.arc(drawX, drawY, BREAKOUT_BALL_R, 0, Math.PI * 2);
     ctx.fillStyle = "#e8e6e0";
     ctx.fill();
   });
-
-  if (state.status !== "playing") {
-    if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
-  }
 }
 
 const BREAKOUT_SPEED_PRESETS = {
