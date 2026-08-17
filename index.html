@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.212</title>
+  <title>L⇄V ∞ v21.213</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1383,6 +1383,15 @@
       min-height: 0;
     }
     #gameScreenOverlay.gs-collapsed .game-screen-body { display: none; }
+    #gameScreenOverlay.gs-maximized {
+      width: 94vw !important;
+      height: 88vh !important;
+      max-width: 96vw !important;
+      max-height: 92vh !important;
+      top: 5vh !important;
+      right: 3vw !important;
+      left: auto !important;
+    }
     .ttt-board {
       --cell: clamp(50px, min(calc((var(--avail-w) - 12px) / 3), calc(var(--avail-h) / 3)), 170px);
       display: grid;
@@ -2476,7 +2485,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.212</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.213</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2593,6 +2602,7 @@
       <span class="game-screen-title" id="gameScreenTitle">🎮 遊戲</span>
     </div>
     <div class="game-screen-header-btns">
+      <button class="game-screen-min-btn" id="gameScreenMaxBtn" onclick="toggleGameScreenMaximize()" title="最大化 / Развернуть">⤢</button>
       <button class="game-screen-min-btn" id="gameScreenMinBtn" onclick="toggleGameScreenMinimize()">▾</button>
       <button class="game-screen-exit" onclick="exitGameScreen()">✕</button>
     </div>
@@ -2754,7 +2764,7 @@
 
 <script>
 
-const APP_VERSION = "21.212";
+const APP_VERSION = "21.213";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2976,7 +2986,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.212";
+    document.title = "L⇄V ∞ v21.213";
   }
 });
 
@@ -3041,7 +3051,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.212";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.213";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5255,6 +5265,8 @@ function enterGameScreen(gameId, inviteData) {
   overlay.classList.remove("gs-collapsed");
   const minBtn = document.getElementById("gameScreenMinBtn");
   if (minBtn) minBtn.textContent = "▾";
+  const maxBtn = document.getElementById("gameScreenMaxBtn");
+  if (maxBtn) maxBtn.textContent = overlay.classList.contains("gs-maximized") ? "⤡" : "⤢";
   overlay.style.display = "flex";
   if (gamePanelPos) {
     overlay.style.left = gamePanelPos.left + "px";
@@ -5364,6 +5376,11 @@ function toggleGameScreenMinimize() {
   const overlay = document.getElementById("gameScreenOverlay");
   const collapsed = overlay.classList.toggle("gs-collapsed");
   document.getElementById("gameScreenMinBtn").textContent = collapsed ? "▲" : "▾";
+}
+function toggleGameScreenMaximize() {
+  const overlay = document.getElementById("gameScreenOverlay");
+  const maximized = overlay.classList.toggle("gs-maximized");
+  document.getElementById("gameScreenMaxBtn").textContent = maximized ? "⤡" : "⤢";
 }
 function exitGameScreen(silent) {
   clearTimeout(gameLoadWatchdogTimer);
