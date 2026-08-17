@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.215</title>
+  <title>L⇄V ∞ v21.216</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2485,7 +2485,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.215</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.216</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2764,7 +2764,7 @@
 
 <script>
 
-const APP_VERSION = "21.215";
+const APP_VERSION = "21.216";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2986,7 +2986,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.215";
+    document.title = "L⇄V ∞ v21.216";
   }
 });
 
@@ -3051,7 +3051,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.215";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.216";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5233,8 +5233,8 @@ function updateBreakoutCanvasSize() {
   const canvas = document.getElementById("breakoutCanvas");
   const body = document.getElementById("gameScreenBody");
   if (!canvas || !body) return;
-  const availW = Math.max(0, body.clientWidth - 40);
-  const availH = Math.max(0, body.clientHeight - 130);
+  const availW = Math.max(0, body.clientWidth - 20);
+  const availH = Math.max(0, body.clientHeight - 60);
   const ratio = BREAKOUT_WIDTH / BREAKOUT_HEIGHT;
   const targetW = Math.max(160, Math.min(availW, availH * ratio));
   canvas.style.width = targetW + "px";
@@ -7315,7 +7315,6 @@ function initBreakoutScreen() {
   body.innerHTML = `
     <div class="ttt-status" id="breakoutStatus">載入中... / Загрузка...</div>
     <canvas id="breakoutCanvas" width="${BREAKOUT_WIDTH}" height="${BREAKOUT_HEIGHT}" style="background:var(--bg-deep); border-radius:8px; touch-action:none; display:block; margin:0 auto; max-width:100%; height:auto; aspect-ratio:${BREAKOUT_WIDTH}/${BREAKOUT_HEIGHT};"></canvas>
-    <div style="text-align:center; font-size:11px; color:var(--text-tertiary); margin-top:6px;">左右拖曳畫面來移動你的板子 / Двигайте пальцем влево-вправо</div>
   `;
   updateBreakoutCanvasSize();
   if (activeGameListenerRef) activeGameListenerRef.off();
