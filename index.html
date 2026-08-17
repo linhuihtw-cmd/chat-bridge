@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.208</title>
+  <title>L⇄V ∞ v21.209</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2450,7 +2450,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.208</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.209</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2728,7 @@
 
 <script>
 
-const APP_VERSION = "21.208";
+const APP_VERSION = "21.209";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2950,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.208";
+    document.title = "L⇄V ∞ v21.209";
   }
 });
 
@@ -3015,7 +3015,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.208";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.209";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7431,7 +7431,7 @@ function drawBreakoutFrame() {
 
   // 讓畫布的實際解析度跟著顯示大小一起放大，避免放大後糊掉（跟高解析度螢幕的處理方式一樣）
   const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
-  if (cssW > 0 && cssH > 0 && (cssW !== breakoutCanvasCssW || cssH !== breakoutCanvasCssH)) {
+  if (cssW > 0 && cssH > 0 && (Math.abs(cssW - breakoutCanvasCssW) > 2 || Math.abs(cssH - breakoutCanvasCssH) > 2)) {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
