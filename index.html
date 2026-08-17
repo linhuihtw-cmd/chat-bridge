@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.209</title>
+  <title>L⇄V ∞ v21.210</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1422,6 +1422,32 @@
     }
     .ttt-restart-btn:hover { background: var(--gold); }
 
+    .restart-consensus-banner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-panel);
+      border: 1px solid var(--gold-dim);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text-primary);
+      text-align: center;
+      margin-top: 8px;
+    }
+    .restart-consensus-accept, .restart-consensus-cancel {
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      margin: 2px 4px 0;
+    }
+    .restart-consensus-accept { background: #6a9a52; color: #fff; }
+    .restart-consensus-cancel { background: var(--error-red); color: #fff; }
+
     /* 公牛母牛 */
     .bulls-input-row { display: flex; gap: 8px; align-items: center; width: 100%; box-sizing: border-box; }
     .bulls-digit-input {
@@ -2450,7 +2476,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.209</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.210</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2728,7 +2754,7 @@
 
 <script>
 
-const APP_VERSION = "21.209";
+const APP_VERSION = "21.210";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2950,7 +2976,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.209";
+    document.title = "L⇄V ∞ v21.210";
   }
 });
 
@@ -3015,7 +3041,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.209";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.210";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4437,6 +4463,59 @@ async function requestImageOcrTranslate(key, imageUrl, btnEl) {
    ============================================================ */
 const GAME_TRIGGER_PHRASE = "⚽⚽⚽⚽⚽";
 
+/* ---------- 遊戲「再玩一局」雙方確認機制 ---------- */
+const GAME_RESTART_MAP = {
+  tictactoe: () => restartTicTacToe(),
+  bulls: () => restartBulls(),
+  rps: () => restartRps(),
+  guesswho: () => restartGuessWho(),
+  gomoku: () => restartGomoku(),
+  pipes: () => restartPipes(),
+  wordmatch: () => restartWordmatch(),
+  minesweeper: () => restartMinesweeper(),
+  xiangqi: () => restartXiangqi(),
+  breakout: (args) => restartBreakout(args && args.speedKey, args && args.ballCount)
+};
+
+function doGameRestart(gameId, args) {
+  const fn = GAME_RESTART_MAP[gameId];
+  if (fn) fn(args);
+}
+
+function requestOrConfirmRestart(gameId, args) {
+  const reqRef = db.ref("games/" + gameId + "/restartRequest");
+  reqRef.once("value").then((snap) => {
+    const req = snap.val();
+    if (req && req.by && req.by !== currentUser.email) {
+      // 對方也已經想重開了，直接視為雙方同意，馬上執行
+      reqRef.remove();
+      doGameRestart(gameId, (req.args !== undefined ? req.args : args));
+    } else if (!req) {
+      reqRef.set({ by: currentUser.email, args: args || null, at: Date.now() });
+    }
+  });
+}
+function acceptGameRestartRequest(gameId) {
+  const reqRef = db.ref("games/" + gameId + "/restartRequest");
+  reqRef.once("value").then((snap) => {
+    const req = snap.val();
+    reqRef.remove();
+    doGameRestart(gameId, req && req.args);
+  });
+}
+function declineOrCancelGameRestartRequest(gameId) {
+  db.ref("games/" + gameId + "/restartRequest").remove();
+}
+
+function restartConsensusBannerHtml(gameId, state) {
+  const req = state && state.restartRequest;
+  if (!req || !req.by) return "";
+  if (req.by === currentUser.email) {
+    return `<div class="restart-consensus-banner">⏳ 等待對方確認重新開始... / Ожидаем подтверждения<button class="restart-consensus-cancel" onclick="declineOrCancelGameRestartRequest('${gameId}')">取消 / Отмена</button></div>`;
+  }
+  return `<div class="restart-consensus-banner">🔄 對方想重新開始這局，同意嗎？ / Собеседник хочет начать заново<button class="restart-consensus-accept" onclick="acceptGameRestartRequest('${gameId}')">同意 / Да</button><button class="restart-consensus-cancel" onclick="declineOrCancelGameRestartRequest('${gameId}')">拒絕 / Нет</button></div>`;
+}
+
 /* ---------- 視訊通話 ---------- */
 const VC_TRIGGER_PHRASE = "📹📹📹📹📹";
 const VC_ICE_SERVERS = [
@@ -5399,11 +5478,11 @@ function renderTicTacToe(state) {
     statusEl.innerHTML = `對方已離開遊戲<br>Собеседник вышел из игры`;
   } else if (state.winner) {
     if (state.winner === "draw") {
-      statusEl.innerHTML = `平手！🤝 / Ничья!<br><button class="ttt-restart-btn" onclick="restartTicTacToe()">再玩一局 / Ещё раз</button>`;
+      statusEl.innerHTML = `平手！🤝 / Ничья!<br><button class="ttt-restart-btn" onclick="requestOrConfirmRestart('tictactoe')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('tictactoe', state);
     } else {
       const winnerIsMe = state.winner === mySymbol;
       statusEl.innerHTML = (winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл")
-        + `<br><button class="ttt-restart-btn" onclick="restartTicTacToe()">再玩一局 / Ещё раз</button>`;
+        + `<br><button class="ttt-restart-btn" onclick="requestOrConfirmRestart('tictactoe')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('tictactoe', state);
     }
   } else {
     const turnIsMe = state.turn === mySymbol;
@@ -5530,7 +5609,8 @@ function renderBulls(state) {
     const oppNumber = mySide === "A" ? state.numberB : state.numberA;
     body.innerHTML = `
       <div class="ttt-status">${winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл"}<br>對方的數字是 ${oppNumber} / Число соперника: ${oppNumber}</div>
-      <button class="ttt-restart-btn" onclick="restartBulls()">再玩一局 / Ещё раз</button>
+      <button class="ttt-restart-btn" onclick="requestOrConfirmRestart('bulls')">再玩一局 / Ещё раз</button>
+      ${restartConsensusBannerHtml('bulls', state)}
     `;
     return;
   }
@@ -5694,7 +5774,8 @@ function renderGuessWho(state) {
     const winnerIsMe = state.winner === mySide;
     body.innerHTML = `
       <div class="ttt-status">${winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл"}</div>
-      <button class="ttt-restart-btn" onclick="restartGuessWho()">再玩一局 / Ещё раз</button>
+      <button class="ttt-restart-btn" onclick="requestOrConfirmRestart('guesswho')">再玩一局 / Ещё раз</button>
+      ${restartConsensusBannerHtml('guesswho', state)}
     `;
     return;
   }
@@ -6038,13 +6119,13 @@ function renderPipes(state) {
   let statusHtml, extraHtml = "";
   if (connected) {
     statusHtml = "接通了！🎉 / Соединено!";
-    extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">再玩一局 / Ещё раз</button>`;
+    extraHtml = `<button class="ttt-restart-btn" onclick="requestOrConfirmRestart('pipes')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('pipes', state);
   } else if (deadlocked) {
     statusHtml = "起點或終點已經被封死，死局了 / Тупик, старт или финиш заблокирован";
-    extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">重新開始 / Начать заново</button>`;
+    extraHtml = `<button class="ttt-restart-btn" onclick="requestOrConfirmRestart('pipes')">重新開始 / Начать заново</button>` + restartConsensusBannerHtml('pipes', state);
   } else if (isFull) {
     statusHtml = "棋盤填滿了，沒接通 / Поле заполнено, связи нет";
-    extraHtml = `<button class="ttt-restart-btn" onclick="restartPipes()">重新開始 / Начать заново</button>`;
+    extraHtml = `<button class="ttt-restart-btn" onclick="requestOrConfirmRestart('pipes')">重新開始 / Начать заново</button>` + restartConsensusBannerHtml('pipes', state);
   } else {
     statusHtml = turnIsMe ? "Твой ход, выбери и поставь трубу / 輪到你放水管" : "Ход соперника / 等對方放水管";
   }
@@ -6200,7 +6281,8 @@ function renderRps(state) {
     mainHtml = `
       ${scoreHtml}
       <div class="ttt-status">${finalText}</div>
-      <button class="ttt-restart-btn" onclick="restartRps()">再玩一局 / Ещё раз</button>
+      <button class="ttt-restart-btn" onclick="requestOrConfirmRestart('rps')">再玩一局 / Ещё раз</button>
+      ${restartConsensusBannerHtml('rps', state)}
     `;
   } else if (bothChosen) {
     const myLastChoice = mySide === "A" ? state.lastChoiceA : state.lastChoiceB;
@@ -6357,10 +6439,10 @@ function renderGomoku(state) {
   if (state.winner) {
     const winnerIsMe = state.winner === mySide;
     statusHtml = winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл";
-    extraHtml = `<button class="ttt-restart-btn" onclick="restartGomoku()">再玩一局 / Ещё раз</button>`;
+    extraHtml = `<button class="ttt-restart-btn" onclick="requestOrConfirmRestart('gomoku')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('gomoku', state);
   } else if (isFull) {
     statusHtml = "平手！🤝 / Ничья!";
-    extraHtml = `<button class="ttt-restart-btn" onclick="restartGomoku()">再玩一局 / Ещё раз</button>`;
+    extraHtml = `<button class="ttt-restart-btn" onclick="requestOrConfirmRestart('gomoku')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('gomoku', state);
   } else {
     const myStoneHtml = `<span class="gomoku-stone ${mySide === 'A' ? 'gomoku-stone-a' : 'gomoku-stone-b'}" style="display:inline-block;vertical-align:middle;margin-left:6px;"></span>`;
     statusHtml = (turnIsMe ? `Ваш ход / 輪到你` : "Ход соперника / 等對方") + myStoneHtml;
@@ -6617,7 +6699,7 @@ function renderXiangqi(state) {
   if (state.winner) {
     const winnerIsMe = state.winner === mySide;
     statusHtml = winnerIsMe ? "你贏了！🎉 / Вы выиграли!" : "對方贏了 / Собеседник выиграл";
-    extraHtml = `<button class="ttt-restart-btn" onclick="restartXiangqi()">再玩一局 / Ещё раз</button>`;
+    extraHtml = `<button class="ttt-restart-btn" onclick="requestOrConfirmRestart('xiangqi')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('xiangqi', state);
   }
 
   body.innerHTML = `
@@ -6830,11 +6912,11 @@ function renderMinesweeper(state) {
     statusEl.innerHTML = `對方已離開遊戲<br>Собеседник вышел из игры`;
   } else if (state.winner) {
     if (state.winner === "draw") {
-      statusEl.innerHTML = `太厲害了，兩人一起把安全格都踩完了！🎉 / Все безопасные клетки открыты!<br><button class="ttt-restart-btn" onclick="restartMinesweeper()">再玩一局 / Ещё раз</button>`;
+      statusEl.innerHTML = `太厲害了，兩人一起把安全格都踩完了！🎉 / Все безопасные клетки открыты!<br><button class="ttt-restart-btn" onclick="requestOrConfirmRestart('minesweeper')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('minesweeper', state);
     } else {
       const winnerIsMe = state.winner === myRole;
       statusEl.innerHTML = (winnerIsMe ? "💥 對方踩到地雷了，你贏了！🎉 / Соперник подорвался, вы выиграли!" : "💥 你踩到地雷了 / Вы подорвались")
-        + `<br><button class="ttt-restart-btn" onclick="restartMinesweeper()">再玩一局 / Ещё раз</button>`;
+        + `<br><button class="ttt-restart-btn" onclick="requestOrConfirmRestart('minesweeper')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('minesweeper', state);
     }
   } else {
     const turnIsMe = state.turn === myRole;
@@ -7107,7 +7189,7 @@ function renderWordmatch(state) {
   `;
 
   const statusHtml = allMatched
-    ? `全部連對了！🎉 / Все совпало!<br><button class="ttt-restart-btn" onclick="restartWordmatch()">再玩一局 / Ещё раз</button>`
+    ? `全部連對了！🎉 / Все совпало!<br><button class="ttt-restart-btn" onclick="requestOrConfirmRestart('wordmatch')">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('wordmatch', state)
     : `點左邊聽中文，點右邊聽俄文，找出配對 / Слева — китайский, справа — русский. Найдите пары`;
 
   body.innerHTML = `
@@ -7398,8 +7480,8 @@ function renderBreakout(state) {
     return;
   }
 
-  statusEl.innerHTML = state.status === "win" ? "🎉 完成！所有磚塊都清空了 / Все кирпичи разбиты!" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>`
-    : state.status === "gameover" ? "💥 遊戲結束 / Игра окончена" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>`
+  statusEl.innerHTML = state.status === "win" ? "🎉 完成！所有磚塊都清空了 / Все кирпичи разбиты!" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('breakout', state)
+    : state.status === "gameover" ? "💥 遊戲結束 / Игра окончена" + `<br><button class="ttt-restart-btn" onclick="showBreakoutDifficultyPicker()">再玩一局 / Ещё раз</button>` + restartConsensusBannerHtml('breakout', state)
     : `分數 ${state.score} ・ 生命 ${"❤️".repeat(Math.max(state.lives, 0))}`;
 
   if (state.status !== "playing") {
@@ -7516,9 +7598,17 @@ let breakoutPendingSpeed = null;
 let breakoutPendingBalls = 1;
 
 function showBreakoutDifficultyPicker() {
-  breakoutPendingSpeed = null;
-  breakoutPendingBalls = 1;
-  renderBreakoutPicker();
+  db.ref("games/breakout/restartRequest").once("value").then((snap) => {
+    const req = snap.val();
+    if (req && req.by && req.by !== currentUser.email) {
+      // 對方已經想重開了(而且應該已經選好難度)，直接同意，不用自己再選一次
+      acceptGameRestartRequest("breakout");
+      return;
+    }
+    breakoutPendingSpeed = null;
+    breakoutPendingBalls = 1;
+    renderBreakoutPicker();
+  });
 }
 
 function renderBreakoutPicker() {
@@ -7547,7 +7637,7 @@ function pickBreakoutSpeed(key) {
 }
 
 function confirmBreakoutStart() {
-  restartBreakout(breakoutPendingSpeed, breakoutPendingBalls);
+  requestOrConfirmRestart("breakout", { speedKey: breakoutPendingSpeed, ballCount: breakoutPendingBalls });
 }
 
 function restartBreakout(speedKey, ballCount) {
