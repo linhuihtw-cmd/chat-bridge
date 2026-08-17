@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.211</title>
+  <title>L⇄V ∞ v21.212</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2476,7 +2476,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.211</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.212</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2754,7 +2754,7 @@
 
 <script>
 
-const APP_VERSION = "21.211";
+const APP_VERSION = "21.212";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2976,7 +2976,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.211";
+    document.title = "L⇄V ∞ v21.212";
   }
 });
 
@@ -3041,7 +3041,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.211";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.212";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7276,8 +7276,6 @@ function generateBreakoutBricks() {
 let breakoutLoopInterval = null;
 let breakoutRenderLoopId = null;
 let breakoutStateReceivedAt = 0;
-let breakoutStateHistory = []; // [{state, time}]，保留最近一段時間的所有狀態，不管收到得快或慢都能在裡面找到內插用的兩點
-const BREAKOUT_RENDER_DELAY = 600; // 畫面故意晚現實一點點，換取不受跨國網路延遲/抖動影響的平滑動作（實測延遲約480毫秒，留一點餘裕）
 let breakoutIsHost = false;
 let breakoutLocalPaddleX = 110;
 let breakoutLatestState = null;
@@ -7287,12 +7285,11 @@ function initBreakoutScreen() {
   const body = document.getElementById("gameScreenBody");
   body.innerHTML = `
     <div class="ttt-status" id="breakoutStatus">載入中... / Загрузка...</div>
-    <canvas id="breakoutCanvas" width="${BREAKOUT_WIDTH}" height="${BREAKOUT_HEIGHT}" style="background:var(--bg-deep); border-radius:8px; touch-action:none; display:block; margin:0 auto; width:min(var(--avail-w), calc(var(--avail-h) * 0.9167)); max-width:100%; height:auto; aspect-ratio:${BREAKOUT_WIDTH}/${BREAKOUT_HEIGHT};"></canvas>
+    <canvas id="breakoutCanvas" width="${BREAKOUT_WIDTH}" height="${BREAKOUT_HEIGHT}" style="background:var(--bg-deep); border-radius:8px; touch-action:none; display:block; margin:0 auto; width:min(var(--avail-w), calc((var(--avail-h) - 130px) * 0.9167)); max-width:100%; height:auto; aspect-ratio:${BREAKOUT_WIDTH}/${BREAKOUT_HEIGHT};"></canvas>
     <div style="text-align:center; font-size:11px; color:var(--text-tertiary); margin-top:6px;">左右拖曳畫面來移動你的板子 / Двигайте пальцем влево-вправо</div>
   `;
   if (activeGameListenerRef) activeGameListenerRef.off();
   if (breakoutLoopInterval) { clearInterval(breakoutLoopInterval); breakoutLoopInterval = null; }
-  breakoutStateHistory = [];
   stopBreakoutRenderLoop();
   startBreakoutRenderLoop();
   activeGameListenerRef = db.ref("games/breakout");
@@ -7306,11 +7303,6 @@ function initBreakoutScreen() {
       return;
     }
     gameStateSeenOnce = true;
-    const now = performance.now();
-    breakoutStateHistory.push({ state, time: now });
-    while (breakoutStateHistory.length > 2 && breakoutStateHistory[0].time < now - (BREAKOUT_RENDER_DELAY + 200)) {
-      breakoutStateHistory.shift();
-    }
     breakoutLatestState = state;
     const myEmail = currentUser.email;
     breakoutMyRole = state.playerA === myEmail ? "A" : (state.playerB === myEmail ? "B" : null);
@@ -7549,41 +7541,14 @@ function drawBreakoutFrame() {
   ctx.fillStyle = colorB;
   ctx.fillRect(paddleBX - BREAKOUT_PADDLE_W / 2, BREAKOUT_PADDLE_B_Y, BREAKOUT_PADDLE_W, BREAKOUT_PADDLE_H);
 
-  // 球（可能不只一顆）：從歷史紀錄裡找出「剛好包住目標時間點」的兩筆資料做內插，
-  // 不管收到資料的頻率快或慢都能對上，只有真的還沒收到足夠新資料時，才用速度暫時往前推算頂著畫
+  // 球（可能不只一顆）：只用「最新收到的這一筆」資料，往前補最多一格(0.04秒)的距離讓移動看起來連續，
+  // 不刻意讓畫面整體變慢，這樣球、磚塊、板子永遠是同一個時間點的資料，不會互相對不上
   const ballsToShow = state.balls || (state.ball ? [state.ball] : []);
-  const renderTime = performance.now() - BREAKOUT_RENDER_DELAY;
-  const hist = breakoutStateHistory;
-  let before = null, after = null;
-  for (let i = hist.length - 1; i >= 0; i--) {
-    if (hist[i].time <= renderTime) { before = hist[i]; after = hist[i + 1] || null; break; }
-  }
-  if (!before) { before = hist[0] || { state, time: renderTime }; after = hist[1] || null; }
+  const elapsedTicks = Math.min((performance.now() - breakoutStateReceivedAt) / 40, 1);
 
-  ballsToShow.forEach((b, idx) => {
-    let drawX, drawY;
-    const beforeBalls = before.state.balls || (before.state.ball ? [before.state.ball] : []);
-    const bb = beforeBalls[idx];
-    if (after) {
-      const afterBalls = after.state.balls || (after.state.ball ? [after.state.ball] : []);
-      const ab = afterBalls[idx];
-      if (bb && ab) {
-        const span = after.time - before.time || 1;
-        const t = Math.min(1, Math.max(0, (renderTime - before.time) / span));
-        drawX = bb.x + (ab.x - bb.x) * t;
-        drawY = bb.y + (ab.y - bb.y) * t;
-      } else {
-        drawX = b.x; drawY = b.y;
-      }
-    } else if (bb) {
-      // 沒有更晚的資料點了(還沒收到)，先停在最後已知的確定位置，不用猜的往前推，避免猜錯之後畫面往回修正
-      drawX = bb.x;
-      drawY = bb.y;
-    } else {
-      drawX = b.x; drawY = b.y;
-    }
-    drawX = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_WIDTH - BREAKOUT_BALL_R, drawX));
-    drawY = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_HEIGHT, drawY));
+  ballsToShow.forEach((b) => {
+    const drawX = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_WIDTH - BREAKOUT_BALL_R, b.x + b.vx * elapsedTicks));
+    const drawY = Math.max(BREAKOUT_BALL_R, Math.min(BREAKOUT_HEIGHT, b.y + b.vy * elapsedTicks));
     ctx.beginPath();
     ctx.arc(drawX, drawY, BREAKOUT_BALL_R, 0, Math.PI * 2);
     ctx.fillStyle = "#e8e6e0";
@@ -7647,7 +7612,6 @@ function confirmBreakoutStart() {
 function restartBreakout(speedKey, ballCount) {
   const preset = BREAKOUT_SPEED_PRESETS[speedKey] || BREAKOUT_SPEED_PRESETS.normal;
   const count = Math.min(Math.max(ballCount || 1, 1), BREAKOUT_MAX_BALLS);
-  breakoutStateHistory = [];
   const balls = Array.from({ length: count }, () => ({
     x: BREAKOUT_WIDTH / 2, y: 110, vx: preset.vx, vy: preset.vy
   }));
