@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.216</title>
+  <title>L⇄V ∞ v21.217</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2485,7 +2485,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.216</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.217</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2764,7 +2764,7 @@
 
 <script>
 
-const APP_VERSION = "21.216";
+const APP_VERSION = "21.217";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -2986,7 +2986,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.216";
+    document.title = "L⇄V ∞ v21.217";
   }
 });
 
@@ -3051,7 +3051,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.216";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.217";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -7590,7 +7590,7 @@ const BREAKOUT_SPEED_PRESETS = {
   fast: { vx: 3.8, vy: 4.2 },
   challenge: { vx: 4.6, vy: 5.0 }
 };
-const BREAKOUT_SPEED_LABELS = { normal: "🙂 普通", fast: "⚡ 快", challenge: "🔥 挑戰" };
+const BREAKOUT_SPEED_LABELS = { normal: "🙂 普通 / Обычная", fast: "⚡ 快 / Быстрая", challenge: "🔥 挑戰 / Сложная" };
 const BREAKOUT_MAX_BALLS = 3;
 let breakoutPendingSpeed = null;
 let breakoutPendingBalls = 1;
@@ -7614,11 +7614,11 @@ function renderBreakoutPicker() {
   if (!statusEl) return;
   const btnsHtml = Object.keys(BREAKOUT_SPEED_PRESETS).map(key => {
     const isSelected = breakoutPendingSpeed === key;
-    const ballBadge = isSelected ? ` (${breakoutPendingBalls}顆球)` : "";
+    const ballBadge = isSelected ? ` (${breakoutPendingBalls}顆球 / ${breakoutPendingBalls} ${breakoutPendingBalls === 1 ? "мяч" : "мяча"})` : "";
     return `<button class="ttt-restart-btn" onclick="pickBreakoutSpeed('${key}')">${BREAKOUT_SPEED_LABELS[key]}${ballBadge}</button>`;
   }).join("");
   statusEl.innerHTML = `
-    <div style="font-size:11px;margin-bottom:6px;">選一個球速；同一個再按一次可以加一顆球（最多${BREAKOUT_MAX_BALLS}顆）<br>Выберите скорость, нажмите ещё раз для доп. мяча</div>
+    <div style="font-size:13px;margin-bottom:6px;">選一個球速；同一個再按一次可以加一顆球（最多${BREAKOUT_MAX_BALLS}顆）<br>Выберите скорость, нажмите ещё раз для доп. мяча</div>
     <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">${btnsHtml}</div>
     ${breakoutPendingSpeed ? `<button class="ttt-restart-btn" onclick="confirmBreakoutStart()">▶️ 開始 / Начать</button>` : ""}
   `;
