@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.218</title>
+  <title>L⇄V ∞ v21.220</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1447,6 +1447,21 @@
       white-space: nowrap;
     }
     .mp-hint { font-size: 11px; color: var(--text-tertiary); text-align: center; }
+    #musicSearchResults { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+    .mp-result-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 0.5px solid transparent;
+    }
+    .mp-result-item:hover { background: var(--bg-panel); border-color: var(--border-strong); }
+    .mp-result-item img { width: 44px; height: 33px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+    .mp-result-text { display: flex; flex-direction: column; min-width: 0; }
+    .mp-result-title { font-size: 12px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mp-result-channel { font-size: 10px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .game-screen-body {
       display: flex;
       flex-direction: column;
@@ -2563,7 +2578,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.218</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.220</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2731,10 +2746,15 @@
   <div class="mp-body" id="musicPlayerBody">
     <div class="mp-iframe-wrap"><div id="ytPlayerTarget"></div></div>
     <div class="mp-load-row">
-      <input type="text" id="musicUrlInput" placeholder="貼YouTube連結 / Вставьте ссылку YouTube" />
+      <input type="text" id="musicSearchInput" placeholder="搜尋歌曲/歌手 / Поиск песни" onkeydown="if(event.key==='Enter')searchYouTubeMusic()" />
+      <button onclick="searchYouTubeMusic()">🔍</button>
+    </div>
+    <div id="musicSearchResults"></div>
+    <div class="mp-load-row">
+      <input type="text" id="musicUrlInput" placeholder="或直接貼YouTube連結 / Или вставьте ссылку" />
       <button onclick="loadMusicFromInput()">載入 / Загрузить</button>
     </div>
-    <div class="mp-hint" id="musicPlayerHint">貼上一首YouTube影片，兩人會同步聽到同一個進度 / Вставьте видео, чтобы слушать вместе</div>
+    <div class="mp-hint" id="musicPlayerHint">搜尋或貼上一首YouTube影片，兩人會同步聽到同一個進度 / Найдите или вставьте видео, чтобы слушать вместе</div>
   </div>
 </div>
 
@@ -2861,7 +2881,7 @@
 
 <script>
 
-const APP_VERSION = "21.218";
+const APP_VERSION = "21.220";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3083,7 +3103,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.218";
+    document.title = "L⇄V ∞ v21.220";
   }
 });
 
@@ -3148,7 +3168,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.218";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.220";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4962,23 +4982,22 @@ const MUSIC_TRIGGER_PHRASE = "🎵🎵🎵🎵🎵";
 let ytPlayer = null;
 let ytApiReady = false;
 let ytPlayerReady = false;
-let mpPendingVideoId = null;
+let mpPendingSource = null;
 let mpApplyingRemote = false;
 let mpLastLocalActionAt = 0;
 let mpListenerRef = null;
 let mpSyncIntervalId = null;
 let mpPanelPos = null;
+let mpCurrentMode = null; // "video" 或 "playlist"，記著自己這台裝置目前實際載入的是哪一種
+let mpCurrentSourceId = null; // 目前載入的 videoId 或 playlistId
 
-function extractYouTubeId(url) {
+function extractYouTubeSource(url) {
   if (!url) return null;
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtube\.com\/shorts\/|youtu\.be\/)([A-Za-z0-9_-]{11})/
-  ];
-  for (const re of patterns) {
-    const m = url.match(re);
-    if (m) return m[1];
-  }
-  if (/^[A-Za-z0-9_-]{11}$/.test(url.trim())) return url.trim();
+  const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+  if (listMatch) return { type: "playlist", id: listMatch[1] };
+  const videoMatch = url.match(/(?:youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtube\.com\/shorts\/|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (videoMatch) return { type: "video", id: videoMatch[1] };
+  if (/^[A-Za-z0-9_-]{11}$/.test(url.trim())) return { type: "video", id: url.trim() };
   return null;
 }
 
@@ -4991,17 +5010,23 @@ function loadYouTubeApiIfNeeded() {
   document.head.appendChild(tag);
   window.onYouTubeIframeAPIReady = function () {
     ytApiReady = true;
-    if (mpPendingVideoId) createYtPlayer(mpPendingVideoId);
+    if (mpPendingSource) createYtPlayer(mpPendingSource);
   };
 }
 
-function createYtPlayer(videoId) {
+function createYtPlayer(source) {
+  mpCurrentMode = source.type;
+  mpCurrentSourceId = source.id;
+  const initVars = source.type === "playlist"
+    ? { listType: "playlist", list: source.id }
+    : { videoId: source.id };
   if (ytPlayer) {
-    ytPlayer.cueVideoById(videoId);
+    if (source.type === "playlist") ytPlayer.loadPlaylist({ list: source.id });
+    else ytPlayer.cueVideoById(source.id);
     return;
   }
   ytPlayer = new YT.Player("ytPlayerTarget", {
-    videoId: videoId,
+    ...initVars,
     playerVars: { playsinline: 1, rel: 0 },
     events: {
       onReady: () => { ytPlayerReady = true; },
@@ -5016,12 +5041,20 @@ function onYtPlayerStateChange(event) {
   const state = event.data;
   if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.PAUSED) {
     mpLastLocalActionAt = Date.now();
-    db.ref("musicPlayer").update({
+    const payload = {
+      mode: mpCurrentMode || "video",
       isPlaying: state === YT.PlayerState.PLAYING,
       position: ytPlayer.getCurrentTime(),
       updatedAt: Date.now(),
       updatedBy: currentUser.email
-    });
+    };
+    if (mpCurrentMode === "playlist") {
+      payload.sourceId = mpCurrentSourceId;
+      payload.index = ytPlayer.getPlaylistIndex();
+    } else {
+      payload.sourceId = mpCurrentSourceId;
+    }
+    db.ref("musicPlayer").set(payload);
   }
 }
 
@@ -5068,14 +5101,16 @@ function applyRemoteMusicState(state, correctionOnly) {
   if (hintEl && state.updatedBy) {
     hintEl.textContent = (state.updatedBy === (currentUser && currentUser.email) ? "由你載入 / Загружено вами" : "由對方載入 / Загружено собеседником");
   }
+  const source = { type: state.mode || "video", id: state.sourceId };
+  if (!source.id) return;
   if (!ytApiReady) {
-    mpPendingVideoId = state.videoId;
+    mpPendingSource = source;
     loadYouTubeApiIfNeeded();
     return;
   }
   if (!ytPlayer) {
-    mpPendingVideoId = state.videoId;
-    createYtPlayer(state.videoId);
+    mpPendingSource = source;
+    createYtPlayer(source);
     setTimeout(() => applyRemoteMusicState(state, correctionOnly), 600);
     return;
   }
@@ -5087,12 +5122,22 @@ function applyRemoteMusicState(state, correctionOnly) {
   if (state.updatedBy === (currentUser && currentUser.email) && Date.now() - mpLastLocalActionAt < 2000) return;
 
   const expectedPos = state.position + (state.isPlaying ? (Date.now() - state.updatedAt) / 1000 : 0);
-  const currentVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
-
   mpApplyingRemote = true;
-  if (currentVideoId !== state.videoId) {
-    ytPlayer.loadVideoById(state.videoId, Math.max(0, expectedPos));
-    if (!state.isPlaying) setTimeout(() => { if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo(); }, 800);
+
+  if (mpCurrentMode !== source.type || mpCurrentSourceId !== source.id) {
+    // 整個曲目來源都不一樣了(換了播放清單，或從清單切到單曲之類)，重新載入
+    mpCurrentMode = source.type;
+    mpCurrentSourceId = source.id;
+    if (source.type === "playlist") {
+      ytPlayer.loadPlaylist({ list: source.id, index: state.index || 0 });
+    } else {
+      ytPlayer.loadVideoById(source.id, Math.max(0, expectedPos));
+    }
+    if (!state.isPlaying) setTimeout(() => { if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo(); }, 900);
+  } else if (source.type === "playlist" && ytPlayer.getPlaylistIndex() !== state.index) {
+    // 同一份清單，但對方切到了另一首歌
+    ytPlayer.playVideoAt(state.index || 0);
+    if (!state.isPlaying) setTimeout(() => { if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo(); }, 900);
   } else {
     const drift = Math.abs(ytPlayer.getCurrentTime() - expectedPos);
     if (drift > 2) ytPlayer.seekTo(Math.max(0, expectedPos), true);
@@ -5102,22 +5147,88 @@ function applyRemoteMusicState(state, correctionOnly) {
   setTimeout(() => { mpApplyingRemote = false; }, 500);
 }
 
-function loadMusicFromInput() {
-  const input = document.getElementById("musicUrlInput");
-  const videoId = extractYouTubeId(input.value.trim());
-  if (!videoId) {
-    alert("看不出來是哪個YouTube影片，麻煩確認連結 / Не удалось распознать ссылку YouTube");
-    return;
-  }
-  input.value = "";
+function searchYouTubeMusic() {
+  const input = document.getElementById("musicSearchInput");
+  const q = input.value.trim();
+  const resultsEl = document.getElementById("musicSearchResults");
+  if (!q) return;
+  resultsEl.innerHTML = `<div class="mp-hint">搜尋中... / Поиск...</div>`;
+  fetch(`https://${API_KEY}/youtube-search?q=${encodeURIComponent(q)}`)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.error) {
+        resultsEl.innerHTML = `<div class="mp-hint">搜尋失敗 / Ошибка поиска：${data.error.message}</div>`;
+        return;
+      }
+      if (!data.results || data.results.length === 0) {
+        resultsEl.innerHTML = `<div class="mp-hint">沒有找到結果 / Ничего не найдено</div>`;
+        return;
+      }
+      resultsEl.innerHTML = data.results.map((r) => `
+        <div class="mp-result-item" onclick="playMusicVideoId('${r.videoId}')">
+          <img src="${r.thumbnail}" alt="">
+          <div class="mp-result-text">
+            <span class="mp-result-title">${r.title}</span>
+            <span class="mp-result-channel">${r.channel}</span>
+          </div>
+        </div>
+      `).join("");
+    })
+    .catch((err) => {
+      resultsEl.innerHTML = `<div class="mp-hint">搜尋失敗 / Ошибка поиска：${err.message}</div>`;
+    });
+}
+
+function playMusicVideoId(videoId) {
+  document.getElementById("musicSearchResults").innerHTML = "";
+  document.getElementById("musicSearchInput").value = "";
   mpLastLocalActionAt = Date.now();
+  mpCurrentMode = "video";
+  mpCurrentSourceId = videoId;
+  if (ytPlayer && ytPlayerReady) {
+    ytPlayer.loadVideoById(videoId);
+  } else {
+    mpPendingSource = { type: "video", id: videoId };
+    createYtPlayer(mpPendingSource);
+  }
   db.ref("musicPlayer").set({
-    videoId: videoId,
+    mode: "video",
+    sourceId: videoId,
     isPlaying: true,
     position: 0,
     updatedAt: Date.now(),
     updatedBy: currentUser.email
   });
+}
+
+function loadMusicFromInput() {
+  const input = document.getElementById("musicUrlInput");
+  const source = extractYouTubeSource(input.value.trim());
+  if (!source) {
+    alert("看不出來是哪個YouTube影片或播放清單，麻煩確認連結 / Не удалось распознать ссылку YouTube");
+    return;
+  }
+  input.value = "";
+  mpLastLocalActionAt = Date.now();
+  mpCurrentMode = source.type;
+  mpCurrentSourceId = source.id;
+  if (ytPlayer && ytPlayerReady) {
+    if (source.type === "playlist") ytPlayer.loadPlaylist({ list: source.id });
+    else ytPlayer.loadVideoById(source.id);
+  } else {
+    mpPendingSource = source;
+    createYtPlayer(source);
+  }
+  const payload = {
+    mode: source.type,
+    sourceId: source.id,
+    isPlaying: true,
+    position: 0,
+    updatedAt: Date.now(),
+    updatedBy: currentUser.email
+  };
+  if (source.type === "playlist") payload.index = 0;
+  db.ref("musicPlayer").set(payload);
 }
 
 function initMusicPanelDrag() {
