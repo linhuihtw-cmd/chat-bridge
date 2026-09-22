@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.222</title>
+  <title>L⇄V ∞ v21.223</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -1485,6 +1485,106 @@
       white-space: nowrap;
     }
     .mp-hint { font-size: 11px; color: var(--text-tertiary); text-align: center; }
+
+    .mp-tabs { display: flex; gap: 4px; padding: 8px 12px 0; flex-shrink: 0; }
+    .mp-tab {
+      flex: 1;
+      background: none;
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-tertiary);
+      border-radius: 8px;
+      padding: 6px 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .mp-tab.active { background: var(--gold-dim); color: var(--bg-deep); border-color: var(--gold-dim); font-weight: 500; }
+    .mp-local-pick-btn {
+      width: 100%;
+      border: 1px dashed var(--border-strong);
+      border-radius: 8px;
+      padding: 10px;
+      background: none;
+      color: var(--text-primary);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .mp-local-pick-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+    .mp-playlist { display: flex; flex-direction: column; gap: 2px; max-height: 110px; overflow-y: auto; }
+    .mp-playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 7px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mp-playlist-item:hover { background: var(--bg-panel); }
+    .mp-playlist-item.active { background: var(--gold-dim); color: var(--bg-deep); font-weight: 500; }
+    .mp-local-controls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .mp-local-controls button {
+      background: none;
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-primary);
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #localMusicPlayBtn { width: 38px; height: 38px; font-size: 16px; }
+    .mp-time-label { font-size: 11px; color: var(--text-tertiary); min-width: 76px; text-align: center; }
+    .mp-seek { width: 100%; accent-color: var(--gold-dim); }
+    .mp-share-btn {
+      flex: 1;
+      border: none !important;
+      border-radius: 8px !important;
+      width: auto !important;
+      height: auto !important;
+      padding: 6px 10px !important;
+      font-size: 12px !important;
+      background: var(--gold-dim);
+      color: var(--bg-deep);
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .mp-share-btn.sharing { background: var(--error-red); color: #fff; }
+
+    #musicStreamIncomingBanner, #musicStreamListenerBar {
+      position: fixed;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 470;
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-primary);
+      max-width: 92vw;
+    }
+    #musicStreamListenerBar input[type="range"] { width: 70px; accent-color: var(--gold-dim); }
+    #musicStreamListenerBar button {
+      border: none;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      background: var(--error-red);
+      color: #fff;
+      font-family: inherit;
+    }
     #musicSearchResults { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
     .mp-result-item {
       display: flex;
@@ -2616,7 +2716,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.222</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.223</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2781,19 +2881,62 @@
       <button class="mp-exit" onclick="closeMusicPlayer()">✕</button>
     </div>
   </div>
-  <div class="mp-body" id="musicPlayerBody">
-    <div class="mp-iframe-wrap"><div id="ytPlayerTarget"></div></div>
-    <div class="mp-load-row">
-      <input type="text" id="musicSearchInput" placeholder="搜尋歌曲/歌手 / Поиск песни" onkeydown="if(event.key==='Enter')searchYouTubeMusic()" />
-      <button onclick="searchYouTubeMusic()">🔍</button>
-    </div>
-    <div id="musicSearchResults"></div>
-    <div class="mp-load-row">
-      <input type="text" id="musicUrlInput" placeholder="或直接貼YouTube連結 / Или вставьте ссылку" />
-      <button onclick="loadMusicFromInput()">載入 / Загрузить</button>
-    </div>
-    <div class="mp-hint" id="musicPlayerHint">搜尋或貼上一首YouTube影片，兩人會同步聽到同一個進度 / Найдите или вставьте видео, чтобы слушать вместе</div>
+  <div class="mp-tabs">
+    <button class="mp-tab active" id="mpTabYoutubeBtn" onclick="switchMusicTab('youtube')">📺 YouTube</button>
+    <button class="mp-tab" id="mpTabLocalBtn" onclick="switchMusicTab('local')">💾 本機音樂 / Мои файлы</button>
   </div>
+  <div class="mp-body" id="musicPlayerBody">
+    <div id="mpYoutubeSection">
+      <div class="mp-iframe-wrap"><div id="ytPlayerTarget"></div></div>
+      <div class="mp-load-row">
+        <input type="text" id="musicSearchInput" placeholder="搜尋歌曲/歌手 / Поиск песни" onkeydown="if(event.key==='Enter')searchYouTubeMusic()" />
+        <button onclick="searchYouTubeMusic()">🔍</button>
+      </div>
+      <div id="musicSearchResults"></div>
+      <div class="mp-load-row">
+        <input type="text" id="musicUrlInput" placeholder="或直接貼YouTube連結 / Или вставьте ссылку" />
+        <button onclick="loadMusicFromInput()">載入 / Загрузить</button>
+      </div>
+      <div class="mp-hint" id="musicPlayerHint">搜尋或貼上一首YouTube影片，兩人會同步聽到同一個進度 / Найдите или вставьте видео, чтобы слушать вместе</div>
+    </div>
+    <div id="mpLocalSection" style="display:none;">
+      <div id="mpLocalHostView">
+        <input type="file" id="localMusicFileInput" accept="audio/*" multiple style="display:none;" onchange="handleLocalMusicFiles(event)">
+        <button class="mp-local-pick-btn" onclick="document.getElementById('localMusicFileInput').click()">➕ 選擇音樂檔案 / Выбрать файлы</button>
+        <div id="localMusicPlaylist" class="mp-playlist"></div>
+        <div id="localMusicNowPlaying" class="mp-hint">還沒選歌 / Песня не выбрана</div>
+        <div class="mp-local-controls">
+          <button onclick="localMusicPrev()" title="上一首">⏮</button>
+          <button id="localMusicPlayBtn" onclick="toggleLocalMusicPlay()" title="播放/暫停">▶️</button>
+          <button onclick="localMusicNext()" title="下一首">⏭</button>
+          <span id="localMusicTimeLabel" class="mp-time-label">0:00 / 0:00</span>
+        </div>
+        <input type="range" id="localMusicSeek" class="mp-seek" min="0" max="1000" value="0" oninput="seekLocalMusic(this.value)">
+        <div class="mp-local-controls">
+          <span>🔊</span>
+          <input type="range" id="localMusicVolume" class="mp-seek" min="0" max="100" value="80" oninput="setLocalMusicVolume(this.value)">
+          <button id="localMusicShareBtn" class="mp-share-btn" onclick="toggleMusicShare()">📡 分享給對方 / Транслировать</button>
+        </div>
+        <div class="mp-hint" id="localMusicShareStatus"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="musicStreamIncomingBanner" style="display:none;">
+  <span>🎵 對方正在放音樂，要一起聽嗎？<br><span style="color:var(--text-tertiary);font-size:11px;">Собеседник включил музыку</span></span>
+  <div class="vc-incoming-btns">
+    <button class="vc-accept-btn" onclick="acceptMusicStream()">收聽 / Слушать</button>
+    <button class="vc-decline-btn" onclick="declineMusicStream()">不用了 / Нет</button>
+  </div>
+</div>
+
+<div id="musicStreamListenerBar" style="display:none;">
+  <span id="musicStreamListenerLabel">🎧 正在收聽對方的音樂 / Слушаем музыку собеседника</span>
+  <span>🔊</span>
+  <input type="range" id="musicStreamListenerVolume" min="0" max="100" value="80" oninput="setMusicStreamListenerVolume(this.value)">
+  <button onclick="leaveMusicStream()">離開 / Выйти</button>
+  <audio id="remoteMusicAudio" autoplay></audio>
 </div>
 
 <div id="profileSetupOverlay" style="display:none;">
@@ -2921,7 +3064,7 @@
 
 <script>
 
-const APP_VERSION = "21.222";
+const APP_VERSION = "21.223";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3057,6 +3200,7 @@ auth.onAuthStateChanged((user) => {
   setupConsensusListener();
   setupGameInviteListener();
   setupVideoCallListener();
+  setupMusicStreamListener();
 
   if (user.email === ADMIN_EMAIL) {
     db.ref("approvedUsers/" + userKey).set({ email: user.email, approvedAt: Date.now() });
@@ -3143,7 +3287,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.222";
+    document.title = "L⇄V ∞ v21.223";
   }
 });
 
@@ -3208,7 +3352,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.222";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.223";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5201,6 +5345,281 @@ function toggleMusicPlayerMinimize() {
   const overlay = document.getElementById("musicPlayerOverlay");
   const collapsed = overlay.classList.toggle("mp-collapsed");
   document.getElementById("musicPlayerMinBtn").textContent = collapsed ? "▲" : "▾";
+}
+function switchMusicTab(tab) {
+  document.getElementById("mpYoutubeSection").style.display = tab === "youtube" ? "flex" : "none";
+  document.getElementById("mpLocalSection").style.display = tab === "local" ? "block" : "none";
+  document.getElementById("mpTabYoutubeBtn").classList.toggle("active", tab === "youtube");
+  document.getElementById("mpTabLocalBtn").classList.toggle("active", tab === "local");
+}
+
+/* ---------- 本機音樂串流給對方 ---------- */
+let localMusicPlaylist = [];
+let localMusicIndex = -1;
+let localMusicAudioEl = null;
+let msSharing = false;
+let msPeerConn = null;
+let msCandListenerRef = null;
+let msStreamListenerRef = null;
+let msPresenceListenerRef = null;
+let msOtherPartySeen = false;
+let msLastLocalActionAt = 0;
+
+function getLocalMusicAudio() {
+  if (!localMusicAudioEl) {
+    localMusicAudioEl = document.createElement("audio");
+    localMusicAudioEl.id = "localMusicAudio";
+    localMusicAudioEl.style.display = "none";
+    document.body.appendChild(localMusicAudioEl);
+    localMusicAudioEl.addEventListener("timeupdate", updateLocalMusicTimeLabel);
+    localMusicAudioEl.addEventListener("ended", localMusicNext);
+    localMusicAudioEl.addEventListener("play", () => { document.getElementById("localMusicPlayBtn").textContent = "⏸️"; });
+    localMusicAudioEl.addEventListener("pause", () => { document.getElementById("localMusicPlayBtn").textContent = "▶️"; });
+  }
+  return localMusicAudioEl;
+}
+
+function handleLocalMusicFiles(event) {
+  const files = Array.from(event.target.files || []);
+  event.target.value = "";
+  if (files.length === 0) return;
+  files.forEach((f) => localMusicPlaylist.push({ file: f, url: URL.createObjectURL(f), name: f.name }));
+  renderLocalMusicPlaylist();
+  if (localMusicIndex === -1) playLocalMusicAt(localMusicPlaylist.length - files.length);
+}
+
+function renderLocalMusicPlaylist() {
+  const el = document.getElementById("localMusicPlaylist");
+  el.innerHTML = localMusicPlaylist.map((t, i) =>
+    `<div class="mp-playlist-item ${i === localMusicIndex ? 'active' : ''}" onclick="playLocalMusicAt(${i})">${i === localMusicIndex ? '🎵 ' : ''}${t.name}</div>`
+  ).join("");
+}
+
+function playLocalMusicAt(index) {
+  if (index < 0 || index >= localMusicPlaylist.length) return;
+  localMusicIndex = index;
+  const audio = getLocalMusicAudio();
+  audio.src = localMusicPlaylist[index].url;
+  audio.play().catch(() => {});
+  document.getElementById("localMusicNowPlaying").textContent = "🎵 " + localMusicPlaylist[index].name;
+  renderLocalMusicPlaylist();
+  broadcastMusicTrackChange();
+}
+function localMusicNext() {
+  if (localMusicPlaylist.length === 0) return;
+  playLocalMusicAt((localMusicIndex + 1) % localMusicPlaylist.length);
+}
+function localMusicPrev() {
+  if (localMusicPlaylist.length === 0) return;
+  playLocalMusicAt((localMusicIndex - 1 + localMusicPlaylist.length) % localMusicPlaylist.length);
+}
+function toggleLocalMusicPlay() {
+  const audio = getLocalMusicAudio();
+  if (!audio.src) { document.getElementById("localMusicFileInput").click(); return; }
+  if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+}
+function seekLocalMusic(value) {
+  const audio = getLocalMusicAudio();
+  if (!audio.duration) return;
+  audio.currentTime = (value / 1000) * audio.duration;
+}
+function setLocalMusicVolume(value) {
+  getLocalMusicAudio().volume = value / 100;
+}
+function formatTime(sec) {
+  if (!isFinite(sec)) return "0:00";
+  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+  return m + ":" + String(s).padStart(2, "0");
+}
+function updateLocalMusicTimeLabel() {
+  const audio = getLocalMusicAudio();
+  document.getElementById("localMusicTimeLabel").textContent = formatTime(audio.currentTime) + " / " + formatTime(audio.duration);
+  if (audio.duration) {
+    document.getElementById("localMusicSeek").value = (audio.currentTime / audio.duration) * 1000;
+  }
+}
+function broadcastMusicTrackChange() {
+  if (msSharing && currentUser) {
+    db.ref("musicStream").update({ trackTitle: localMusicPlaylist[localMusicIndex] ? localMusicPlaylist[localMusicIndex].name : "" });
+  }
+}
+
+async function toggleMusicShare() {
+  if (msSharing) { stopMusicShare(); return; }
+  if (!getLocalMusicAudio().captureStream) {
+    alert("這個瀏覽器不支援音樂分享功能，建議用電腦版Chrome / Эта функция не поддерживается этим браузером");
+    return;
+  }
+  if (localMusicPlaylist.length === 0) {
+    alert("先選幾首歌再分享 / Сначала выберите песни");
+    return;
+  }
+  const audio = getLocalMusicAudio();
+  const stream = audio.captureStream ? audio.captureStream() : audio.mozCaptureStream();
+  const audioTrack = stream.getAudioTracks()[0];
+  if (!audioTrack) {
+    alert("找不到音訊軌道，請先播放一首歌再試一次 / Не удалось получить аудиодорожку");
+    return;
+  }
+
+  await db.ref("musicStream").remove();
+  await db.ref("musicStreamCandidates").remove();
+
+  msPeerConn = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
+  msPeerConn.addTrack(audioTrack, stream);
+  msPeerConn.onicecandidate = (e) => {
+    if (e.candidate) db.ref("musicStreamCandidates/host").push(e.candidate.toJSON());
+  };
+  const offer = await msPeerConn.createOffer();
+  await msPeerConn.setLocalDescription(offer);
+
+  await db.ref("musicStream").set({
+    status: "active",
+    hostEmail: currentUser.email,
+    offer: { type: offer.type, sdp: offer.sdp },
+    trackTitle: localMusicPlaylist[localMusicIndex] ? localMusicPlaylist[localMusicIndex].name : "",
+    updatedAt: Date.now()
+  });
+
+  msCandListenerRef = db.ref("musicStreamCandidates/listener");
+  msCandListenerRef.on("child_added", (snap) => {
+    const cand = snap.val();
+    if (cand && msPeerConn) msPeerConn.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
+  });
+
+  msStreamListenerRef = db.ref("musicStream");
+  msStreamListenerRef.on("value", (snap) => {
+    const state = snap.val();
+    if (!state) return;
+    if (state.answer && msPeerConn && !msPeerConn.currentRemoteDescription) {
+      msPeerConn.setRemoteDescription(new RTCSessionDescription(state.answer)).catch(() => {});
+    }
+  });
+
+  msSharing = true;
+  const btn = document.getElementById("localMusicShareBtn");
+  btn.textContent = "⏹ 停止分享 / Остановить";
+  btn.classList.add("sharing");
+  document.getElementById("localMusicShareStatus").textContent = "🟢 正在分享給對方 / Трансляция идёт";
+  registerMusicStreamPresence();
+}
+
+function stopMusicShare(silent) {
+  if (msPeerConn) { msPeerConn.close(); msPeerConn = null; }
+  if (msCandListenerRef) { msCandListenerRef.off(); msCandListenerRef = null; }
+  if (msStreamListenerRef) { msStreamListenerRef.off(); msStreamListenerRef = null; }
+  if (msPresenceListenerRef) { msPresenceListenerRef.off(); msPresenceListenerRef = null; }
+  msSharing = false;
+  msOtherPartySeen = false;
+  const btn = document.getElementById("localMusicShareBtn");
+  if (btn) { btn.textContent = "📡 分享給對方 / Транслировать"; btn.classList.remove("sharing"); }
+  const statusEl = document.getElementById("localMusicShareStatus");
+  if (statusEl) statusEl.textContent = "";
+  if (!silent) db.ref("musicStream").update({ status: "ended" });
+}
+
+function registerMusicStreamPresence() {
+  if (!currentUser) return;
+  const myKey = emailToKey(currentUser.email);
+  const presenceRef = db.ref("musicStream/presence/" + myKey);
+  presenceRef.set(true);
+  presenceRef.onDisconnect().remove();
+  if (msPresenceListenerRef) msPresenceListenerRef.off();
+  msPresenceListenerRef = db.ref("musicStream/presence");
+  msPresenceListenerRef.on("value", (snap) => {
+    const presence = snap.val() || {};
+    const otherKeys = Object.keys(presence).filter((k) => k !== myKey);
+    if (otherKeys.length > 0) { msOtherPartySeen = true; }
+    else if (msOtherPartySeen && msSharing) { stopMusicShare(); }
+  });
+}
+
+/* ---------- 收聽對方的音樂串流 ---------- */
+function setupMusicStreamListener() {
+  db.ref("musicStream").on("value", (snap) => {
+    const state = snap.val();
+    const incomingBanner = document.getElementById("musicStreamIncomingBanner");
+    const listenerBar = document.getElementById("musicStreamListenerBar");
+    if (!currentUser) return;
+    if (!state || state.status === "ended") {
+      incomingBanner.style.display = "none";
+      if (msListenerActive) cleanupMusicListener();
+      return;
+    }
+    if (state.hostEmail === currentUser.email) {
+      incomingBanner.style.display = "none";
+      return;
+    }
+    if (msListenerActive) {
+      document.getElementById("musicStreamListenerLabel").textContent = "🎧 正在收聽：" + (state.trackTitle || "音樂") + " / Слушаем";
+      return;
+    }
+    incomingBanner.style.display = "flex";
+  });
+}
+
+let msListenerActive = false;
+let msListenerPeerConn = null;
+let msListenerCandRef = null;
+
+async function acceptMusicStream() {
+  document.getElementById("musicStreamIncomingBanner").style.display = "none";
+  const snap = await db.ref("musicStream").once("value");
+  const state = snap.val();
+  if (!state || !state.offer) return;
+
+  msListenerPeerConn = new RTCPeerConnection({ iceServers: VC_ICE_SERVERS });
+  msListenerPeerConn.onicecandidate = (e) => {
+    if (e.candidate) db.ref("musicStreamCandidates/listener").push(e.candidate.toJSON());
+  };
+  msListenerPeerConn.ontrack = (e) => {
+    const audioEl = document.getElementById("remoteMusicAudio");
+    audioEl.srcObject = e.streams[0];
+    audioEl.volume = (document.getElementById("musicStreamListenerVolume").value || 80) / 100;
+  };
+
+  await msListenerPeerConn.setRemoteDescription(new RTCSessionDescription(state.offer));
+  const answer = await msListenerPeerConn.createAnswer();
+  await msListenerPeerConn.setLocalDescription(answer);
+  await db.ref("musicStream").update({ answer: { type: answer.type, sdp: answer.sdp } });
+
+  msListenerCandRef = db.ref("musicStreamCandidates/host");
+  msListenerCandRef.on("child_added", (s) => {
+    const cand = s.val();
+    if (cand && msListenerPeerConn) msListenerPeerConn.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
+  });
+
+  msListenerActive = true;
+  document.getElementById("musicStreamListenerLabel").textContent = "🎧 正在收聽：" + (state.trackTitle || "音樂") + " / Слушаем";
+  document.getElementById("musicStreamListenerBar").style.display = "flex";
+
+  const myKey = emailToKey(currentUser.email);
+  const presenceRef = db.ref("musicStream/presence/" + myKey);
+  presenceRef.set(true);
+  presenceRef.onDisconnect().remove();
+}
+
+function declineMusicStream() {
+  document.getElementById("musicStreamIncomingBanner").style.display = "none";
+}
+
+function setMusicStreamListenerVolume(value) {
+  const audioEl = document.getElementById("remoteMusicAudio");
+  if (audioEl) audioEl.volume = value / 100;
+}
+
+function cleanupMusicListener() {
+  if (msListenerPeerConn) { msListenerPeerConn.close(); msListenerPeerConn = null; }
+  if (msListenerCandRef) { msListenerCandRef.off(); msListenerCandRef = null; }
+  const audioEl = document.getElementById("remoteMusicAudio");
+  if (audioEl) audioEl.srcObject = null;
+  document.getElementById("musicStreamListenerBar").style.display = "none";
+  msListenerActive = false;
+  if (currentUser) db.ref("musicStream/presence/" + emailToKey(currentUser.email)).remove();
+}
+
+function leaveMusicStream() {
+  cleanupMusicListener();
 }
 
 function applyRemoteMusicState(state, correctionOnly) {
