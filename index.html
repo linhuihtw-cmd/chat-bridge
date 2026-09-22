@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.223</title>
+  <title>L⇄V ∞ v21.224</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2716,7 +2716,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.223</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.224</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3064,7 +3064,7 @@
 
 <script>
 
-const APP_VERSION = "21.223";
+const APP_VERSION = "21.224";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3287,7 +3287,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.223";
+    document.title = "L⇄V ∞ v21.224";
   }
 });
 
@@ -3352,7 +3352,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.223";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.224";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -8752,19 +8752,19 @@ function bindContextMenuEvents() {
     clearTimeout(longPressTimer);
   });
 
-  // 拖曳檔案/圖片進聊天室直接傳送
+  // 拖曳檔案/圖片進聊天室直接傳送：整個頁面範圍都攔截，不管拖到哪個角落都不會被瀏覽器搶走去開新分頁
   let dragCounter = 0;
-  chatEl.addEventListener("dragover", (e) => { e.preventDefault(); });
-  chatEl.addEventListener("dragenter", (e) => {
+  window.addEventListener("dragover", (e) => { e.preventDefault(); });
+  window.addEventListener("dragenter", (e) => {
     e.preventDefault();
     dragCounter++;
     chatEl.classList.add("drag-over");
   });
-  chatEl.addEventListener("dragleave", () => {
+  window.addEventListener("dragleave", () => {
     dragCounter--;
     if (dragCounter <= 0) { dragCounter = 0; chatEl.classList.remove("drag-over"); }
   });
-  chatEl.addEventListener("drop", (e) => {
+  window.addEventListener("drop", (e) => {
     e.preventDefault();
     dragCounter = 0;
     chatEl.classList.remove("drag-over");
