@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.221</title>
+  <title>L⇄V ∞ v21.222</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -63,6 +63,26 @@
       background: var(--bg-panel);
       border-radius: 16px;
       margin-bottom: 16px;
+      position: relative;
+    }
+    #chat.drag-over {
+      border: 2px dashed var(--gold);
+      background: var(--bg-elevated);
+    }
+    #chat.drag-over::after {
+      content: "放開即可傳送 / Отпустите, чтобы отправить";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.55);
+      color: var(--gold);
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: 16px;
+      pointer-events: none;
+      z-index: 5;
     }
 
     .msg-box {
@@ -2596,7 +2616,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.221</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.222</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2901,7 +2921,7 @@
 
 <script>
 
-const APP_VERSION = "21.221";
+const APP_VERSION = "21.222";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3123,7 +3143,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.221";
+    document.title = "L⇄V ∞ v21.222";
   }
 });
 
@@ -3188,7 +3208,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.221";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.222";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -8293,24 +8313,62 @@ function bindContextMenuEvents() {
   if (contextMenuEventsBound) return;
   contextMenuEventsBound = true;
   let longPressTimer = null;
-  document.getElementById("chat").addEventListener("contextmenu", (e) => {
+  const chatEl = document.getElementById("chat");
+  chatEl.addEventListener("contextmenu", (e) => {
     const msgBox = e.target.closest(".msg-box[data-text]");
     if (!msgBox) return;
     showContextMenu(e, msgBox);
   });
-  document.getElementById("chat").addEventListener("touchstart", (e) => {
+  chatEl.addEventListener("touchstart", (e) => {
     const msgBox = e.target.closest(".msg-box[data-text]");
     if (!msgBox) return;
     longPressTimer = setTimeout(() => {
       showContextMenu(e, msgBox);
     }, 500);
   }, { passive: true });
-  document.getElementById("chat").addEventListener("touchend", () => {
+  chatEl.addEventListener("touchend", () => {
     clearTimeout(longPressTimer);
   });
-  document.getElementById("chat").addEventListener("touchmove", () => {
+  chatEl.addEventListener("touchmove", () => {
     clearTimeout(longPressTimer);
   });
+
+  // 拖曳檔案/圖片進聊天室直接傳送
+  let dragCounter = 0;
+  chatEl.addEventListener("dragover", (e) => { e.preventDefault(); });
+  chatEl.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    dragCounter++;
+    chatEl.classList.add("drag-over");
+  });
+  chatEl.addEventListener("dragleave", () => {
+    dragCounter--;
+    if (dragCounter <= 0) { dragCounter = 0; chatEl.classList.remove("drag-over"); }
+  });
+  chatEl.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    chatEl.classList.remove("drag-over");
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    uploadDroppedFile(files[0]);
+  });
+}
+
+function uploadDroppedFile(file) {
+  if (file.type && file.type.startsWith("image/")) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const imageInput = document.getElementById("imageInput");
+    imageInput.files = dt.files;
+    handleImageSelected({ target: imageInput });
+  } else {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const fileInput = document.getElementById("fileInput");
+    fileInput.files = dt.files;
+    handleFileSelected({ target: fileInput });
+  }
 }
 
 function speakRussianText(index) {
