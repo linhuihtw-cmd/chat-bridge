@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.220</title>
+  <title>L⇄V ∞ v21.221</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -114,6 +114,24 @@
     }
     .msg-box.own .chat-image { align-self: flex-end; border-top-right-radius: 4px; }
     .msg-box.other .chat-image { align-self: flex-start; border-top-left-radius: 4px; }
+
+    .chat-file { padding: 0; max-width: 260px; background: var(--bg-elevated); border: 0.5px solid var(--border-subtle); }
+    .msg-box.own .chat-file { align-self: flex-end; border-top-right-radius: 4px; }
+    .msg-box.other .chat-file { align-self: flex-start; border-top-left-radius: 4px; }
+    .chat-file-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .chat-file-icon { font-size: 22px; flex-shrink: 0; }
+    .chat-file-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .chat-file-name { font-size: 13px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-file-size { font-size: 11px; color: var(--text-tertiary); }
+    .chat-file-download { font-size: 16px; color: var(--gold-dim); flex-shrink: 0; }
+    .chat-file-link:hover .chat-file-download { color: var(--gold); }
     .chat-image-ocr-btn {
       display: block;
       width: 100%;
@@ -2578,7 +2596,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.220</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.221</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2859,9 +2877,11 @@
 
 <div class="input-area">
   <button id="imageBtn" class="btn-clear-db" onclick="triggerImageUpload()" title="傳送圖片 / Изображение">📷</button>
+  <button id="fileBtn" class="btn-clear-db" onclick="triggerFileUpload()" title="傳送檔案 / Файл">📎</button>
   <button id="videoCallBtn" class="btn-clear-db" onclick="startVideoCall()" title="視訊通話 / Видеозвонок">📹</button>
   <button id="musicPlayerBtn" class="btn-clear-db" onclick="openMusicPlayer()" title="一起聽音樂 / Слушать вместе">🎵</button>
   <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelected(event)">
+  <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelected(event)">
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)" oninput="autoGrowTextarea(this)"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
@@ -2881,7 +2901,7 @@
 
 <script>
 
-const APP_VERSION = "21.220";
+const APP_VERSION = "21.221";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3103,7 +3123,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.220";
+    document.title = "L⇄V ∞ v21.221";
   }
 });
 
@@ -3168,7 +3188,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.220";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.221";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4113,6 +4133,18 @@ function renderChat() {
         return `${dateSeparator}<div class="msg-box ${isOwnImg ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}" data-text="[圖片]" data-name="${safeNameImg}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-image" ${bubbleStyleImg}><img src="${safeUrlImg}" alt="圖片" loading="lazy" onclick="window.open('${safeUrlImg}','_blank')">${captionHtml}${ocrHtml}</div>${timeLabel}</div>`;
       }
 
+      // 檔案訊息：顯示成一張可下載的檔案卡片
+      if (m.type === "file") {
+        const isOwnFile = currentUser && m.senderEmail === currentUser.email;
+        const bubbleColorFile = getBubbleColor(m.senderEmail);
+        const bubbleStyleFile = bubbleColorFile ? `style="border-color:${bubbleColorFile}; border-width:2px;"` : "";
+        const safeUrlFile = (m.fileUrl || "").replace(/"/g, '&quot;');
+        const safeFileNameDisp = escapeHtmlText(m.fileName || "檔案");
+        const safeNameFile = getDisplayName(m.senderEmail).replace(/"/g, '&quot;');
+        const sizeLabel = m.fileSize ? formatFileSize(m.fileSize) : "";
+        return `${dateSeparator}<div class="msg-box ${isOwnFile ? 'own' : 'other'}" id="msg-${m.firebaseKey || ''}" data-text="[檔案] ${safeFileNameDisp}" data-name="${safeNameFile}" data-key="${m.firebaseKey || ''}" data-sender="${m.senderEmail || ''}"><div class="bubble chat-file" ${bubbleStyleFile}><a href="${safeUrlFile}" target="_blank" download class="chat-file-link"><span class="chat-file-icon">📎</span><span class="chat-file-info"><span class="chat-file-name">${safeFileNameDisp}</span><span class="chat-file-size">${sizeLabel}</span></span><span class="chat-file-download">⬇</span></a></div>${timeLabel}</div>`;
+      }
+
       const displayName = getDisplayName(m.senderEmail);
       const bubbleColor = getBubbleColor(m.senderEmail);
       const isOwnMessage = currentUser && m.senderEmail === currentUser.email;
@@ -4416,6 +4448,61 @@ async function sendMsg() {
 function triggerImageUpload() {
   const inputEl = document.getElementById("imageInput");
   if (inputEl) inputEl.click();
+}
+
+function triggerFileUpload() {
+  const inputEl = document.getElementById("fileInput");
+  if (inputEl) inputEl.click();
+}
+
+const MAX_FILE_SIZE_MB = 50;
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+let isSendingFile = false;
+async function handleFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  if (!file) return;
+  if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+    alert(`檔案太大了，這裡最多支援 ${MAX_FILE_SIZE_MB}MB / Файл слишком большой, максимум ${MAX_FILE_SIZE_MB}МБ`);
+    return;
+  }
+  if (isSendingFile) return;
+  isSendingFile = true;
+  const fileBtn = document.getElementById("fileBtn");
+  const originalBtnHtml = fileBtn ? fileBtn.innerHTML : "";
+  if (fileBtn) { fileBtn.disabled = true; fileBtn.innerText = "⏳"; }
+
+  try {
+    const senderTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const safeUid = (currentUser.uid || emailToKey(currentUser.email) || "user").replace(/[^a-zA-Z0-9_-]/g, "");
+    const safeFileName = file.name.replace(/[^a-zA-Z0-9._\-\u4e00-\u9fff\u0400-\u04FF ]/g, "_");
+    const storagePath = "files/" + safeUid + "_" + Date.now() + "_" + safeFileName;
+    const storageRef = storage.ref(storagePath);
+    await storageRef.put(file, { contentType: file.type || "application/octet-stream" });
+    const downloadUrl = await storageRef.getDownloadURL();
+    const msgData = {
+      role: "user",
+      type: "file",
+      fileUrl: downloadUrl,
+      fileName: file.name,
+      fileSize: file.size,
+      text: "[檔案] " + file.name,
+      timestamp: Date.now(),
+      tz: senderTimeZone,
+      senderEmail: currentUser.email
+    };
+    await db.ref("messages").push(msgData);
+  } catch (e) {
+    alert("⚠️ 檔案傳送失敗，請稍後再試一次。\n\n錯誤詳情：" + e.message);
+  } finally {
+    isSendingFile = false;
+    if (fileBtn) { fileBtn.disabled = false; fileBtn.innerHTML = originalBtnHtml || "📎"; }
+  }
 }
 
 function compressImageFile(file, maxDim = 1200, quality = 0.75) {
