@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.224</title>
+  <title>L⇄V ∞ v21.225</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2716,7 +2716,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.224</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.225</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3039,12 +3039,11 @@
 </div>
 
 <div class="input-area">
-  <button id="imageBtn" class="btn-clear-db" onclick="triggerImageUpload()" title="傳送圖片 / Изображение">📷</button>
-  <button id="fileBtn" class="btn-clear-db" onclick="triggerFileUpload()" title="傳送檔案 / Файл">📎</button>
+  <button id="fileBtn" class="btn-clear-db" onclick="triggerFileUpload()" title="傳送圖片/檔案 / Изображение или файл">📎</button>
   <button id="videoCallBtn" class="btn-clear-db" onclick="startVideoCall()" title="視訊通話 / Видеозвонок">📹</button>
   <button id="musicPlayerBtn" class="btn-clear-db" onclick="openMusicPlayer()" title="一起聽音樂 / Слушать вместе">🎵</button>
   <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelected(event)">
-  <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelected(event)">
+  <input type="file" id="fileInput" style="display:none;" onchange="uploadDroppedFile(event.target.files[0])">
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)" oninput="autoGrowTextarea(this)"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
   <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
@@ -3064,7 +3063,7 @@
 
 <script>
 
-const APP_VERSION = "21.224";
+const APP_VERSION = "21.225";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3287,7 +3286,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.224";
+    document.title = "L⇄V ∞ v21.225";
   }
 });
 
@@ -3352,7 +3351,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.224";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.225";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4609,11 +4608,6 @@ async function sendMsg() {
 /* ============================================================
    傳送圖片功能：選圖 → 前端壓縮 → 上傳 Firebase Storage → 存訊息
    ============================================================ */
-function triggerImageUpload() {
-  const inputEl = document.getElementById("imageInput");
-  if (inputEl) inputEl.click();
-}
-
 function triggerFileUpload() {
   const inputEl = document.getElementById("fileInput");
   if (inputEl) inputEl.click();
