@@ -1,19 +1,8 @@
-/* 聊天橋 推播 Service Worker（資料型訊息 + 未讀小圓點） */
-importScripts("https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js");
-
-firebase.initializeApp({
-  apiKey: "AIzaSyC6iQ2z5_zLokTrcfn2JevoM94ijxq2jGA",
-  authDomain: "chat-bridge-f89ed.firebaseapp.com",
-  databaseURL: "https://chat-bridge-f89ed-default-rtdb.firebaseio.com",
-  projectId: "chat-bridge-f89ed",
-  storageBucket: "chat-bridge-f89ed.firebasestorage.app",
-  messagingSenderId: "622910981254",
-  appId: "1:622910981254:web:1d9d07862a765c31f6fd07"
-});
-
-const messaging = firebase.messaging();
+/* 聊天橋 推播 Service Worker v2（不依賴 Firebase SDK，直接處理 push 事件，較穩定） */
 const APP_LINK = "https://linhuihtw-cmd.github.io/chat-bridge/";
+
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
 async function updateBadge() {
   try {
@@ -23,28 +12,49 @@ async function updateBadge() {
   } catch (e) {}
 }
 
-messaging.onBackgroundMessage(async (payload) => {
-  const n = payload.notification || null;
-  const d = payload.data || {};
-  if (!n) {
-    await self.registration.showNotification(d.title || "🌉 雙語聊天橋", {
-      body: d.body || "有新訊息",
-      tag: "chat-bridge-msg-" + Date.now(),
-      data: { link: d.link || APP_LINK }
+self.addEventListener("push", (event) => {
+  event.waitUntil((async () => {
+    let payload = {};
+    try { payload = event.data ? event.data.json() : {}; } catch (e) { payload = {}; }
+    const n = payload.notification || {};
+    const d = payload.data || {};
+    const title = d.title || n.title || "🌉 雙語聊天橋";
+    const body = d.body || n.body || "有新訊息";
+    const link = d.link || APP_LINK;
+
+    await self.registration.showNotification(title, {
+      body: body,
+      tag: "chat-bridge-" + Date.now(),
+      data: { link: link },
+      vibrate: [200, 100, 200]
     });
-  }
-  setTimeout(updateBadge, 300);
+
+    // 使用者正開著聊天橋畫面時，不要讓通知卡在那裡
+    try {
+      const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const visible = wins.some((w) => w.visibilityState === "visible" && w.url.indexOf("/chat-bridge/") !== -1);
+      if (visible) {
+        setTimeout(async () => {
+          const list = await self.registration.getNotifications();
+          list.forEach((x) => x.close());
+          updateBadge();
+        }, 1500);
+        return;
+      }
+    } catch (e) {}
+    await updateBadge();
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const link = (event.notification.data && (event.notification.data.link || (event.notification.data.FCM_MSG && event.notification.data.FCM_MSG.notification && event.notification.data.FCM_MSG.notification.click_action))) || APP_LINK;
+  const link = (event.notification.data && event.notification.data.link) || APP_LINK;
   event.waitUntil((async () => {
-    const wins = await clients.matchAll({ type: "window", includeUncontrolled: true });
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const w of wins) {
       if (w.url.indexOf("/chat-bridge/") !== -1 && "focus" in w) { await w.focus(); await updateBadge(); return; }
     }
-    await clients.openWindow(link);
+    await self.clients.openWindow(link);
     await updateBadge();
   })());
 });
