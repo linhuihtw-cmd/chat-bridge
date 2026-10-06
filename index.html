@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="聊天橋">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <title>L⇄V ∞ v21.231</title>
+  <title>L⇄V ∞ v21.232</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -66,6 +66,7 @@
       padding: 18px;
       height: 650px; 
       overflow-y: auto;
+      overflow-x: hidden;
       white-space: pre-wrap;
       background: var(--bg-panel);
       border-radius: 16px;
@@ -498,7 +499,13 @@
       gap: 4px;
       padding: 4px 0;
       overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
+    .emoji-quick-row::-webkit-scrollbar { display: none; }
+    textarea#msg { scrollbar-width: none; }
+    textarea#msg::-webkit-scrollbar { display: none; }
+    .bubble, .ai-card, .error-card { overflow-wrap: anywhere; min-width: 0; }
     .emoji-quick-row .emoji-item {
       font-size: 20px;
       flex-shrink: 0;
@@ -2668,12 +2675,26 @@
       }
 
       .input-area {
-        gap: 4px;
+        gap: 6px;
+        flex-wrap: wrap;
       }
 
       textarea#msg {
         font-size: 14px;
         padding: 8px;
+        order: 1;
+        flex: 1 1 calc(100% - 64px);
+        min-width: 0;
+        min-height: 52px;
+      }
+      #sendBtn { order: 2; flex: 0 0 54px; min-width: 54px; }
+      #fileBtn, #videoCallBtn, #musicPlayerBtn, #exportBtn, #settingsBtn {
+        order: 3;
+        flex: 1 1 0;
+        min-width: 0;
+        font-size: 22px;
+        padding: 4px 0;
+        text-align: center;
       }
 
       .btn-send {
@@ -2723,7 +2744,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.231</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.232</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3055,7 +3076,7 @@
   <input type="file" id="fileInput" style="display:none;" onchange="uploadDroppedFile(event.target.files[0])">
   <textarea id="msg" placeholder="輸入中文或俄文... / Введите текст..." rows="2" onkeydown="handleMsgKeydown(event)" oninput="autoGrowTextarea(this)"></textarea>
   <button id="sendBtn" class="btn-send" onclick="sendMsg()"><span class="send-arrow">➤</span></button>
-  <button class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
+  <button id="exportBtn" class="btn-clear-db" onclick="showExportMenu()" title="匯出記錄 / Экспорт">📦</button>
   <button id="settingsBtn" class="btn-clear-db" onclick="openSettings()" title="設定 / Настройки">⚙️</button>
 </div>
 
@@ -3072,7 +3093,7 @@
 
 <script>
 
-const APP_VERSION = "21.231";
+const APP_VERSION = "21.232";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3296,7 +3317,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.231";
+    document.title = "L⇄V ∞ v21.232";
   }
 });
 
@@ -3361,7 +3382,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.231";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.232";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
