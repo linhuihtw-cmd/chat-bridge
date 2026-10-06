@@ -1,4 +1,4 @@
-/* 聊天橋 推播 Service Worker v2（不依賴 Firebase SDK，直接處理 push 事件，較穩定） */
+/* 聊天橋 推播 Service Worker v3（不依賴 Firebase SDK，直接處理 push 事件，較穩定） */
 const APP_LINK = "https://linhuihtw-cmd.github.io/chat-bridge/";
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -29,19 +29,6 @@ self.addEventListener("push", (event) => {
       vibrate: [200, 100, 200]
     });
 
-    // 使用者正開著聊天橋畫面時，不要讓通知卡在那裡
-    try {
-      const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      const visible = wins.some((w) => w.visibilityState === "visible" && w.url.indexOf("/chat-bridge/") !== -1);
-      if (visible) {
-        setTimeout(async () => {
-          const list = await self.registration.getNotifications();
-          list.forEach((x) => x.close());
-          updateBadge();
-        }, 1500);
-        return;
-      }
-    } catch (e) {}
     await updateBadge();
   })());
 });
