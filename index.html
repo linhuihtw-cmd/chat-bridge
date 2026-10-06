@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.225</title>
+  <title>L⇄V ∞ v21.226</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2716,7 +2716,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.225</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.226</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3063,7 +3063,7 @@
 
 <script>
 
-const APP_VERSION = "21.225";
+const APP_VERSION = "21.226";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3286,7 +3286,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.225";
+    document.title = "L⇄V ∞ v21.226";
   }
 });
 
@@ -3351,7 +3351,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.225";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.226";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -5474,6 +5474,7 @@ async function toggleMusicShare() {
     trackTitle: localMusicPlaylist[localMusicIndex] ? localMusicPlaylist[localMusicIndex].name : "",
     updatedAt: Date.now()
   });
+  db.ref("musicStream/status").onDisconnect().set("ended");
 
   msCandListenerRef = db.ref("musicStreamCandidates/listener");
   msCandListenerRef.on("child_added", (snap) => {
@@ -5548,7 +5549,9 @@ function setupMusicStreamListener() {
       document.getElementById("musicStreamListenerLabel").textContent = "🎧 正在收聽：" + (state.trackTitle || "音樂") + " / Слушаем";
       return;
     }
-    incomingBanner.style.display = "flex";
+    const hostKey = emailToKey(state.hostEmail || "");
+    const hostOnline = !!(state.presence && state.presence[hostKey]);
+    incomingBanner.style.display = hostOnline ? "flex" : "none";
   });
 }
 
