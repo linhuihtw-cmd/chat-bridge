@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>L⇄V ∞ v21.226</title>
+  <title>L⇄V ∞ v21.227</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2716,7 +2716,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.226</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.227</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3063,7 +3063,7 @@
 
 <script>
 
-const APP_VERSION = "21.226";
+const APP_VERSION = "21.227";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3286,7 +3286,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.226";
+    document.title = "L⇄V ∞ v21.227";
   }
 });
 
@@ -3351,7 +3351,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.226";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.227";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -9329,19 +9329,54 @@ async function sendFcmToOtherUsers(title, body) {
   if (!currentUser) return;
   try {
     const snapshot = await db.ref("fcmTokens").once("value");
-    const tokens = snapshot.val() || {};
+    const users = snapshot.val() || {};
     const myKey = emailToKey(currentUser.email);
-    for (const [key, data] of Object.entries(tokens)) {
-      if (key === myKey) continue;
-      if (!data.token) continue;
-      fetch("https://holy-dew-9872.linhuihtw.workers.dev/fcm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: data.token, title, bodyText: body })
-      }).catch(() => {});
+    const sent = new Set();
+    for (const [key, data] of Object.entries(users)) {
+      if (key === myKey || !data) continue;
+      const list = [];
+      if (data.token) list.push({ token: data.token, path: "fcmTokens/" + key + "/token" });
+      Object.entries(data.devices || {}).forEach(([devId, dev]) => {
+        if (dev && dev.token) list.push({ token: dev.token, path: "fcmTokens/" + key + "/devices/" + devId });
+      });
+      for (const item of list) {
+        if (sent.has(item.token)) continue;
+        sent.add(item.token);
+        fetch("https://holy-dew-9872.linhuihtw.workers.dev/fcm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: item.token, title, bodyText: body })
+        }).then((r) => r.json()).then((res) => {
+          const st = res && res.error && res.error.status;
+          if (st === "NOT_FOUND" || st === "UNREGISTERED") db.ref(item.path).remove().catch(() => {});
+        }).catch(() => {});
+      }
     }
   } catch(e) {}
 }
+
+function getFcmDeviceId() {
+  try {
+    let id = localStorage.getItem("fcmDeviceId");
+    if (!id) { id = "d" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem("fcmDeviceId", id); }
+    return id;
+  } catch (e) { return "dfallback"; }
+}
+
+function clearUnreadBadge() {
+  try { if (navigator.clearAppBadge) navigator.clearAppBadge(); } catch (e) {}
+  try {
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: "clearBadge" });
+    } else if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistration("/chat-bridge/").then((reg) => {
+        if (reg && reg.active) reg.active.postMessage({ type: "clearBadge" });
+      }).catch(() => {});
+    }
+  } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") clearUnreadBadge(); });
+window.addEventListener("focus", clearUnreadBadge);
 
 let fcmInitialized = false;
 
@@ -9360,7 +9395,10 @@ async function requestNotificationPermission() {
 
     if (token && currentUser) {
       const userKey = emailToKey(currentUser.email);
-      await db.ref("fcmTokens/" + userKey).set({ token: token, email: currentUser.email, updatedAt: Date.now() });
+      await db.ref("fcmTokens/" + userKey + "/email").set(currentUser.email);
+      await db.ref("fcmTokens/" + userKey + "/devices/" + getFcmDeviceId()).set({ token: token, updatedAt: Date.now(), ua: (navigator.userAgent || "").slice(0, 80) });
+      const legacy = await db.ref("fcmTokens/" + userKey + "/token").once("value");
+      if (legacy.exists()) db.ref("fcmTokens/" + userKey + "/token").remove().catch(() => {});
       fcmInitialized = true;
     }
   } catch (e) {
