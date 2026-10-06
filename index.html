@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="聊天橋">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <title>L⇄V ∞ v21.229</title>
+  <title>L⇄V ∞ v21.230</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2723,7 +2723,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.229</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.230</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -2985,6 +2985,8 @@
       <span style="font-size:11px;color:var(--text-tertiary);">正常 / Обычно</span>
     </div>
     <div style="font-size:10px;color:var(--text-tertiary);text-align:center;margin-top:2px;">正常語速為上限，可依需求調慢方便學習 / Максимум — обычная скорость, можно замедлить для изучения языка</div>
+    <button type="button" id="enablePushBtn" onclick="enablePushFromButton()" style="width:100%;margin-top:14px;background:none;border:1px solid var(--border-color,#888);color:inherit;border-radius:10px;padding:10px;font-size:13px;font-family:inherit;cursor:pointer;">🔔 開啟離線推播通知 / Включить push-уведомления</button>
+    <div id="enablePushStatus" style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:4px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
       <span class="profile-setup-label" style="margin-top:0;">訊息通知音 / Звук уведомлений</span>
       <label class="settings-toggle">
@@ -3070,7 +3072,7 @@
 
 <script>
 
-const APP_VERSION = "21.229";
+const APP_VERSION = "21.230";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3294,7 +3296,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.229";
+    document.title = "L⇄V ∞ v21.230";
   }
 });
 
@@ -3359,7 +3361,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.229";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.230";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -9387,6 +9389,24 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 window.addEventListener("focus", clearUnreadBadge);
 
 let fcmInitialized = false;
+let fcmLastStatus = "";
+
+async function enablePushFromButton() {
+  const st = document.getElementById("enablePushStatus");
+  const say = (t) => { if (st) st.textContent = t; };
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+    say("❌ 這個瀏覽器不支援推播（iPhone 請從主畫面的App圖示開啟）/ Не поддерживается");
+    return;
+  }
+  if (Notification.permission === "denied") {
+    say("❌ 通知被關閉了，請到手機「設定 → 通知」把聊天橋打開 / Уведомления отключены в настройках");
+    return;
+  }
+  say("處理中… / Подождите…");
+  fcmInitialized = false;
+  await requestNotificationPermission();
+  say(fcmInitialized ? "✅ 已開啟！這台裝置會收到離線通知 / Готово" : "⚠️ 沒成功：" + (fcmLastStatus || "請重新整理後再試一次"));
+}
 
 async function requestNotificationPermission() {
   if (fcmInitialized) return;
@@ -9395,7 +9415,7 @@ async function requestNotificationPermission() {
 
   try {
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") return;
+    if (permission !== "granted") { fcmLastStatus = "你沒有按允許 / разрешение не дано"; return; }
 
     const registration = await navigator.serviceWorker.register("/chat-bridge/firebase-messaging-sw.js");
     const messaging = firebase.messaging();
@@ -9410,6 +9430,7 @@ async function requestNotificationPermission() {
       fcmInitialized = true;
     }
   } catch (e) {
+    fcmLastStatus = e.message || "";
     console.log("FCM初始化失敗：", e.message);
   }
 }
