@@ -1,8 +1,8 @@
-/* 聊天橋 推播 Service Worker v4（不依賴 Firebase SDK，直接處理 push 事件，較穩定） */
+/* 聊天橋 推播 Service Worker v4.1（不依賴 Firebase SDK，直接處理 push 事件，較穩定） */
 const APP_LINK = "https://linhuihtw-cmd.github.io/chat-bridge/";
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) => event.waitUntil((async () => { await self.clients.claim(); await pushLog("SW v4.1 已啟用"); })()));
 
 const LOG_KEY = "/chat-bridge/__push_log";
 async function pushLog(text) {
