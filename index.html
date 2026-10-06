@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="聊天橋">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <title>L⇄V ∞ v21.230</title>
+  <title>L⇄V ∞ v21.231</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2723,7 +2723,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.230</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.231</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3072,7 +3072,7 @@
 
 <script>
 
-const APP_VERSION = "21.230";
+const APP_VERSION = "21.231";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3296,7 +3296,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.230";
+    document.title = "L⇄V ∞ v21.231";
   }
 });
 
@@ -3361,7 +3361,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.230";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.231";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -4585,6 +4585,7 @@ async function sendMsg() {
   }
   let userMsgKey = null;
   try {
+    window._localSendAt = Date.now();
     const userMsgRef = await db.ref("messages").push(msgData);
     userMsgKey = userMsgRef.key;
   } catch (e) {
@@ -4664,6 +4665,7 @@ async function handleFileSelected(event) {
       tz: senderTimeZone,
       senderEmail: currentUser.email
     };
+    window._localSendAt = Date.now();
     await db.ref("messages").push(msgData);
   } catch (e) {
     alert("⚠️ 檔案傳送失敗，請稍後再試一次。\n\n錯誤詳情：" + e.message);
@@ -4733,6 +4735,7 @@ async function handleImageSelected(event) {
       tz: senderTimeZone,
       senderEmail: currentUser.email
     };
+    window._localSendAt = Date.now();
     await db.ref("messages").push(msgData);
   } catch (e) {
     alert("⚠️ 圖片傳送失敗，請稍後再試一次。\n\n錯誤詳情：" + e.message);
@@ -9234,7 +9237,9 @@ function setupMessageListener() {
     const isOwnMessage = currentUser && newMsg.senderEmail === currentUser.email;
     if (!isOwnMessage) {
       triggerNewMessageAlert(newMsg);
-      sendFcmToOtherUsers("🌉 雙語聊天橋有新訊息", newMsg.role === "user" ? newMsg.text.slice(0,60) : "翻譯字卡已送達");
+    } else if (newMsg.role === "user" && Date.now() - (window._localSendAt || 0) < 8000) {
+      // 離線推播由「發送者這台裝置」送出（對方不一定開著網頁）
+      sendFcmToOtherUsers("🌉 雙語聊天橋有新訊息", String(newMsg.text).slice(0, 60));
     }
   });
 
@@ -9260,19 +9265,21 @@ function setupMessageListener() {
         if (isSpeaker && newCorrection.confused && !prevCorrection.confused) {
           if (isAfterLogin(newCorrection.confusedAt)) {
             showCorrectionAlert("❓", "對方表示「我不太明白這句話的意思」\nЯ не понимаю — нажмите, чтобы пояснить", snapshot.key);
-            sendFcmToOtherUsers("🌉 雙語聊天橋", "❓ 對方表示「我不太明白」");
           }
           markCardNeedsCorrection(snapshot.key);
         }
         if (!isSpeaker && newCorrection.correctedText && !prevCorrection.correctedText) {
           if (isAfterLogin(newCorrection.correctedAt)) {
             showCorrectionAlert("✎", "對方送出了更正說明，請查看\nОтправлено уточнение — нажмите, чтобы посмотреть", snapshot.key);
-            sendFcmToOtherUsers("🌉 雙語聊天橋", "✎ 對方送出了更正說明");
           }
           markCardCorrectionDone(snapshot.key);
         }
         if (newCorrection.confused && !prevCorrection.confused && !isSpeaker) {
           markCardNeedsCorrection(snapshot.key);
+          if (isAfterLogin(newCorrection.confusedAt)) sendFcmToOtherUsers("🌉 雙語聊天橋", "❓ 對方表示「我不太明白」");
+        }
+        if (newCorrection.correctedText && !prevCorrection.correctedText && isSpeaker && isAfterLogin(newCorrection.correctedAt)) {
+          sendFcmToOtherUsers("🌉 雙語聊天橋", "✎ 對方送出了更正說明");
         }
         if (newCorrection.correctedText && !prevCorrection.correctedText && isSpeaker) {
           markCardCorrectionDone(snapshot.key);
