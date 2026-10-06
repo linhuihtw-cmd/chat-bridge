@@ -1,8 +1,20 @@
-/* 聊天橋 推播 Service Worker v3（不依賴 Firebase SDK，直接處理 push 事件，較穩定） */
+/* 聊天橋 推播 Service Worker v4（不依賴 Firebase SDK，直接處理 push 事件，較穩定） */
 const APP_LINK = "https://linhuihtw-cmd.github.io/chat-bridge/";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+const LOG_KEY = "/chat-bridge/__push_log";
+async function pushLog(text) {
+  try {
+    const cache = await caches.open("cb-debug");
+    const old = await cache.match(LOG_KEY);
+    let arr = [];
+    if (old) { try { arr = await old.json(); } catch (e) { arr = []; } }
+    arr.unshift(new Date().toLocaleTimeString("zh-TW", { hour12: false }) + " " + text);
+    await cache.put(LOG_KEY, new Response(JSON.stringify(arr.slice(0, 8)), { headers: { "Content-Type": "application/json" } }));
+  } catch (e) {}
+}
 
 async function updateBadge() {
   try {
@@ -22,12 +34,19 @@ self.addEventListener("push", (event) => {
     const body = d.body || n.body || "有新訊息";
     const link = d.link || APP_LINK;
 
-    await self.registration.showNotification(title, {
-      body: body,
-      tag: "chat-bridge-" + Date.now(),
-      data: { link: link },
-      vibrate: [200, 100, 200]
-    });
+    await pushLog("收到推播：" + title + "／" + String(body).slice(0, 20));
+    try {
+      await self.registration.showNotification(title, {
+        body: body,
+        tag: "chat-bridge-" + Date.now(),
+        data: { link: link },
+        vibrate: [200, 100, 200]
+      });
+      const shown = await self.registration.getNotifications();
+      await pushLog("已顯示通知（目前通知數 " + shown.length + "）");
+    } catch (e) {
+      await pushLog("顯示通知失敗：" + (e && e.message));
+    }
 
     await updateBadge();
   })());
