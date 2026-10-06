@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="聊天橋">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <title>L⇄V ∞ v21.234</title>
+  <title>L⇄V ∞ v21.235</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2748,7 +2748,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.234</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.235</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3098,7 +3098,7 @@
 
 <script>
 
-const APP_VERSION = "21.234";
+const APP_VERSION = "21.235";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3322,7 +3322,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.234";
+    document.title = "L⇄V ∞ v21.235";
   }
 });
 
@@ -3387,7 +3387,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.234";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.235";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -9271,6 +9271,8 @@ function setupMessageListener() {
     } else if (newMsg.role === "user" && Date.now() - (window._localSendAt || 0) < 8000) {
       // 離線推播由「發送者這台裝置」送出（對方不一定開著網頁）
       sendFcmToOtherUsers("🌉 雙語聊天橋有新訊息", String(newMsg.text).slice(0, 60));
+    } else if (isOwnMessage) {
+      console.log("[FCM] 這是我自己的訊息但沒有觸發推播（role=" + newMsg.role + "，距上次發送 " + (Date.now() - (window._localSendAt || 0)) + "ms）");
     }
   });
 
@@ -9380,6 +9382,7 @@ async function sendFcmToOtherUsers(title, body) {
     const users = snapshot.val() || {};
     const myKey = emailToKey(currentUser.email);
     const sent = new Set();
+    console.log("[FCM] 開始推播，資料庫裡共有帳號：", Object.keys(users).length, "我是：", myKey);
     for (const [key, data] of Object.entries(users)) {
       if (key === myKey || !data) continue;
       const list = [];
@@ -9390,11 +9393,13 @@ async function sendFcmToOtherUsers(title, body) {
       for (const item of list) {
         if (sent.has(item.token)) continue;
         sent.add(item.token);
+        console.log("[FCM] 送給", key, "…" + item.token.slice(-6));
         fetch("https://holy-dew-9872.linhuihtw.workers.dev/fcm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: item.token, title, bodyText: body })
         }).then((r) => r.json()).then((res) => {
+          console.log("[FCM] 結果", key, res && (res.name ? "OK" : JSON.stringify(res.error || res)));
           const st = res && res.error && res.error.status;
           if (st === "NOT_FOUND" || st === "UNREGISTERED") db.ref(item.path).remove().catch(() => {});
         }).catch(() => {});
