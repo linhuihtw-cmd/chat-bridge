@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="聊天橋">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <title>L⇄V ∞ v21.235</title>
+  <title>L⇄V ∞ v21.236</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2748,7 +2748,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.235</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.236</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3012,6 +3012,7 @@
     <div style="font-size:10px;color:var(--text-tertiary);text-align:center;margin-top:2px;">正常語速為上限，可依需求調慢方便學習 / Максимум — обычная скорость, можно замедлить для изучения языка</div>
     <button type="button" id="enablePushBtn" onclick="enablePushFromButton()" style="width:100%;margin-top:14px;background:none;border:1px solid var(--border-color,#888);color:inherit;border-radius:10px;padding:10px;font-size:13px;font-family:inherit;cursor:pointer;">🔔 開啟離線推播通知 / Включить push-уведомления</button>
     <button type="button" onclick="testPushToSelf()" style="width:100%;margin-top:8px;background:none;border:1px solid var(--border-color,#888);color:inherit;border-radius:10px;padding:8px;font-size:12px;font-family:inherit;cursor:pointer;">🧪 測試推播（發給自己這台）/ Тест push</button>
+    <button type="button" onclick="showPushLog()" style="width:100%;margin-top:8px;background:none;border:1px solid var(--border-color,#888);color:inherit;border-radius:10px;padding:8px;font-size:12px;font-family:inherit;cursor:pointer;">📋 查看推播紀錄 / Журнал push</button>
     <div id="enablePushStatus" style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:4px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
       <span class="profile-setup-label" style="margin-top:0;">訊息通知音 / Звук уведомлений</span>
@@ -3098,7 +3099,7 @@
 
 <script>
 
-const APP_VERSION = "21.235";
+const APP_VERSION = "21.236";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3322,7 +3323,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.235";
+    document.title = "L⇄V ∞ v21.236";
   }
 });
 
@@ -3387,7 +3388,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.235";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.236";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -9449,6 +9450,18 @@ async function enablePushFromButton() {
   fcmInitialized = false;
   await requestNotificationPermission();
   say(fcmInitialized ? "✅ 已開啟！這台裝置會收到離線通知 / Готово" : "⚠️ 沒成功：" + (fcmLastStatus || "請重新整理後再試一次"));
+}
+
+async function showPushLog() {
+  const st = document.getElementById("enablePushStatus");
+  try {
+    const cache = await caches.open("cb-debug");
+    const r = await cache.match("/chat-bridge/__push_log");
+    const arr = r ? await r.json() : [];
+    if (st) st.innerText = arr.length ? arr.join("\n") : "還沒有收到過推播紀錄 / Записей нет";
+  } catch (e) {
+    if (st) st.innerText = "讀取失敗：" + (e.message || e);
+  }
 }
 
 async function testPushToSelf() {
