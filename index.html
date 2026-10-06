@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="聊天橋">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <title>L⇄V ∞ v21.232</title>
+  <title>L⇄V ∞ v21.233</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2683,11 +2683,12 @@
         font-size: 14px;
         padding: 8px;
         order: 1;
-        flex: 1 1 calc(100% - 64px);
+        box-sizing: border-box;
+        flex: 1 1 calc(100% - 70px);
         min-width: 0;
         min-height: 52px;
       }
-      #sendBtn { order: 2; flex: 0 0 54px; min-width: 54px; }
+      #sendBtn { order: 2; box-sizing: border-box; flex: 0 0 56px; min-width: 56px; padding-left: 0; padding-right: 0; }
       #fileBtn, #videoCallBtn, #musicPlayerBtn, #exportBtn, #settingsBtn {
         order: 3;
         flex: 1 1 0;
@@ -2744,7 +2745,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.232</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.233</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3007,6 +3008,7 @@
     </div>
     <div style="font-size:10px;color:var(--text-tertiary);text-align:center;margin-top:2px;">正常語速為上限，可依需求調慢方便學習 / Максимум — обычная скорость, можно замедлить для изучения языка</div>
     <button type="button" id="enablePushBtn" onclick="enablePushFromButton()" style="width:100%;margin-top:14px;background:none;border:1px solid var(--border-color,#888);color:inherit;border-radius:10px;padding:10px;font-size:13px;font-family:inherit;cursor:pointer;">🔔 開啟離線推播通知 / Включить push-уведомления</button>
+    <button type="button" onclick="testPushToSelf()" style="width:100%;margin-top:8px;background:none;border:1px solid var(--border-color,#888);color:inherit;border-radius:10px;padding:8px;font-size:12px;font-family:inherit;cursor:pointer;">🧪 測試推播（發給自己這台）/ Тест push</button>
     <div id="enablePushStatus" style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:4px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
       <span class="profile-setup-label" style="margin-top:0;">訊息通知音 / Звук уведомлений</span>
@@ -3093,7 +3095,7 @@
 
 <script>
 
-const APP_VERSION = "21.232";
+const APP_VERSION = "21.233";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3317,7 +3319,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.232";
+    document.title = "L⇄V ∞ v21.233";
   }
 });
 
@@ -3382,7 +3384,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.232";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.233";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -9434,6 +9436,33 @@ async function enablePushFromButton() {
   fcmInitialized = false;
   await requestNotificationPermission();
   say(fcmInitialized ? "✅ 已開啟！這台裝置會收到離線通知 / Готово" : "⚠️ 沒成功：" + (fcmLastStatus || "請重新整理後再試一次"));
+}
+
+async function testPushToSelf() {
+  const st = document.getElementById("enablePushStatus");
+  const say = (t) => { if (st) st.textContent = t; };
+  if (!currentUser) return;
+  say("測試中… / Тест…");
+  try {
+    const snap = await db.ref("fcmTokens/" + emailToKey(currentUser.email)).once("value");
+    const v = snap.val() || {};
+    const tokens = [];
+    if (v.token) tokens.push(v.token);
+    Object.values(v.devices || {}).forEach((d) => { if (d && d.token) tokens.push(d.token); });
+    if (tokens.length === 0) { say("❌ 資料庫裡沒有這個帳號的推播登記，請先按上面的「開啟離線推播通知」"); return; }
+    const results = [];
+    for (const t of tokens) {
+      const r = await fetch("https://holy-dew-9872.linhuihtw.workers.dev/fcm", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: t, title: "🌉 推播測試", bodyText: "收到這則代表推播正常 ✅" })
+      });
+      const j = await r.json().catch(() => ({}));
+      results.push(j && j.name ? "OK" : "失敗：" + ((j && j.error && (j.error.message || j.error.status)) || ("HTTP " + r.status)));
+    }
+    say("共 " + tokens.length + " 台登記｜" + results.join("；") + "｜（請把App切到背景或關掉再看有沒有跳通知）");
+  } catch (e) {
+    say("❌ 測試失敗：" + (e.message || e));
+  }
 }
 
 async function requestNotificationPermission() {
