@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="聊天橋">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <title>L⇄V ∞ v21.238</title>
+  <title>L⇄V ∞ v21.239</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -2748,7 +2748,7 @@
   </div>
 </div>
 
-<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.238</span></h2>
+<h2>L⇄V ∞<span style="font-size:12px;color:#64748b;font-weight:400;margin-left:10px;">v21.239</span></h2>
 
 <!-- 登入畫面：尚未登入時顯示 -->
 <div id="loginScreen" class="auth-screen" style="display: none;">
@@ -3099,7 +3099,7 @@
 
 <script>
 
-const APP_VERSION = "21.238";
+const APP_VERSION = "21.239";
 const ADMIN_EMAIL = "linhuihtw@gmail.com";
 
 function checkForNewVersion() {
@@ -3323,7 +3323,7 @@ document.addEventListener('visibilitychange', () => {
   if (isTabActive) {
     clearInterval(titleFlashInterval);
     titleFlashInterval = null;
-    document.title = "L⇄V ∞ v21.238";
+    document.title = "L⇄V ∞ v21.239";
   }
 });
 
@@ -3388,7 +3388,7 @@ function flashTabTitle() {
   if (titleFlashInterval) return;
   let isOldTitle = true;
   titleFlashInterval = setInterval(() => {
-    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.238";
+    document.title = isOldTitle ? "💬 【新訊息 / Новое сообщение】" : "L⇄V ∞ v21.239";
     isOldTitle = !isOldTitle;
   }, 1000);
 }
@@ -9385,10 +9385,10 @@ async function sendFcmToOtherUsers(title, body) {
     const sent = new Set();
     // 備援：同時推一份到 ntfy（手機自己發的訊息不用推回手機）
     if (!/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
-      fetch("https://holy-dew-9872.linhuihtw.workers.dev/ntfy", {
+      fetch("https://ntfy.sh/", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, bodyText: body })
-      }).then((r) => r.json()).then((res) => console.log("[ntfy] 結果", res && res.ok ? "OK" : "失敗")).catch(() => {});
+        body: JSON.stringify({ topic: "LV-1984-bridge-2026-G", title, message: body, priority: 4, click: "https://linhuihtw-cmd.github.io/chat-bridge/", tags: ["speech_balloon"] })
+      }).then((r) => console.log("[ntfy] 結果", r.ok ? "OK" : "失敗 " + r.status)).catch((e) => console.log("[ntfy] 失敗", e));
     }
     console.log("[FCM] 開始推播，資料庫裡共有帳號：", Object.keys(users).length, "我是：", myKey);
     for (const [key, data] of Object.entries(users)) {
